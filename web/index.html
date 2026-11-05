@@ -181,6 +181,7 @@
       <label class="row">Alkış hassasiyeti (düşük = hassas) <input type="range" id="sl-thr" min="0.15" max="0.8" step="0.05"></label>
       <div class="row"><span class="note">Uykudayken iki kez alkışla ya da tıkla: uyanır. Sesle: "uyu".</span><button class="mini" id="sl-now">😴 ŞİMDİ UYU</button></div>
       <label class="row">Adın (yüz kilidinde görünür) <input id="ar-name" placeholder="Murat"></label>
+      <label class="row">Sistem kilidi PIN'i (boş = PIN yok; sadece bu tarayıcıda, şifreli saklanır) <input id="lk-pinset" type="password" inputmode="numeric" maxlength="12" style="width:120px" autocomplete="new-password"></label>
       <label class="row">AR efektte 👍 (1 sn) komutu <input id="ar-cmd" placeholder="Bana bugün için kısa bir brifing ver"></label>
       <label class="row">Tanıma dili <select id="v-stt"><option value="tr-TR">Türkçe</option><option value="en-US">English</option></select></label>
       <div id="voice-sliders"></div>
@@ -279,7 +280,10 @@
 <script src="/static/handfx.js"></script>
 <script src="/static/clap.js"></script>
 <script src="/static/camnode.js"></script>
+<script src="/static/screennode.js"></script>
 <script src="/static/stage.js"></script>
+<script src="/static/call.js"></script>
+<script src="/static/lock.js"></script>
 <script src="/static/video.js"></script>
 <script src="/static/library.js"></script>
 <script src="/static/scan.js"></script>

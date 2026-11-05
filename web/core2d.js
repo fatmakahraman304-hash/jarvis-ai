@@ -80,6 +80,7 @@
       }
     });
     g.globalCompositeOperation = "source-over";
+    if (o.noLabel) { g.restore(); return; }
     // alt etiket
     g.textAlign = "center"; g.fillStyle = C(0.85);
     g.font = `600 ${Math.max(10, R * 0.06)}px 'Chakra Petch','Rajdhani',sans-serif`;

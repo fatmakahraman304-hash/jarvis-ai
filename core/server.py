@@ -152,6 +152,27 @@ async def scene_api(request):
     return JSONResponse({"error": "bilinmeyen"}, status_code=404)
 
 
+async def screens_api(request):
+    """Telefon ekranları: GET poll?id&name&state (komutları al) · GET list · POST send {target, type, ...}."""
+    from .skills import screens as sc
+    what = request.path_params["what"]
+    q = request.query_params
+    if what == "poll":
+        return JSONResponse({"cmds": sc.register(q.get("id", ""), q.get("name", ""), q.get("state", ""))})
+    if what == "list":
+        return JSONResponse(sc.phone_screens())
+    if what == "send" and request.method == "POST":
+        b = await request.json()
+        t, tg = b.get("type", ""), b.get("target", "hepsi")
+        fn = {"video": lambda: sc.phone_video(b.get("query", ""), tg), "say": lambda: sc.phone_say(b.get("text", ""), tg),
+              "show": lambda: sc.phone_show(b.get("text", ""), tg), "anim": lambda: sc.phone_anim(b.get("preset", ""), tg),
+              "stop": lambda: sc.phone_stop(tg), "ring": lambda: sc.call_me(b.get("text", ""), tg)}.get(t)
+        if not fn:
+            return JSONResponse({"error": "tür: video | say | show | anim | stop | ring"}, status_code=400)
+        return JSONResponse(await asyncio.to_thread(fn))
+    return JSONResponse({"error": "bilinmeyen"}, status_code=404)
+
+
 async def hud_api(request):
     from .skills import hud
     what = request.path_params.get("what", "")
@@ -1015,6 +1036,7 @@ routes = [
     Route("/api/scene/{what}", scene_api, methods=["GET", "POST"]),
     Route("/api/life/{what}", life_api, methods=["GET", "POST"]),
     Route("/api/hud/{what}", hud_api),
+    Route("/api/screens/{what}", screens_api, methods=["GET", "POST"]),
     Route("/api/library/{what}", library_api, methods=["POST"]),
     Route("/api/cams/{cid}", cams_api),
     Route("/api/vision", vision_api, methods=["POST"]),

@@ -111,6 +111,8 @@
     if (ui === "body") return JV.body && JV.body.cmd(r);
     if (ui === "video") return JV.video && JV.video.open(r);
     if (ui === "stage") return JV.stage && JV.stage.cmd(r, args || {});
+    if (ui === "call") return JV.call && (r.incoming ? JV.call.incoming(r.message || "") : JV.call.start());
+    if (ui === "lock") return JV.lock && (r.on === false ? JV.lock.off() : JV.lock.on());
     if (ui === "core") { if (JV.stage) JV.stage.clear(); if (JV.getView() !== "core") JV.setView("core"); return JV.setCoreStyle && r.style && JV.setCoreStyle(r.style); }
     if (ui === "library") return JV.library && JV.library.cmd(r);
     if (ui === "handfx") return JV.handfx && JV.handfx.cmd(r);

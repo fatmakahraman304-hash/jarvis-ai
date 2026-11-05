@@ -32,6 +32,9 @@
     ["YAŞAM & EĞLENCE", "v-balloon", "🎈", "Balon Patlat", "30 saniye, rekor tut", () => JV.handfx && JV.handfx.cmd({ action: "game", game: "balloons" })],
     ["YAŞAM & EĞLENCE", "v-fortune", "☕", "Kahve Falı", "Fincanı kameraya göster", () => JV.fortune && JV.fortune()],
     ["YAŞAM & EĞLENCE", "t-ambient", "🎧", "Ortam Sesleri", "Alarm, cam kırılması, bebek, kapı zili"],
+    ["GÖRÜŞ & AR", "v-phones", "📱", "Telefon Ekranları", "Telefonlarda video, yazı, animasyon; telefonu çaldır", () => JV.phones && JV.phones.open()],
+    ["SİSTEM", "v-call", "📞", "JARVIS'i Ara", "Sesli görüşme, eller serbest", () => JV.call && JV.call.start()],
+    ["SİSTEM", "v-lock", "🔒", "Sistemi Kilitle", "İki elle çimdikle-aç ile açılır", () => JV.lock && JV.lock.on()],
     ["SİSTEM", "t-command", "⌘", "Komuta Merkezi", "Modlar, makrolar, modüller"],
     ["SİSTEM", "v-sleep", "😴", "Uyku", "Ekran kararır, iki alkışla uyan", () => JV.sleep && JV.sleep.enter()],
     ["SİSTEM", "t-update", "⟳", "Güncelle", "Tek tuşla yeni sürüm"],
@@ -39,7 +42,7 @@
   const QUICK = [
     ["☀", "Sabah brifingi", "Sabah brifingini ver"], ["⛅", "Hava durumu", "Hava durumunu göster"], ["📰", "Gündem", "Aydınlat beni"],
     ["📧", "Maillerim", "Okunmamış maillerimi özetle"], ["📅", "Bugünkü programım", "Bugünkü programım ne?"], ["✅", "Yapılacaklar", "Yapılacaklar listemde ne var?"],
-    ["🪐", "Güneş sistemi animasyonu", "Ortada güneş sistemi animasyonu göster"], ["🧬", "DNA animasyonu", "Ortada DNA animasyonu göster"], ["🎬", "YouTube videosu aç", "YouTube'dan aç: "], ["🔎", "Odayı tara", "Odayı tara"], ["🔍", "Kumandayı bul", "Kumandayı bul"], ["💱", "Dolar kaç TL", "Dolar şu an kaç TL?"], ["🥇", "Altın fiyatları", "Gram altın kaç TL?"],
+    ["🪐", "Güneş sistemi animasyonu", "Ortada güneş sistemi animasyonu göster"], ["🧬", "DNA animasyonu", "Ortada DNA animasyonu göster"], ["🎬", "YouTube videosu aç", "YouTube'dan aç: "], ["📱", "Telefonlarda video", "Tüm telefonlarda oynat: "], ["📞", "Beni ara", "Beni ara"], ["🔎", "Odayı tara", "Odayı tara"], ["🔍", "Kumandayı bul", "Kumandayı bul"], ["💱", "Dolar kaç TL", "Dolar şu an kaç TL?"], ["🥇", "Altın fiyatları", "Gram altın kaç TL?"],
     ["⏳", "50 dk odak", "50 dakika odak modu başlat"], ["📔", "Günlüğe yaz", "Günlüğüme yaz: "], ["🎙", "Toplantıyı kaydet", "Toplantıyı kaydet"],
   ];
 

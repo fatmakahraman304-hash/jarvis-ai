@@ -215,3 +215,68 @@ body.cc #stage-host{left:calc(var(--lw) + var(--g) * 2 + 14px);right:calc(var(--
 #videopanel.in-stage .vp-top{display:none}
 #videopanel.in-stage .vp-frame{flex:1;height:100%;padding:0;aspect-ratio:auto}
 #videopanel.in-stage iframe{width:100%;height:100%;border:0;display:block}
+/* ================= SESLİ ARAMA ================= */
+#callui{position:fixed;inset:0;z-index:120;display:flex;flex-direction:column;align-items:center;background:radial-gradient(ellipse at 50% 38%,color-mix(in srgb,var(--c) 16%,#04101d),#02060d 70%);color:#e8f4ff;animation:sgin .4s}
+#callui.hidden{display:none}
+.cl-top{width:100%;display:flex;justify-content:space-between;padding:18px 22px;font-family:var(--mono);font-size:11px;letter-spacing:.24em;color:var(--dim)}
+#cl-time{color:#fff}
+#cl-orb{width:min(70vw,360px);height:min(70vw,360px);margin-top:4vh}
+.cl-name{font-family:'Orbitron',var(--head);font-weight:700;font-size:clamp(22px,5vw,34px);letter-spacing:.3em;color:var(--c);text-shadow:0 0 18px color-mix(in srgb,var(--c) 60%,transparent);margin-top:8px}
+.cl-state{font-family:var(--mono);font-size:12px;letter-spacing:.3em;color:#cfe3f5;margin-top:8px}
+.cl-said{min-height:2.6em;max-width:min(560px,88vw);text-align:center;margin-top:14px;font-size:17px;color:#b9cde0;font-style:italic}
+.cl-btns{display:flex;gap:34px;margin-top:auto;margin-bottom:9vh}
+.cl-btns button{width:72px;height:72px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;backdrop-filter:blur(8px);transition:transform .15s,background .15s}
+.cl-btns button:hover{transform:scale(1.06)}
+.cl-btns button i{font-style:normal;font-size:24px}.cl-btns button small{position:absolute;margin-top:100px;font-family:var(--mono);font-size:9px;letter-spacing:.18em;color:var(--dim)}
+.cl-btns button.on{background:#fff;color:#02101a}
+.cl-btns .red{background:#ff3b4e;border-color:#ff3b4e}.cl-btns .red i{transform:rotate(135deg)}
+.cl-btns .green{background:#23c96b;border-color:#23c96b;animation:clpulse 1.2s infinite}
+@keyframes clpulse{0%{box-shadow:0 0 0 0 rgba(35,201,107,.6)}100%{box-shadow:0 0 0 22px rgba(35,201,107,0)}}
+.cl-ring{display:none}#callui.ringing .cl-ring{display:flex}#callui.ringing .cl-live{display:none}
+#callui.ringing #cl-orb{animation:clshake .5s infinite}
+@keyframes clshake{0%,100%{transform:rotate(0)}25%{transform:rotate(-2deg)}75%{transform:rotate(2deg)}}
+/* ================= SİSTEM KİLİDİ ================= */
+#lockui{position:fixed;inset:0;z-index:130;background:radial-gradient(ellipse at center,#061629,#010409 75%);color:#e6f3ff;overflow:hidden}
+#lockui.hidden{display:none}
+#lk-bg{position:absolute;inset:0;width:100%;height:100%}
+.lk-top{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;padding:18px 24px;font-family:var(--mono);font-size:11px;letter-spacing:.26em;color:var(--dim)}
+.lk-mid{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
+.lk-ring{position:relative;width:min(56vw,300px);height:min(56vw,300px);transition:transform .6s,opacity .6s}
+.lk-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.lk-r0{fill:rgba(3,12,24,.55);stroke:color-mix(in srgb,var(--c) 30%,transparent);stroke-width:1.5}
+.lk-r1{fill:none;stroke:var(--c);stroke-width:4;stroke-linecap:round;stroke-dasharray:578;stroke-dashoffset:578;filter:drop-shadow(0 0 8px var(--c));transition:stroke-dashoffset .12s}
+.lk-in{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.lk-in b{font-family:'Orbitron',var(--head);font-weight:700;letter-spacing:.22em;font-size:clamp(14px,3.2vw,20px);color:var(--c);text-shadow:0 0 16px color-mix(in srgb,var(--c) 60%,transparent)}
+.lk-in small{font-family:var(--head);font-size:clamp(28px,7vw,46px);margin-top:6px;letter-spacing:.06em}
+.lk-msg{font-family:var(--mono);font-size:12px;letter-spacing:.18em;color:#cfe3f5;text-align:center;max-width:90vw}.lk-msg.bad{color:var(--bad)}
+.lk-pin{display:flex;gap:8px}.lk-pin.hidden{display:none}
+#lk-pin{background:rgba(0,0,0,.4);border:1px solid var(--line2);border-radius:var(--r);color:#fff;font-size:22px;letter-spacing:.4em;text-align:center;width:180px;padding:8px}
+.lk-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.lk-btns .mini{padding:8px 14px;font-size:11px;touch-action:none;user-select:none}
+#lk-v{display:none}
+#lk-hands{position:absolute;right:20px;bottom:46px;width:240px;height:180px;border:1px solid var(--line2);border-radius:6px;background:rgba(0,0,0,.35);display:none}
+#lockui.lk-camon #lk-hands{display:block}
+.lk-foot{position:absolute;bottom:14px;left:0;right:0;text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--dim2)}
+#lockui.lk-open .lk-ring{transform:scale(1.7);opacity:0}#lockui.lk-open{transition:opacity .7s;opacity:0}
+#lockui.lk-shake .lk-mid{animation:clshake .12s 4}
+/* ================= TELEFON EKRANI (?rol=ekran) ================= */
+body.scrrole>*:not(#scrnode):not(#stage-host):not(#callui):not(#toasts):not(script):not(#lockui){display:none!important}
+body.scrrole #stage-host{inset:0!important;height:auto;border:0;border-radius:0;z-index:20;background:#02060d}
+body.scrrole #stage-host .sg-bar{position:absolute;top:0;left:0;right:0;z-index:2;background:linear-gradient(180deg,rgba(0,0,0,.6),transparent);border:0;opacity:.85}
+#scrnode{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 45%,color-mix(in srgb,var(--c) 12%,#030b16),#010409 75%);color:#e6f3ff}
+#sn-orb{position:absolute;inset:0;width:100%;height:100%}
+.sn-top{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;padding:16px 18px;font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--dim)}.sn-top b{color:var(--c)}
+.sn-clock{position:absolute;top:9vh;left:0;right:0;text-align:center}.sn-clock b{display:block;font-family:var(--head);font-size:clamp(40px,14vw,80px);font-weight:500;letter-spacing:.04em}.sn-clock span{font-family:var(--mono);font-size:11px;letter-spacing:.26em;color:var(--dim)}
+.sn-text{position:absolute;left:6vw;right:6vw;top:50%;transform:translateY(-50%);text-align:center;font-family:var(--head);font-weight:600;font-size:clamp(26px,8vw,64px);line-height:1.15;color:#fff;text-shadow:0 0 30px var(--c);background:rgba(1,6,14,.75);padding:24px;border:1px solid var(--line2);border-radius:8px;animation:sgin .4s}.sn-text.hidden{display:none}
+.sn-bot{position:absolute;bottom:5vh;left:0;right:0;display:flex;justify-content:center;gap:10px}.sn-bot .btn-primary{padding:14px 26px;font-size:13px}
+.sn-start{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;background:rgba(1,4,10,.92);padding:20px}.sn-start.hidden{display:none}
+.sn-start>div{max-width:420px;display:flex;flex-direction:column;gap:12px}.sn-start b{font-family:'Orbitron',var(--head);color:var(--c);letter-spacing:.2em}
+.sn-start label{display:flex;flex-direction:column;gap:4px;font-family:var(--mono);font-size:11px;color:var(--dim)}.sn-start input{background:rgba(0,0,0,.4);border:1px solid var(--line2);border-radius:var(--r);padding:10px;color:#fff;font-size:16px}
+/* ================= TELEFON EKRANLARI PANELİ ================= */
+#phonespanel{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;background:rgba(1,5,12,.6);backdrop-filter:blur(4px)}#phonespanel.hidden{display:none}
+.ph-card{width:min(640px,94vw);max-height:84vh;overflow:auto;background:linear-gradient(180deg,#0a1628,#060e1b);border:1px solid var(--line);border-radius:6px;padding:16px;box-shadow:0 30px 80px -20px #000;animation:sgin .3s}
+.ph-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}.ph-top b{font-family:var(--head);letter-spacing:.2em;color:var(--c);flex:1}#ph-n{font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:.2em}
+#ph-list{list-style:none;margin:0 0 12px;padding:0}#ph-list li{display:flex;gap:10px;align-items:center;padding:7px 4px;border-bottom:1px solid rgba(255,255,255,.04)}#ph-list li i{color:var(--ok);font-style:normal;font-size:10px}#ph-list li span{flex:1;color:var(--dim);font-size:13px}#ph-list li small{font-family:var(--mono);font-size:10px;color:var(--dim2)}#ph-list li.none{color:var(--dim2)}
+.ph-row{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap}.ph-row select,.ph-row input{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:var(--r);color:#fff;padding:8px}.ph-row input{flex:1;min-width:200px}
+.ph-acts .mini{padding:6px 10px}
+#ph-out{min-height:1.4em;margin-top:6px;color:#cfe3f5}

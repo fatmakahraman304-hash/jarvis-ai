@@ -1,12 +1,12 @@
 {
-  "version": "4.5.0",
+  "version": "4.6.0",
   "date": "2026-11-05",
   "notes": [
-    "◎ Yeni çekirdek: REAKTÖR — dönen kadran, sesle ve düşünürken yanan bobin dilimleri, ses dalgası halkası, altıgen parlayan çekirdek",
-    "∿ İkinci yeni görünüm: DALGA (konuşunca/dinleyince büyüyen ses dalgaları). Alttaki düğmeyle ya da sesle değiştir: \"çekirdeği dalga yap\" (eski küre ve yüz de duruyor)",
-    "🎬 YouTube videosu artık ORTADA açılır: çekirdek gider, video gelir; ✕ ya da Esc ile çekirdeğe döner, ⛶ ile tam ekran",
-    "🪐 Animasyonlar da ortada: \"güneş sistemi animasyonu göster\" — hazır olanlar: güneş sistemi, atom, DNA, kalp atışı, galaksi, havai fişek, dijital yağmur, okyanus, hologram saat",
-    "✨ Hazırı olmayan bir şey istersen JARVIS animasyonu kendisi yazar; korumalı çerçevede, internete kapalı çalışır",
-    "⌘ Komut paletinde (Ctrl+K) animasyon ve YouTube kısayolları"
+    "📱 Telefon ekranları: eski telefonlarda JARVIS adresini sonuna ?rol=ekran ekleyerek aç — JARVIS onlara komut verir",
+    "▶ \"Tüm telefonlarda … aç\" → hepsinde aynı video; \"a | b | c\" → her telefonda farklı video. Yazı göster, sesli konuş, animasyon, durdur",
+    "📞 JARVIS seni ARAR: \"beni ara\" → telefonda (ya da bilgisayarda) gelen arama ekranı çalar; CEVAPLA → mesajı söyler, sesli görüşme başlar",
+    "🎙 Sesli görüşme: \"JARVIS'i ara\" / telefonda 📞 düğmesi — eller serbest, kesintisiz konuşma (sessize al, hoparlör, kapat; \"görüşürüz\" deyince kapanır)",
+    "🔒 SİSTEM KİLİTLİ ekranı: \"sistemi kilitle\" — iki elle çimdikle ve ellerini açarak (kamera) aç; ya da basılı tut. Ayarlar'dan PIN koyarsan PIN gerekir",
+    "⊞ Uygulamalar'a eklendi: 📱 Telefon Ekranları paneli, 📞 JARVIS'i Ara, 🔒 Sistemi Kilitle"
   ]
 }

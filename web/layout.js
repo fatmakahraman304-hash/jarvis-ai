@@ -14,7 +14,7 @@
     const s = mk("section", "cc-box"); s.append(mk("div", "cc-h", `<span>${title}</span><i>${meta}</i>`)); return s;
   }
   function build() {
-    if (JV.isCamRole || innerWidth < WIDE || document.body.classList.contains("cc")) return;
+    if (JV.isCamRole || JV.isScreenRole || innerWidth < WIDE || document.body.classList.contains("cc")) return;
     document.body.classList.add("cc");
     // ---------- üst bar ----------
     const top = $("#top"); const mid = mk("div", "cc-mid");
@@ -102,7 +102,7 @@
   }
   // geniş ↔ dar arasında geçilirse sayfayı yeniden kur (öğeler taşındığı için)
   let wasWide = innerWidth >= WIDE, rt = 0;
-  addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { const w = innerWidth >= WIDE; if (w !== wasWide && !JV.isCamRole) location.reload(); }, 600); });
+  addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { const w = innerWidth >= WIDE; if (w !== wasWide && !JV.isCamRole && !JV.isScreenRole) location.reload(); }, 600); });
   // shell.js çipleri oluşturduktan sonra çalışsın
   const go = () => setTimeout(build, 0);
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", go); else go();
