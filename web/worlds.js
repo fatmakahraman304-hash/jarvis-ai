@@ -64,6 +64,7 @@
 
   // ---------------- mod değiştirme ----------------
   JV.setView = function (v) {
+    if (JV.stage && JV.stage.current()) JV.stage.clear();
     if (v === view && (v === "core" || current)) return;
     if (current && current.exit) current.exit();
     view = v; current = W[v] || null;
@@ -109,6 +110,8 @@
     if (ui === "scan") return JV.scan && JV.scan.cmd(r);
     if (ui === "body") return JV.body && JV.body.cmd(r);
     if (ui === "video") return JV.video && JV.video.open(r);
+    if (ui === "stage") return JV.stage && JV.stage.cmd(r, args || {});
+    if (ui === "core") { if (JV.stage) JV.stage.clear(); if (JV.getView() !== "core") JV.setView("core"); return JV.setCoreStyle && r.style && JV.setCoreStyle(r.style); }
     if (ui === "library") return JV.library && JV.library.cmd(r);
     if (ui === "handfx") return JV.handfx && JV.handfx.cmd(r);
     if (ui === "fortune") return JV.fortune && JV.fortune();

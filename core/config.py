@@ -11,7 +11,7 @@ WEB = ROOT / "web"
 DATA.mkdir(exist_ok=True)
 SETTINGS_FILE = DATA / "settings.json"
 
-VERSION = "4.4.0"
+VERSION = "4.5.0"
 
 
 def _load_env():
@@ -44,7 +44,7 @@ def env(name, default=""):
 DEFAULT_SETTINGS = {
     "persona": "jarvis",
     "only_gemini": True,         # tek beyin: yalnızca Google Gemini (diğer anahtarlar durur ama kullanılmaz)
-    "visual": "sphere",          # sphere | face
+    "visual": "reactor",         # reactor | wave | sphere | face
     "voice_enabled": True,
     "voice_lang": "auto",        # auto | tr | en
     "wake_word": False,

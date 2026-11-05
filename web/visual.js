@@ -6,7 +6,7 @@
   const hctx = hud.getContext("2d");
   let color = new (window.THREE ? THREE.Color : Object)("#38d6ff");
   let colorHex = "#38d6ff";
-  let mode = "sphere";
+  let mode = "reactor";
   let mix = 0; // 0 küre, 1 yüz
   const mouse = { x: 0, y: 0 };
   addEventListener("pointermove", (e) => { mouse.x = e.clientX / innerWidth - 0.5; mouse.y = e.clientY / innerHeight - 0.5; });
@@ -220,14 +220,24 @@
     JV._three = { faceGroup, aS, aF, aR };
   }
 
+  // çekirdeğin merkezi: komuta düzeninde orta sahnenin ortası, değilse ekranın ortası
+  let ctr = null;
+  function center() {
+    const w = innerWidth, h = innerHeight, st = document.getElementById("cc-stage");
+    if (st) { const b = st.getBoundingClientRect(); if (b.width > 50) return { x: b.left + b.width / 2, y: b.top + b.height / 2 + 6, R: Math.min(b.width, b.height) * 0.27, w, h }; }
+    return { x: w / 2, y: w < 800 ? h * 0.36 : h / 2, R: Math.min(w, h) * (w < 800 ? 0.3 : 0.33), w, h };
+  }
+  JV.coreCenter = () => ctr || (ctr = center());
   function resize() {
     const w = innerWidth, h = innerHeight, d = Math.min(devicePixelRatio, 2);
+    ctr = center();
     hud.width = w * d; hud.height = h * d; hctx.setTransform(d, 0, 0, d, 0, 0);
     if (renderer) {
       renderer.setSize(w, h, false);
       camera.aspect = w / h;
       camera.position.z = w < 800 ? 5.6 : 4.2;
       camera.position.y = w < 800 ? -0.5 : 0;
+      if (document.getElementById("cc-stage")) camera.setViewOffset(w, h, w / 2 - ctr.x, h / 2 - ctr.y, w, h); else camera.clearViewOffset();
       camera.updateProjectionMatrix();
     }
   }
@@ -237,8 +247,7 @@
   function drawHUD(t, lvl) {
     const w = innerWidth, h = innerHeight;
     hctx.clearRect(0, 0, w, h);
-    const cx = w / 2, cy = w < 800 ? h * 0.36 : h / 2;
-    const R = Math.min(w, h) * (w < 800 ? 0.3 : 0.33);
+    const c0 = JV.coreCenter(), cx = c0.x, cy = c0.y, R = c0.R;
     hctx.strokeStyle = colorHex; hctx.fillStyle = colorHex;
     hctx.shadowColor = colorHex; hctx.shadowBlur = 8;
     const arc = (r, a0, a1, lw, alpha) => { hctx.globalAlpha = alpha; hctx.lineWidth = lw; hctx.beginPath(); hctx.arc(cx, cy, r, a0, a1); hctx.stroke(); };
@@ -282,8 +291,16 @@
   let last = performance.now(), blinkT = 0;
   function frame(now) {
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
-    if (JV.coreHidden) { requestAnimationFrame(frame); return; }
+    if (JV.coreHidden || document.body.classList.contains("stage-busy")) { requestAnimationFrame(frame); return; }
     const t = now / 1000, lvl = JV.level || 0;
+    if ((mode === "reactor" || mode === "wave") && JV.core2d) {
+      if (canvas.style.visibility !== "hidden") canvas.style.visibility = "hidden";
+      const w = innerWidth, h = innerHeight, c0 = JV.coreCenter(); hctx.clearRect(0, 0, w, h);
+      const pn = document.getElementById("p-name");
+      JV.core2d[mode](hctx, { t, lvl, cx: c0.x, cy: c0.y, R: c0.R * 0.8, hex: colorHex, name: pn ? pn.textContent : "" });
+      requestAnimationFrame(frame); return;
+    }
+    if (canvas.style.visibility === "hidden") canvas.style.visibility = "";
     mix += ((mode === "face" ? 1 : 0) - mix) * Math.min(1, dt * 3);
     drawHUD(t, lvl);
     if (renderer) {

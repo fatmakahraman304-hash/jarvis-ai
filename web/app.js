@@ -20,7 +20,7 @@
   };
 
   JV.state = { personas: [], providers: [], tts: false };
-  JV.settings = { voice_enabled: true, effects: true, persona: "jarvis", visual: "sphere" };
+  JV.settings = { voice_enabled: true, effects: true, persona: "jarvis", visual: "reactor" };
   let persona = "jarvis";
   let busy = false;
   let abortCtl = null;
@@ -276,12 +276,14 @@
 
   // ---------- düğmeler ----------
   function updateToggles() {
-    $("#t-visual").textContent = JV.settings.visual === "face" ? "☺ YÜZ" : "◉ KÜRE";
+    $("#t-visual").textContent = ({ reactor: "◎ REAKTÖR", wave: "∿ DALGA", sphere: "◉ KÜRE", face: "☺ YÜZ" })[JV.settings.visual] || "◎ REAKTÖR";
     $("#t-visual").classList.add("on");
     $("#t-voice").classList.toggle("on", !!JV.settings.voice_enabled);
     $("#t-wake").classList.toggle("on", wakeMode);
   }
-  $("#t-visual").onclick = async () => { const v = JV.settings.visual === "face" ? "sphere" : "face"; JV.settings.visual = v; JV.setVisual(v); updateToggles(); saveSettings({ visual: v }); };
+  const MODES = ["reactor", "wave", "sphere", "face"];
+  JV.setCoreStyle = (v) => { if (!MODES.includes(v)) v = MODES[(MODES.indexOf(JV.settings.visual) + 1) % MODES.length]; JV.settings.visual = v; JV.setVisual(v); updateToggles(); saveSettings({ visual: v }); return v; };
+  $("#t-visual").onclick = () => JV.setCoreStyle();
   $("#t-voice").onclick = async () => { JV.settings.voice_enabled = !JV.settings.voice_enabled; if (!JV.settings.voice_enabled) JV.stopSpeaking(); updateToggles(); saveSettings({ voice_enabled: JV.settings.voice_enabled }); };
   $("#t-wake").onclick = () => {
     JV.unlockAudio();
@@ -817,7 +819,9 @@
     } catch (e) { log.textContent += "> SUNUCUYA ULAŞILAMADI: " + e.message; }
     renderPersonas();
     applyPersona(JV.settings.persona || "jarvis", false);
-    JV.setVisual(JV.settings.visual || "sphere");
+    // v4.5: yeni reaktör çekirdeği bir kez varsayılan yapılır (sonra kullanıcı ne seçerse o kalır)
+    try { if (!localStorage.getItem("jv_core_v2")) { localStorage.setItem("jv_core_v2", "1"); if (!JV.settings.visual || JV.settings.visual === "sphere") { JV.settings.visual = "reactor"; saveSettings({ visual: "reactor" }); } } } catch (e) {}
+    JV.setVisual(JV.settings.visual || "reactor");
     lastNote = JV.state.last_notification || 0;
     updateToggles();
     loadHistory();

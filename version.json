@@ -1,13 +1,12 @@
 {
-  "version": "4.4.0",
+  "version": "4.5.0",
   "date": "2026-11-05",
   "notes": [
-    "🎨 Arayüz baştan tasarlandı: 'Komuta Merkezi' — koyu lacivert zemin, ince keskin çizgiler, köşe işaretli kutular, yeni yazı tipleri",
-    "🧭 İnce üst bar: kişilikler + dünyalar + durum hapı + saat/tarih/hava tek satırda",
-    "📊 Sol sütun: SİSTEM ölçerleri, canlı AĞ trafiği grafiği, DURUM, İŞLEMLER, GÖREVLER (açık işlerin), MODELLER",
-    "💬 Sağ sütun: İLETİŞİM (yeni mesaj kartları) + altında KOMUT kutusu (öneriler, yazı/mikrofon, hızlı düğmeler)",
-    "🎯 Ortada köşeli sahne çerçevesi: hangi dünyada olduğun, durum ve FPS; altyazı ve onaylar sahnenin içinde",
-    "▁ Alt durum şeridi: motor, ses, mikrofon, kişilik, sürüm ve kısayollar",
-    "📱 Telefonda eski dikey düzen kalır ama yeni renk/kart stiliyle; tüm özellikler aynen çalışır"
+    "◎ Yeni çekirdek: REAKTÖR — dönen kadran, sesle ve düşünürken yanan bobin dilimleri, ses dalgası halkası, altıgen parlayan çekirdek",
+    "∿ İkinci yeni görünüm: DALGA (konuşunca/dinleyince büyüyen ses dalgaları). Alttaki düğmeyle ya da sesle değiştir: \"çekirdeği dalga yap\" (eski küre ve yüz de duruyor)",
+    "🎬 YouTube videosu artık ORTADA açılır: çekirdek gider, video gelir; ✕ ya da Esc ile çekirdeğe döner, ⛶ ile tam ekran",
+    "🪐 Animasyonlar da ortada: \"güneş sistemi animasyonu göster\" — hazır olanlar: güneş sistemi, atom, DNA, kalp atışı, galaksi, havai fişek, dijital yağmur, okyanus, hologram saat",
+    "✨ Hazırı olmayan bir şey istersen JARVIS animasyonu kendisi yazar; korumalı çerçevede, internete kapalı çalışır",
+    "⌘ Komut paletinde (Ctrl+K) animasyon ve YouTube kısayolları"
   ]
 }

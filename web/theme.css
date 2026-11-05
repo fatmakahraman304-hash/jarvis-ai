@@ -195,3 +195,23 @@ body.cc #world-panel,body.cc #holo-panel{max-height:calc(100vh - var(--top) - va
   #send{border-radius:var(--r)}
   #ask{border-radius:6px}
 }
+/* ================= ORTA SAHNE (video / animasyon çekirdeğin yerine) ================= */
+body.stage-busy #three,body.stage-busy #hud{opacity:0;transition:opacity .35s}
+#three,#hud{transition:opacity .35s}
+#stage-host{position:fixed;z-index:7;left:10px;right:10px;top:156px;height:38vh;display:flex;flex-direction:column;background:rgba(3,8,16,.92);border:1px solid var(--line2);border-radius:6px;overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 50px -10px color-mix(in srgb,var(--c) 45%,transparent);animation:sgin .45s cubic-bezier(.2,.8,.2,1)}
+#stage-host.hidden{display:none}
+@keyframes sgin{from{opacity:0;transform:scale(.94);filter:blur(6px)}}
+body.cc #stage-host{left:calc(var(--lw) + var(--g) * 2 + 14px);right:calc(var(--rw) + var(--g) * 2 + 14px);top:calc(var(--top) + var(--g) + 32px);bottom:calc(var(--foot) + var(--g) + 14px);height:auto;z-index:4}
+#stage-host.full{inset:0!important;z-index:95;border-radius:0}
+.sg-bar{display:flex;align-items:center;gap:10px;padding:7px 10px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.03),transparent);font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--dim)}
+.sg-bar b{color:#02101a;background:var(--c);padding:2px 8px;border-radius:3px;font-weight:600;letter-spacing:.2em}
+#sg-title{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#d8e8f6;font-family:var(--body);font-size:14px;font-weight:600;letter-spacing:.02em}
+#sg-link.hidden{display:none}
+#sg-body{flex:1;min-height:0;position:relative;display:flex}
+#sg-body>*{flex:1;width:100%;height:100%;border:0}
+#sg-anim{background:radial-gradient(ellipse at center,color-mix(in srgb,var(--c) 8%,transparent),transparent 70%)}
+/* video sahnede: kendi başlığını gizle, çerçeveyi doldur */
+#videopanel.in-stage{position:static;width:auto;height:100%;display:flex;flex-direction:column;background:#000;border:0;box-shadow:none;z-index:auto}
+#videopanel.in-stage .vp-top{display:none}
+#videopanel.in-stage .vp-frame{flex:1;height:100%;padding:0;aspect-ratio:auto}
+#videopanel.in-stage iframe{width:100%;height:100%;border:0;display:block}

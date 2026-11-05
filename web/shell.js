@@ -39,7 +39,7 @@
   const QUICK = [
     ["☀", "Sabah brifingi", "Sabah brifingini ver"], ["⛅", "Hava durumu", "Hava durumunu göster"], ["📰", "Gündem", "Aydınlat beni"],
     ["📧", "Maillerim", "Okunmamış maillerimi özetle"], ["📅", "Bugünkü programım", "Bugünkü programım ne?"], ["✅", "Yapılacaklar", "Yapılacaklar listemde ne var?"],
-    ["🔎", "Odayı tara", "Odayı tara"], ["🔍", "Kumandayı bul", "Kumandayı bul"], ["💱", "Dolar kaç TL", "Dolar şu an kaç TL?"], ["🥇", "Altın fiyatları", "Gram altın kaç TL?"],
+    ["🪐", "Güneş sistemi animasyonu", "Ortada güneş sistemi animasyonu göster"], ["🧬", "DNA animasyonu", "Ortada DNA animasyonu göster"], ["🎬", "YouTube videosu aç", "YouTube'dan aç: "], ["🔎", "Odayı tara", "Odayı tara"], ["🔍", "Kumandayı bul", "Kumandayı bul"], ["💱", "Dolar kaç TL", "Dolar şu an kaç TL?"], ["🥇", "Altın fiyatları", "Gram altın kaç TL?"],
     ["⏳", "50 dk odak", "50 dakika odak modu başlat"], ["📔", "Günlüğe yaz", "Günlüğüme yaz: "], ["🎙", "Toplantıyı kaydet", "Toplantıyı kaydet"],
   ];
 

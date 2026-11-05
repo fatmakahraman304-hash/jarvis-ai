@@ -52,6 +52,7 @@
     const foot = mk("footer", "", `<span>MOTOR <b id="cc-f-model">—</b></span><span>SES <b id="cc-f-voice">—</b></span><span>MİKROFON <b id="cc-f-mic">HAZIR</b></span><span>KİŞİLİK <b id="cc-f-per">—</b></span><span class="sp"></span><span>⌘K KOMUT PALETİ</span><span>␣ KONUŞ</span><span>ESC SUSTUR</span><span id="cc-f-ver"></span>`);
     foot.id = "cc-foot"; document.body.append(foot);
     live();
+    dispatchEvent(new Event("resize")); // çekirdek merkezini sahneye göre yeniden hesapla
   }
 
   // ---------- canlı veriler ----------
@@ -84,15 +85,19 @@
   function live() {
     pollNet(); setInterval(pollNet, 3000); pollTasks(); setInterval(pollTasks, 30000);
     const sync = () => {
+      if (document.body.classList.contains("stage-busy")) return syncFoot();
       const st = $("#status-text"); $("#cc-sub").textContent = "// " + (st ? st.textContent : "");
       const v = document.querySelector("#views button.on"); $("#cc-view").textContent = v ? v.textContent.replace(/^[^\p{L}]+/u, "").trim() : "ÇEKİRDEK";
+    };
+    const syncFoot = () => {
       const mb = $("#model-badge"); $("#cc-f-model").textContent = mb ? mb.textContent.replace(/^MODEL:\s*/, "").split("·").pop().trim() || "—" : "—";
       const pn = $("#p-name"); $("#cc-f-per").textContent = pn ? pn.textContent : "—";
       const vb = $("#t-voice"); $("#cc-f-voice").textContent = vb && vb.classList.contains("on") ? "AÇIK" : "KAPALI";
       $("#cc-f-mic").textContent = document.body.classList.contains("listening") ? "DİNLİYOR" : JV.speaking ? "KONUŞUYOR" : "HAZIR";
       $("#cc-f-ver").textContent = JV.state && JV.state.version ? "v" + JV.state.version : "";
     };
-    sync(); setInterval(sync, 700);
+    const all = () => { sync(); syncFoot(); };
+    all(); setInterval(all, 700);
     let fr = 0, t0 = performance.now(); (function f() { fr++; const n = performance.now(); if (n - t0 > 1000) { const e = $("#cc-fps"); if (e) e.textContent = fr + " FPS"; fr = 0; t0 = n; } requestAnimationFrame(f); })();
   }
   // geniş ↔ dar arasında geçilirse sayfayı yeniden kur (öğeler taşındığı için)
