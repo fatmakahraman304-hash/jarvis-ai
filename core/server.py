@@ -1,4 +1,5 @@
 """Web sunucusu: arayüz + API. Bilgisayardan, telefondan (aynı Wi-Fi) ve Telegram'dan aynı beyin."""
+import asyncio
 import contextlib
 import json
 import re
@@ -92,6 +93,26 @@ async def google_disconnect(request):
         return JSONResponse({"error": "yasak"}, status_code=403)
     google.disconnect()
     return JSONResponse({"ok": True})
+
+
+async def google_check(request):
+    """Kurulum sihirbazı: biçim denetimi (POST, kaydetmeden) / Google'a doğrulama / bağlı hesabı deneme."""
+    from .skills import google
+    if not _is_local(request):
+        return JSONResponse({"error": "Google kurulumu bilgisayarın kendisinden yapılmalı."}, status_code=403)
+    what = request.path_params.get("what", "")
+    if what == "format":
+        b = await request.json()
+        return JSONResponse({"sorunlar": google.validate_format(b.get("id", ""), b.get("secret", ""))})
+    if what == "verify":
+        if not google.configured():
+            return JSONResponse({"ok": False, "mesaj": "Önce Client ID ve Secret'ı kaydet."})
+        return JSONResponse(await asyncio.to_thread(google.verify_client))
+    if what == "test":
+        if not google.connected():
+            return JSONResponse({"ok": False, "mesaj": "Henüz bağlı değil."})
+        return JSONResponse(await asyncio.to_thread(google.self_test))
+    return JSONResponse({"error": "bilinmeyen"}, status_code=404)
 
 
 async def vision_api(request):
@@ -641,7 +662,7 @@ async def processes(request):
     return JSONResponse(tools.top_processes(8, request.query_params.get("by", "ram")))
 
 
-LOCAL_ONLY_SETTINGS = {"allow_remote_commands", "allow_remote_camera", "guest_mode", "voice_lock", "disabled_groups", "robot_port", "robot_url"}
+LOCAL_ONLY_SETTINGS = {"allow_remote_commands", "allow_remote_camera", "allow_remote_screen", "telegram_voice", "guest_mode", "voice_lock", "disabled_groups", "robot_port", "robot_url"}
 
 
 async def settings(request):
@@ -791,6 +812,7 @@ routes = [
     Route("/api/keys", keys, methods=["POST"]),
     Route("/api/google/connect", google_connect),
     Route("/api/google/disconnect", google_disconnect, methods=["POST"]),
+    Route("/api/google/check/{what}", google_check, methods=["GET", "POST"]),
     Route("/api/vision", vision_api, methods=["POST"]),
     Route("/api/transcribe", transcribe_api, methods=["POST"]),
     Route("/api/tasks", tasks_api),

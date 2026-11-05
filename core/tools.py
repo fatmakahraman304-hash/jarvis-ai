@@ -246,6 +246,11 @@ def screenshot():
     return f"Kaydedildi: {p}"
 
 
+def screenshot_to_phone():
+    from . import telegram_bot
+    return telegram_bot.screenshot_to_phone()
+
+
 # ===================== DOSYALAR =====================
 def list_dir(path=""):
     p = _path(path)
@@ -482,6 +487,7 @@ TOOLS = {
     "run_command": (run_command, _schema("PowerShell (Windows) komutu çalıştırır. Başka araç yetmezse kullan.",
                     {"command": S("komut")}, ["command"]), True),
     "screenshot": (screenshot, _schema("Ekran görüntüsü alıp kaydeder."), False),
+    "screenshot_to_phone": (screenshot_to_phone, _schema("Ekran görüntüsünü alıp Telegram ile telefona gönderir."), False),
     "list_dir": (list_dir, _schema("Klasör içeriğini listeler (masaüstü, belgeler, indirilenler veya tam yol).",
                  {"path": S("klasör")}), False),
     "find_files": (find_files, _schema("Dosya/klasör arar.", {"pattern": S("ad veya *.pdf gibi desen"),

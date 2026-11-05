@@ -1,9 +1,11 @@
 {
-  "version": "3.4.0",
+  "version": "3.5.0",
   "date": "2026-11-05",
   "notes": [
-    "Çok daha doğru konuşma tanıma: mikrofon artık Whisper (Groq) kullanıyor; konuşman bitince kendiliğinden gönderir (Ayarlar > SES > Konuşma tanıma)",
-    "Sabah brifingi: her gün seçtiğin saatte hava, takvim, mailler, piyasa, yapılacaklar ve manşetler; ekranda, sesli ve Telegram'da (Ayarlar > GÖREVLER). Telegram'dan /brifing",
-    "Windows açılınca JARVIS'i kendiliğinden başlat (Ayarlar > PLATFORMLAR)"
+    "Gmail ve Takvim kurulum sihirbazı: Ayarlar > BAĞLANTILAR'da 5 adım; yapıştırdığın anahtarları anında denetler, Google'a sorup doğrular, bağlandıktan sonra 'BAĞLANTIYI DENE' ile gerçek test",
+    "Telegram /panel: düğmeli uzaktan kumanda — 🔒 Kilitle, 😴 Uyut (önce 'emin misin?' sorar), 📸 Ekran, 🖥 Durum, 🔇 Ses, ☀️ Brifing, ⛔ Acil dur",
+    "Telegram /ekran: bilgisayarın ekran görüntüsü telefonuna gelir (kapatmak için Ayarlar > BAĞLANTILAR). Sesle de olur: 'ekranı telefonuma at'",
+    "Telegram sesli cevap artık gerçek sesli mesaj; /ses ile aç/kapat, ayar kalıcı. Sesli mesaj atınca JARVIS de sesle cevap verir",
+    "Telegram'da '/' menüsü: tüm komutlar telefonda listelenir"
   ]
 }

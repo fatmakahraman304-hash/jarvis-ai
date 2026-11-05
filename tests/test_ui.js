@@ -64,6 +64,21 @@ const check = (name, cond, extra = "") => { console.log((cond ? "  ✓ " : "  �
     check("VR cihaz yokken anlaşılır hata", /VR|güvenli|WebXR/.test(xr), xr);
     const amb = await p.evaluate(async () => { const before = (await JV.api("/api/notifications?since=0")).length; JV.ambient._handle([{ categoryName: "Smoke detector, smoke alarm", score: 0.9 }]); await new Promise((r) => setTimeout(r, 600)); const ns = await JV.api("/api/notifications?since=0"); return ns.slice(before).map((n) => n.kind + ":" + n.text); });
     check("ortam sesi: duman alarmı güvenlik bildirimi", amb.some((x) => x.startsWith("security:") && x.includes("Duman")), JSON.stringify(amb));
+    console.log("GOOGLE SİHİRBAZI");
+    await p.click("text=AYARLAR"); await wait(500); await p.click('[data-tab="links"]'); await wait(900);
+    check("adım 1 görünüyor", (await p.textContent(".gw-body")).includes("JARVIS") && (await p.$$(".gw-dots span")).length === 5);
+    for (let i = 0; i < 3; i++) { await p.click(".gw-nav button:last-child"); await wait(400); }
+    check("adım 4: anahtar alanları", (await p.$$(".gw-body input")).length === 2);
+    const ins = await p.$$(".gw-body input");
+    await ins[0].fill("GOCSPX-yanlis-kutuya"); await ins[1].fill("123-abc.apps.googleusercontent.com");
+    check("yer değiştirmiş anahtarlar uyarılır", await p.waitForFunction(() => document.querySelector(".gwiz .gtest").textContent.includes("Secret yapıştırılmış"), null, { timeout: 6000 }).then(() => true, () => false));
+    await ins[0].fill("123456789012-abcdefghijklmnopqrstuvwxyz123456.apps.googleusercontent.com"); await ins[1].fill("GOCSPX-abcdefghijklmnopqrstu");
+    check("doğru biçim onaylanır", await p.waitForFunction(() => document.querySelector(".gwiz .gtest").textContent.includes("biçim doğru"), null, { timeout: 6000 }).then(() => true, () => false));
+    await p.click(".gw-nav button:last-child"); await wait(400);
+    check("adım 5: bağlan düğmesi (anahtarsız kapalı)", await p.$eval(".gw-body .btn-primary", (b) => b.textContent.includes("BAĞLAN") && b.disabled));
+    await p.click(".gw-dots span:first-child"); await wait(300);
+    check("adım çiplerine tıklayınca o adıma gider", (await p.textContent(".gw-nav .note")).includes("1 / 5"));
+    await p.keyboard.press("Escape");
     check("sayfa hatası yok", errs.length === 0, errs.slice(0, 3).join(" | "));
   } finally {
     await b.close(); srv.kill(); fake.kill();

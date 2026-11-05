@@ -101,6 +101,72 @@ def disconnect():
         TOKEN_FILE.unlink()
 
 
+CLIENT_ID_RE = re.compile(r"^\d{6,}-[0-9a-z]{20,}\.apps\.googleusercontent\.com$")
+
+
+def validate_format(client_id, client_secret):
+    """Yapıştırılan bilgilerin biçimini denetler; sorunların listesini döner (boşsa biçim doğru)."""
+    cid, sec = (client_id or "").strip(), (client_secret or "").strip()
+    probs = []
+    if not cid:
+        probs.append("Client ID boş.")
+    elif cid.startswith("GOCSPX-"):
+        probs.append("Client ID kutusuna Secret yapıştırılmış (GOCSPX- ile başlayan Secret'tır).")
+    elif not CLIENT_ID_RE.match(cid):
+        probs.append("Client ID '…apps.googleusercontent.com' ile biten uzun bir adres olmalı (başında rakamlar olur).")
+    if not sec:
+        probs.append("Client Secret boş.")
+    elif sec.endswith(".apps.googleusercontent.com"):
+        probs.append("Client Secret kutusuna Client ID yapıştırılmış.")
+    elif not sec.startswith("GOCSPX-") or len(sec) < 20:
+        probs.append("Client Secret genelde 'GOCSPX-' ile başlar; eksik kopyalanmış olabilir.")
+    if re.search(r"\s", cid + sec):
+        probs.append("Kopyalanan değerin içinde boşluk var.")
+    return probs
+
+
+def verify_client():
+    """Google'a sahte bir kodla sorar: 'invalid_client' → ID/Secret yanlış, 'invalid_grant' → ikisi de doğru.
+    Hiçbir hesap bilgisi göndermez, hiçbir izin istemez."""
+    data = {"client_id": env("GOOGLE_CLIENT_ID"), "client_secret": env("GOOGLE_CLIENT_SECRET"),
+            "code": "jarvis-dogrulama", "grant_type": "authorization_code", "redirect_uri": "http://127.0.0.1/"}
+    req = urllib.request.Request(TOKEN_URL, data=urllib.parse.urlencode(data).encode(),
+                                 headers={"Content-Type": "application/x-www-form-urlencoded"})
+    try:
+        with urllib.request.urlopen(req, timeout=15):
+            return {"ok": True, "mesaj": "Google bilgileri kabul etti."}
+    except urllib.error.HTTPError as e:
+        try:
+            err = json.loads(e.read().decode("utf-8", "ignore")).get("error", "")
+        except Exception:
+            err = f"HTTP {e.code}"
+        if err in ("invalid_grant", "redirect_uri_mismatch"):
+            return {"ok": True, "mesaj": "Client ID ve Secret doğru — Google tanıdı."}
+        if err in ("invalid_client", "unauthorized_client"):
+            return {"ok": False, "mesaj": "Google bu Client ID/Secret'ı tanımadı. İstemciler sayfasından ikisini de yeniden kopyala "
+                                          "(istemci türü 'Masaüstü uygulaması' olmalı; yeni istemci birkaç dakika içinde etkinleşir)."}
+        return {"ok": False, "mesaj": f"Google yanıtı: {err}"}
+    except Exception as e:
+        return {"ok": False, "mesaj": f"Google'a ulaşılamadı: {e}"}
+
+
+def self_test():
+    """Bağlandıktan sonra gerçek deneme: okunmamış mail sayısı + bugünkü etkinlikler."""
+    out = {"hesap": account()}
+    try:
+        lb = api("GET", f"{GMAIL}/labels/UNREAD")
+        out["gmail"] = f"çalışıyor · {lb.get('messagesUnread', 0)} okunmamış"
+    except Exception as e:
+        out["gmail"] = f"HATA: {e}"
+    try:
+        ev = calendar_events(days=1)
+        out["takvim"] = "çalışıyor · " + (f"bugün {len(ev)} etkinlik" if isinstance(ev, list) else "bugün etkinlik yok")
+    except Exception as e:
+        out["takvim"] = f"HATA: {e}"
+    out["ok"] = not any(str(v).startswith("HATA") for v in out.values())
+    return out
+
+
 def _access_token():
     if not TOKEN_FILE.exists():
         raise GoogleError("Google hesabı bağlı değil. Ayarlar > Google > 'Google'a bağlan' ile bağla.")

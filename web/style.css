@@ -400,3 +400,12 @@ body.mode-sessiz #t-command::after{content:" · SESSİZ"}
 .vl-row{display:grid;grid-template-columns:150px 1fr 70px;gap:8px;align-items:center}.vl-row em{font-style:normal;color:var(--dim);font-family:var(--mono);font-size:11px}
 .vl-btns{gap:6px;flex-wrap:wrap}.vl-btns input{flex:1;min-width:160px}
 #vl-voice{max-width:100%}
+.gw-dots{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.gw-dots span{font-family:var(--mono);font-size:11px;padding:3px 8px;border:1px solid rgba(0,229,255,.25);border-radius:12px;cursor:pointer;opacity:.6}
+.gw-dots span.on{opacity:1;border-color:var(--c);color:var(--c);box-shadow:0 0 8px rgba(0,229,255,.35)}
+.gw-dots span.done{opacity:.9;color:#3cff8a;border-color:rgba(60,255,138,.4)}
+.gw-body{padding:10px 12px;border-left:2px solid var(--c);background:rgba(0,229,255,.04);margin:6px 0;line-height:1.6}
+.gw-body .prov{margin-top:8px}.gw-body .btn-primary{margin-top:8px}
+.gw-nav{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+.gtest{font-family:var(--mono);font-size:12.5px;margin-top:8px;min-height:1em}
+.gtest.ok{color:#3cff8a}.gtest.bad{color:#ff6b6b}

@@ -455,6 +455,71 @@
   };
   $("#cam-q").addEventListener("keydown", (e) => { if (e.key === "Enter") $("#cam-look").click(); });
 
+  // ---------- Google kurulum sihirbazı (adım adım) ----------
+  let gwStep = 0;
+  function googleWizard(g) {
+    const local = location.hostname === "127.0.0.1" || location.hostname === "localhost";
+    const steps = [
+      { t: "Proje oluştur", h: `<a href="https://console.cloud.google.com/projectcreate" target="_blank">Google Cloud'da yeni proje</a> sayfasını aç. Proje adı: <b>JARVIS</b> → <b>Oluştur</b>. Üstteki proje seçicide JARVIS'in seçili olduğundan emin ol.` },
+      { t: "API'leri aç", h: `Sırayla iki sayfayı aç ve ikisinde de <b>Etkinleştir</b>'e bas:<br>① <a href="https://console.cloud.google.com/apis/library/gmail.googleapis.com" target="_blank">Gmail API</a><br>② <a href="https://console.cloud.google.com/apis/library/calendar-json.googleapis.com" target="_blank">Google Calendar API</a>` },
+      { t: "İzin ekranı", h: `<a href="https://console.cloud.google.com/auth/overview" target="_blank">Google Auth Platform</a> → <b>Başlayın</b>. Uygulama adı <b>JARVIS</b>, destek e-postası kendi adresin, kitle <b>Harici (External)</b>, iletişim e-postası yine senin → Oluştur.<br>Sonra <a href="https://console.cloud.google.com/auth/audience" target="_blank">Kitle</a> sayfasında <b>Test kullanıcıları → Kullanıcı ekle</b>: kendi Gmail adresin.<br><span class="note">İpucu: aynı sayfada <b>Uygulamayı yayınla</b> dersen bağlantı 7 günde bir kopmaz.</span>` },
+      { t: "Anahtarları yapıştır", form: true, h: `<a href="https://console.cloud.google.com/auth/clients" target="_blank">İstemciler</a> → <b>İstemci oluştur</b> → uygulama türü <b>Masaüstü uygulaması</b> → ad JARVIS → Oluştur. Açılan pencereden iki değeri kopyala:` },
+      { t: "Bağlan", h: `Son adım: <b>GOOGLE'A BAĞLAN</b>'a bas, açılan sayfada hesabını seç. <i>"Google bu uygulamayı doğrulamadı"</i> uyarısında <b>Devam</b> de (uygulama senin; veriler yalnızca bu bilgisayarda kalır), tüm izin kutularını işaretle.` },
+    ];
+    if (g.configured && gwStep < 3) gwStep = 4;
+    const w = el("div", "gwiz");
+    w.append(el("div", "gstate", "○ bağlı değil" + (g.configured ? " · anahtarlar kayıtlı" : "")));
+    const dots = el("div", "gw-dots");
+    steps.forEach((st, i) => { const x = el("span", i === gwStep ? "on" : i < gwStep ? "done" : "", `${i + 1}. ${st.t}`); x.onclick = () => { gwStep = i; loadLinks(); }; dots.append(x); });
+    w.append(dots);
+    const st = steps[gwStep], body = el("div", "gw-body"); body.innerHTML = st.h; w.append(body);
+    const msg = el("div", "gtest");
+    if (st.form) {
+      const r1 = el("div", "prov"), i1 = el("input"); i1.placeholder = "123456789-xxxx.apps.googleusercontent.com"; r1.append(el("b", "", "Client ID"), i1, el("span"));
+      const r2 = el("div", "prov"), i2 = el("input"); i2.type = "password"; i2.placeholder = "GOCSPX-…"; r2.append(el("b", "", "Client Secret"), i2, el("span"));
+      const check = async () => {
+        if (!i1.value && !i2.value) { msg.textContent = ""; return []; }
+        const r = await JV.api("/api/google/check/format", { body: { id: i1.value, secret: i2.value } });
+        msg.innerHTML = r.sorunlar.length ? "⚠ " + r.sorunlar.join("<br>⚠ ") : "✓ biçim doğru";
+        msg.className = "gtest " + (r.sorunlar.length ? "bad" : "ok");
+        return r.sorunlar;
+      };
+      i1.oninput = i2.oninput = () => { clearTimeout(check._t); check._t = setTimeout(check, 350); };
+      const sv = el("button", "btn-primary", "KAYDET VE DOĞRULA");
+      sv.onclick = async () => {
+        const p = await check(); if (p.length) return;
+        await JV.api("/api/keys", { body: { GOOGLE_CLIENT_ID: i1.value.trim(), GOOGLE_CLIENT_SECRET: i2.value.trim() } });
+        msg.textContent = "Google'a soruluyor…"; msg.className = "gtest";
+        const v = await JV.api("/api/google/check/verify");
+        msg.textContent = (v.ok ? "✓ " : "✗ ") + v.mesaj; msg.className = "gtest " + (v.ok ? "ok" : "bad");
+        if (v.ok) { gwStep = 4; setTimeout(loadLinks, 1200); }
+      };
+      body.append(r1, r2, sv);
+    }
+    if (gwStep === 4) {
+      const cn = el("button", "btn-primary", "GOOGLE'A BAĞLAN");
+      cn.disabled = !g.configured || !local; cn.style.opacity = cn.disabled ? 0.4 : 1;
+      cn.onclick = async () => {
+        const r = await JV.api("/api/google/connect");
+        if (!r.url) { msg.textContent = r.error || "Bağlanamadı"; msg.className = "gtest bad"; return; }
+        window.open(r.url, "_blank"); msg.textContent = "Tarayıcıda izin ver; bitince bu pencere kendiliğinden güncellenecek…"; msg.className = "gtest";
+        const iv = setInterval(async () => { await refreshState(); if (JV.state.google.connected) { clearInterval(iv); gwStep = 0; loadLinks(); JV.say("Google hesabınız bağlandı.", persona); } }, 3000);
+        setTimeout(() => clearInterval(iv), 300000);
+      };
+      const vf = el("button", "mini", "ANAHTARLARI DOĞRULA"); vf.style.marginLeft = "8px";
+      vf.onclick = async () => { msg.textContent = "Google'a soruluyor…"; const v = await JV.api("/api/google/check/verify"); msg.textContent = (v.ok ? "✓ " : "✗ ") + v.mesaj; msg.className = "gtest " + (v.ok ? "ok" : "bad"); };
+      body.append(cn, vf);
+      if (!g.configured) body.append(el("p", "note", "Önce 4. adımda anahtarları kaydet."));
+    }
+    w.append(msg);
+    const nav = el("div", "gw-nav");
+    const back = el("button", "mini", "◀ GERİ"); back.disabled = gwStep === 0; back.onclick = () => { gwStep--; loadLinks(); };
+    const next = el("button", "mini", "İLERİ ▶"); next.disabled = gwStep === steps.length - 1; next.onclick = () => { gwStep++; loadLinks(); };
+    nav.append(back, el("span", "note", `adım ${gwStep + 1} / ${steps.length}`), next); w.append(nav);
+    if (!local) w.append(el("p", "note", "Not: Google bağlantısını bilgisayardaki JARVIS penceresinden yapmalısın."));
+    return w;
+  }
+
   // ---------- bağlantılar (Google, Home Assistant) ----------
   async function loadLinks() {
     await refreshState();
@@ -463,36 +528,23 @@
     if (g.connected) {
       d.append(el("div", "gstate on", "● BAĞLI: " + (g.email || "Google hesabı")));
       d.append(el("p", "note", "Artık şunları diyebilirsin: \"okunmamış maillerimi özetle\", \"Ahmet'e yarınki toplantı için mail yaz\", \"bu maili arşivle\", \"bugünkü programım ne\", \"cuma 14:00'e dişçi randevusu ekle\"."));
-      const b = el("button", "mini", "BAĞLANTIYI KES"); b.onclick = async () => { await JV.api("/api/google/disconnect", { method: "POST" }); loadLinks(); };
-      d.append(b);
-    } else {
-      const red = `http://127.0.0.1:${location.port || 80}/`;
-      d.innerHTML = `<div class="gstate">○ bağlı değil</div>
-        <ol>
-          <li><a href="https://console.cloud.google.com/projectcreate" target="_blank">console.cloud.google.com</a>'da yeni proje oluştur (ad: JARVIS).</li>
-          <li><a href="https://console.cloud.google.com/apis/library/gmail.googleapis.com" target="_blank">Gmail API</a> ve <a href="https://console.cloud.google.com/apis/library/calendar-json.googleapis.com" target="_blank">Google Calendar API</a> sayfalarında <b>Etkinleştir</b>'e bas.</li>
-          <li><a href="https://console.cloud.google.com/auth/overview" target="_blank">Google Auth Platform</a> → Başlayın: uygulama adı JARVIS, kitle <b>Harici (External)</b>, kendi e-postan. Sonra <b>Kitle</b> sayfasında <b>Test kullanıcıları</b>'na kendi Gmail adresini ekle.</li>
-          <li><a href="https://console.cloud.google.com/auth/clients" target="_blank">İstemciler</a> → İstemci oluştur → tür <b>Masaüstü uygulaması</b> → Oluştur. Çıkan Client ID ve Client Secret'ı aşağıya yapıştır.</li>
-          <li><b>KAYDET</b>, sonra <b>GOOGLE'A BAĞLAN</b>. Açılan sayfada hesabını seç; "Google bu uygulamayı doğrulamadı" uyarısında <b>Devam</b> de (uygulama senin, güvenli).</li>
-        </ol>
-        <p class="note">İpucu: Kitle sayfasında yayın durumunu <b>Üretimde</b> yaparsan bağlantı 7 günde bir kopmaz.</p>`;
-      const r1 = el("div", "prov"), i1 = el("input"); i1.placeholder = "GOOGLE_CLIENT_ID"; i1.dataset.env = "GOOGLE_CLIENT_ID"; r1.append(el("b", "", "Client ID"), i1, el("span"));
-      const r2 = el("div", "prov"), i2 = el("input"); i2.type = "password"; i2.placeholder = "GOOGLE_CLIENT_SECRET"; i2.dataset.env = "GOOGLE_CLIENT_SECRET"; r2.append(el("b", "", "Client Secret"), i2, el("span"));
-      const sv = el("button", "btn-primary", "KAYDET");
-      sv.onclick = async () => { const k = {}; [i1, i2].forEach((i) => i.value.trim() && (k[i.dataset.env] = i.value.trim())); await JV.api("/api/keys", { body: k }); toast("Kaydedildi."); loadLinks(); };
-      const cn = el("button", "btn-primary", "GOOGLE'A BAĞLAN"); cn.style.marginLeft = "8px";
-      cn.disabled = !g.configured; cn.style.opacity = g.configured ? 1 : 0.4;
-      cn.onclick = async () => {
-        const r = await JV.api("/api/google/connect");
-        if (r.url) { window.open(r.url, "_blank"); toast("Tarayıcıda izin ver; bitince bu pencereye dön.", 9000); const iv = setInterval(async () => { await refreshState(); if (JV.state.google.connected) { clearInterval(iv); loadLinks(); JV.say("Google hesabınız bağlandı.", persona); } }, 3000); setTimeout(() => clearInterval(iv), 300000); }
-        else toast(r.error || "Bağlanamadı");
+      const out = el("div", "gtest");
+      const t = el("button", "mini", "BAĞLANTIYI DENE");
+      t.onclick = async () => {
+        out.textContent = "deneniyor…";
+        const r = await JV.api("/api/google/check/test");
+        out.innerHTML = r.mesaj ? r.mesaj : `Gmail: <b>${r.gmail}</b><br>Takvim: <b>${r.takvim}</b>`;
+        out.className = "gtest " + (r.ok ? "ok" : "bad");
       };
-      d.append(r1, r2, sv, cn);
-      if (location.hostname !== "127.0.0.1" && location.hostname !== "localhost") d.append(el("p", "note", "Not: Google bağlantısını bilgisayardaki JARVIS penceresinden yapmalısın."));
+      const b = el("button", "mini", "BAĞLANTIYI KES"); b.style.marginLeft = "8px";
+      b.onclick = async () => { await JV.api("/api/google/disconnect", { method: "POST" }); loadLinks(); };
+      d.append(t, b, out);
+    } else {
+      d.append(googleWizard(g));
     }
     box.append(d);
     const s = JV.settings;
-    $("#o-guest").checked = !!s.guest_mode; $("#o-rcam").checked = !!s.allow_remote_camera; $("#o-rcmd").checked = !!s.allow_remote_commands; $("#o-rport").value = s.robot_port || ""; $("#o-rurl").value = s.robot_url || "";
+    $("#o-guest").checked = !!s.guest_mode; $("#o-rcam").checked = !!s.allow_remote_camera; $("#o-rscr").checked = s.allow_remote_screen !== false; $("#o-rcmd").checked = !!s.allow_remote_commands; $("#o-rport").value = s.robot_port || ""; $("#o-rurl").value = s.robot_url || "";
     $("#o-auto").checked = !!s.auto_control; $("#o-mail").checked = s.email_watch !== false; $("#o-meet").checked = s.meeting_alerts !== false; $("#o-city").value = s.city || "";
   }
   $("#links-save").onclick = async () => {
@@ -627,6 +679,7 @@
   };
   $("#o-guest").onchange = (e) => { JV.settings.guest_mode = e.target.checked; saveSettings({ guest_mode: e.target.checked }); toast(e.target.checked ? "Misafir modu açık." : "Misafir modu kapalı."); };
   $("#o-rcam").onchange = (e) => saveSettings({ allow_remote_camera: e.target.checked });
+  $("#o-rscr").onchange = (e) => saveSettings({ allow_remote_screen: e.target.checked });
   $("#o-rcmd").onchange = (e) => saveSettings({ allow_remote_commands: e.target.checked });
   $("#o-rsave").onclick = async () => { await saveSettings({ robot_port: $("#o-rport").value.trim(), robot_url: $("#o-rurl").value.trim() }); toast("Robot ayarı kaydedildi."); };
 

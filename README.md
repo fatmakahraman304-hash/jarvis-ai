@@ -78,7 +78,7 @@ Beyin konuya göre ilgili araçları kendisi seçer; sen sadece ne istediğini s
 | **Ağ** | Ağdaki cihazlar, hız testi, ping ve paket kaybı, internet sorunu teşhisi |
 | **Günlük** | Sesli alarm (tekrarlı), notlar, alışveriş listesi, haberler |
 | **Proje merkezi** | Kod projesi oluşturma, testleri çalıştırma, GitHub (gh CLI) |
-| **Telefon** | Dosya gezgini (indir/yükle), Telegram'dan sesli mesaj, dosya alma/gönderme, kamera fotoğrafı (izinliyse), durum, acil durdurma |
+| **Telefon** | Dosya gezgini (indir/yükle), Telegram'dan sesli mesaj ve sesli cevap, `/panel` düğmeli uzaktan kumanda (kilitle, uyut — onaylı, ekran, durum, ses, brifing, acil dur), `/ekran` ekran görüntüsü, dosya alma/gönderme, kamera fotoğrafı (izinliyse) |
 | **Uzman ajanlar** | Büyük işi parçalara bölüp aynı anda birden fazla ajana yaptırır |
 | **Anlamsal hafıza** | Kelimesi kelimesine değil anlamına göre hatırlar ("geçen ay tatil hakkında ne konuşmuştuk"); son hatalarından ders çıkarır |
 | **Uzay merkezi** | 🚀 UZAY: gerçek yörünge elemanlarıyla güneş sistemi (tarih ileri/geri), canlı uydular (ISS, Starlink… CelesTrak), "ISS şu an nerede", bu geceki gökyüzü, Ay evresi, Mars, NASA uzay araçlarının konumları (JPL Horizons), kara delik, galaksi, evren |
@@ -117,7 +117,7 @@ Beyin konuya göre ilgili araçları kendisi seçer; sen sadece ne istediğini s
 | Telefon (aynı Wi-Fi) | `start-lan.bat` → pencerede yazan `http://192.168…/?token=…` adresini telefonda aç → tarayıcı menüsünden **Ana ekrana ekle**. Uygulama gibi çalışır, sesli konuşur. Telefonda mikrofon/kamera için `start-vr.bat` (şifreli https) kullan. |
 | VR gözlük | `start-vr.bat` → gözlüğün tarayıcısında pencerede yazan `https://…` adresini aç ("Gelişmiş > Devam et") → bir 3D dünya seç → 🥽 VR |
 | Diğer bilgisayarlar | Her birinde `start-lan.bat`; birinde ⌘ KOMUTA → BİLGİSAYARLARIM → AĞI TARA → anahtarı gir → BAĞLA. Uzaktan komut için diğerinde Ayarlar → Bağlantılar → "Ağdaki diğer JARVIS bilgisayarlarından gelen komutlara izin ver" |
-| Telegram (her yerden) | @BotFather → `/newbot` → token'ı `.env`'de `TELEGRAM_BOT_TOKEN`'a yaz, JARVIS'i başlat, bota yaz; bot sana kullanıcı kimliğini söyler → `TELEGRAM_ALLOWED_IDS`'e yaz, yeniden başlat. Komutlar: `/jarvis` `/friday` `/ultron` `/ses` `/onay KOD` `/iptal KOD`. Bot senin bilgisayarında çalışan beyne bağlıdır; bilgisayar açık olmalı. |
+| Telegram (her yerden) | @BotFather → `/newbot` → token'ı `.env`'de `TELEGRAM_BOT_TOKEN`'a yaz, JARVIS'i başlat, bota yaz; bot sana kullanıcı kimliğini söyler → `TELEGRAM_ALLOWED_IDS`'e yaz, yeniden başlat. Komutlar: `/panel` `/ekran` `/kilitle` `/durum` `/brifing` `/ses` `/jarvis` `/friday` `/ultron` `/onay KOD` `/iptal KOD` `/dur` (telefondaki `/` menüsünde de listelenir). Bot senin bilgisayarında çalışan beyne bağlıdır; bilgisayar açık olmalı. |
 
 ## Sesler hakkında
 

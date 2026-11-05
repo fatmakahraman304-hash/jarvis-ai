@@ -130,17 +130,148 @@ def _download(file_id):
 
 
 def _send_audio(chat_id, audio_bytes, title):
-    boundary = uuid.uuid4().hex
-    parts = []
-    for k, v in (("chat_id", str(chat_id)), ("title", title)):
-        parts.append(f"--{boundary}\r\nContent-Disposition: form-data; name=\"{k}\"\r\n\r\n{v}\r\n".encode())
-    parts.append(f"--{boundary}\r\nContent-Disposition: form-data; name=\"audio\"; filename=\"cevap.mp3\"\r\n"
-                 f"Content-Type: audio/mpeg\r\n\r\n".encode() + audio_bytes + b"\r\n")
-    parts.append(f"--{boundary}--\r\n".encode())
-    req = urllib.request.Request(API.format(token=_token(), method="sendAudio"),
-                                 data=b"".join(parts),
-                                 headers={"Content-Type": f"multipart/form-data; boundary={boundary}"})
-    _urlopen(req, timeout=60).read()
+    """Sesli cevap: önce Telegram 'sesli mesaj' (oynatma balonu), olmazsa mp3 dosyası olarak."""
+    try:
+        _send_file("sendVoice", "voice", chat_id, audio_bytes, "cevap.mp3", "audio/mpeg", "")
+    except Exception:
+        _send_file("sendAudio", "audio", chat_id, audio_bytes, "cevap.mp3", "audio/mpeg", title)
+
+
+def voice_enabled(chat_id):
+    if chat_id in _voice_on:
+        return _voice_on[chat_id]
+    return bool((load_settings().get("telegram_voice") or {}).get(str(chat_id), False))
+
+
+def set_voice(chat_id, on):
+    _voice_on[chat_id] = bool(on)
+    from .config import save_settings
+    tv = dict(load_settings().get("telegram_voice") or {})
+    tv[str(chat_id)] = bool(on)
+    save_settings({"telegram_voice": tv})
+
+
+def speak_to(chat_id, text, pid):
+    if not (text and voice.available()):
+        return False
+    try:
+        clean = re.sub(r"[*_`#>\[\]]", "", text)
+        audio = asyncio.run(voice.synthesize(clean[:1500], pid))
+        _call("sendChatAction", {"chat_id": chat_id, "action": "record_voice"})
+        _send_audio(chat_id, audio, personas.get(pid)["name"])
+        return True
+    except Exception as e:
+        print("[telegram ses]", e)
+        return False
+
+
+# ---------------- ekran görüntüsü ----------------
+def screenshot_jpeg(max_w=2560):
+    try:
+        from PIL import ImageGrab
+    except ImportError:
+        raise RuntimeError("Ekran görüntüsü için 'pillow' gerekli.")
+    import io
+    img = ImageGrab.grab(all_screens=True)
+    if img.width > max_w:
+        img = img.resize((max_w, int(img.height * max_w / img.width)))
+    buf = io.BytesIO()
+    img.convert("RGB").save(buf, "JPEG", quality=82)
+    return buf.getvalue()
+
+
+def send_screenshot(chat_id):
+    if not load_settings().get("allow_remote_screen", True):
+        send(chat_id, "Uzaktan ekran görüntüsü izni kapalı (bilgisayarda Ayarlar > Bağlantılar).")
+        return False
+    from . import memory
+    _call("sendChatAction", {"chat_id": chat_id, "action": "upload_photo"})
+    _send_file("sendPhoto", "photo", chat_id, screenshot_jpeg(), "ekran.jpg", "image/jpeg", "🖥 Ekran · " + time.strftime("%d.%m %H:%M:%S"))
+    memory.log_action("screenshot_to_phone", {"from": "telegram"}, "ok", True)
+    return True
+
+
+def screenshot_to_phone():
+    """Araç: ekran görüntüsünü izinli Telegram hesap(lar)ına gönderir."""
+    if not env("TELEGRAM_BOT_TOKEN") or not _allowed():
+        return "Telegram bağlı değil (TELEGRAM_BOT_TOKEN ve TELEGRAM_ALLOWED_IDS gerekli)."
+    n = 0
+    for cid in _allowed():
+        try:
+            n += bool(send_screenshot(cid))
+        except Exception as e:
+            return f"Gönderilemedi: {e}"
+    return "Ekran görüntüsü telefonuna gönderildi." if n else "Gönderilmedi (uzaktan ekran izni kapalı olabilir)."
+
+
+# ---------------- uzaktan kumanda paneli ----------------
+def _kb(rows):
+    return {"inline_keyboard": [[{"text": t, "callback_data": d} for t, d in row] for row in rows]}
+
+
+PANEL = [[("🔒 Kilitle", "lock"), ("😴 Uyut", "sleep")],
+         [("📸 Ekran", "screen"), ("🖥 Durum", "status")],
+         [("🔇 Sesi kapat/aç", "mute"), ("☀️ Brifing", "brief")],
+         [("🔊 Sesli cevap", "voice"), ("⛔ ACİL DUR", "stop")]]
+
+
+def send_panel(chat_id):
+    _call("sendMessage", {"chat_id": chat_id, "text": "🎛 Uzaktan kumanda — bir düğmeye bas:", "reply_markup": _kb(PANEL)})
+
+
+def _on_button(chat_id, msg_id, data):
+    """Panel düğmeleri. Uyutma iki adımlıdır (önce 'emin misin?')."""
+    from . import memory, tools
+    pid = _persona.get(chat_id) or load_settings().get("persona", "jarvis")
+    if data == "lock":
+        r = tools.lock_pc()
+        memory.log_action("lock_pc", {"from": "telegram"}, r, True)
+        send(chat_id, "🔒 " + r)
+    elif data == "sleep":
+        _call("editMessageText", {"chat_id": chat_id, "message_id": msg_id, "text": "😴 Bilgisayar uyutulsun mu? (açık işlerin kaydedildiğinden emin ol)",
+                                  "reply_markup": _kb([[("✅ Evet, uyut", "sleep_yes"), ("✖ Vazgeç", "sleep_no")]])})
+        return
+    elif data == "sleep_yes":
+        _call("editMessageText", {"chat_id": chat_id, "message_id": msg_id, "text": "😴 Uyutuluyor… iyi geceler."})
+        memory.log_action("power", {"action": "sleep", "from": "telegram"}, "onaylandı", True)
+        threading.Timer(2.0, lambda: tools.power("sleep")).start()  # önce mesaj gitsin
+        return
+    elif data == "sleep_no":
+        _call("editMessageText", {"chat_id": chat_id, "message_id": msg_id, "text": "Uyutma iptal edildi.", "reply_markup": _kb(PANEL)})
+        return
+    elif data == "screen":
+        send_screenshot(chat_id)
+    elif data == "status":
+        st = tools.system_status()
+        send(chat_id, "🖥 " + ("\n".join(f"{k}: {v}" for k, v in st.items()) if isinstance(st, dict) else str(st)))
+    elif data == "mute":
+        send(chat_id, "🔇 " + tools.media_control("mute"))
+    elif data == "brief":
+        from .skills import automation
+        txt = automation.morning_briefing(_persona.get(chat_id, ""))
+        send(chat_id, "☀️ " + txt)
+        if voice_enabled(chat_id):
+            speak_to(chat_id, txt, pid)
+    elif data == "voice":
+        set_voice(chat_id, not voice_enabled(chat_id))
+        send(chat_id, "🔊 Sesli cevap " + ("AÇIK — artık sesli mesajla da cevap vereceğim." if voice_enabled(chat_id) else "kapalı."))
+    elif data == "stop":
+        from .skills import control
+        send(chat_id, "⛔ " + control.emergency_stop("Telegram"))
+    else:
+        return
+    if data != "stop":
+        send_panel(chat_id)  # panel hep en altta dursun
+
+
+def _safe_button(chat_id, msg_id, data):
+    try:
+        _on_button(chat_id, msg_id, data)
+    except Exception as e:
+        try:
+            send(chat_id, f"Hata: {e}")
+        except Exception:
+            pass
 
 
 def send(chat_id, text):
@@ -160,8 +291,15 @@ def broadcast(text):
 
 HELP = ("Komutlar:\n/jarvis /friday /ultron — kişilik değiştir\n/ses — sesli cevabı aç/kapat\n"
         "/onay KOD — kritik işlemi onayla\n/iptal KOD — reddet\n/durum — bilgisayarın durumu\n/dosya YOL — bilgisayardan dosya gönder\n"
-        "/kamera — bilgisayar kamerasından fotoğraf (izin açıksa)\n/brifing — sabah brifingi\n/dur — ACİL DURDURMA\n"
+        "/kamera — bilgisayar kamerasından fotoğraf (izin açıksa)\n/ekran — ekran görüntüsü\n/panel — düğmeli uzaktan kumanda (kilitle, uyut, ekran…)\n"
+        "/kilitle — bilgisayarı kilitle\n/brifing — sabah brifingi\n/dur — ACİL DURDURMA\n"
         "Sesli mesaj da gönderebilirsin. Fotoğraf/dosya gönderirsen İndirilenler'e kaydedilir.")
+
+
+COMMANDS = [("panel", "Düğmeli uzaktan kumanda"), ("ekran", "Ekran görüntüsü"), ("kilitle", "Bilgisayarı kilitle"),
+            ("durum", "Bilgisayarın durumu"), ("brifing", "Sabah brifingi"), ("ses", "Sesli cevap aç/kapat"),
+            ("kamera", "Kamera fotoğrafı"), ("jarvis", "JARVIS'e geç"), ("friday", "FRIDAY'e geç"), ("ultron", "ULTRON'a geç"),
+            ("dur", "ACİL DURDURMA"), ("yardim", "Komutlar")]
 
 
 def _handle(chat_id, text):
@@ -175,8 +313,17 @@ def _handle(chat_id, text):
         send(chat_id, personas.get(_persona[chat_id])["greeting"])
         return
     if low == "/ses":
-        _voice_on[chat_id] = not _voice_on.get(chat_id, False)
-        send(chat_id, "Sesli cevap " + ("açık" if _voice_on[chat_id] else "kapalı"))
+        set_voice(chat_id, not voice_enabled(chat_id))
+        send(chat_id, "🔊 Sesli cevap " + ("açık" if voice_enabled(chat_id) else "kapalı"))
+        return
+    if low in ("/panel", "/kumanda", "/menu", "/menü"):
+        send_panel(chat_id)
+        return
+    if low in ("/ekran", "/screenshot", "/ss"):
+        send_screenshot(chat_id)
+        return
+    if low in ("/kilitle", "/kilit", "/lock"):
+        _on_button(chat_id, 0, "lock")
         return
     if low in ("/dur", "/acil", "acil dur"):
         from .skills import control
@@ -224,22 +371,34 @@ def _handle(chat_id, text):
     for c in confirms:
         reply += f"\n\n⚠️ Onay gerekiyor: {c['text']}\nOnay: /onay {c['id']}   Reddet: /iptal {c['id']}"
     send(chat_id, reply or "…")
-    if _voice_on.get(chat_id) and voice.available() and reply:
-        try:
-            audio = asyncio.run(voice.synthesize(reply[:1200], pid))
-            _send_audio(chat_id, audio, personas.get(pid)["name"])
-        except Exception as e:
-            print("[telegram ses]", e)
+    if voice_enabled(chat_id) and reply:
+        speak_to(chat_id, reply, pid)
 
 
 def _loop():
     offset = 0
     print("[telegram] bot dinliyor")
+    try:  # telefondaki "/" menüsü
+        _call("setMyCommands", {"commands": [{"command": c, "description": d} for c, d in COMMANDS]})
+    except Exception:
+        pass
     while True:
         try:
             res = _call("getUpdates", {"offset": offset, "timeout": 30}, timeout=40)
             for upd in res.get("result", []):
                 offset = upd["update_id"] + 1
+                cq = upd.get("callback_query")
+                if cq:
+                    cuid = str(cq.get("from", {}).get("id", ""))
+                    m = cq.get("message") or {}
+                    ok = cuid in _allowed()
+                    try:
+                        _call("answerCallbackQuery", {"callback_query_id": cq["id"], "text": "" if ok else "Yetkin yok."})
+                    except Exception:
+                        pass
+                    if ok and m.get("chat", {}).get("id"):
+                        threading.Thread(target=_safe_button, args=(m["chat"]["id"], m.get("message_id"), cq.get("data", "")), daemon=True).start()
+                    continue
                 msg = upd.get("message") or upd.get("edited_message") or {}
                 text = msg.get("text") or msg.get("caption")
                 chat_id = msg.get("chat", {}).get("id")
@@ -292,7 +451,8 @@ def _safe_media(chat_id, msg):
             from .skills.media import transcribe_bytes
             text = transcribe_bytes(data, "ses.ogg", "audio/ogg")
             send(chat_id, f"🎙 \"{text}\"")
-            _voice_on.setdefault(chat_id, True)
+            if chat_id not in _voice_on and str(chat_id) not in (load_settings().get("telegram_voice") or {}):
+                _voice_on[chat_id] = True  # sesle yazana sesle cevap (kalıcı ayar /ses ile)
             _handle(chat_id, text)
             return
         f = msg.get("document") or (msg.get("photo") or [None])[-1]
