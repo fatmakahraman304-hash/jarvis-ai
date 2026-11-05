@@ -117,7 +117,7 @@ def _key(pid):
 
 # ---- anahtar sağlığı: geçersiz anahtar her mesajda denenmesin, kullanıcıya açıkça söylensin ----
 _key_bad = {}  # pid -> (zaman, mesaj)
-_KEY_HINT = {"gemini": "Gemini anahtarı genelde 'AIza' ile başlar, 39 karakterdir. https://aistudio.google.com/apikey → Create API key → kopyala.",
+_KEY_HINT = {"gemini": "Gemini anahtarları 'AQ.' (yeni) ya da 'AIza' (eski) ile başlar. https://aistudio.google.com/apikey → Create API key → kopyala.",
              "groq": "Groq anahtarı 'gsk_' ile başlar. https://console.groq.com/keys",
              "openrouter": "OpenRouter anahtarı 'sk-or-' ile başlar.", "xai": "xAI anahtarı 'xai-' ile başlar."}
 
@@ -127,10 +127,14 @@ def key_diagnosis(pid):
     shown = (k[:6] + "…" + k[-4:]) if len(k) > 12 else ("(boş)" if not k else "(çok kısa)")
     probs = []
     if pid == "gemini":
-        if not k.startswith("AIza"):
-            probs.append("'AIza' ile başlamıyor")
-        if len(k) != 39:
-            probs.append(f"uzunluğu {len(k)} (normalde 39)")
+        if k.startswith("AIza"):
+            if len(k) != 39:
+                probs.append(f"uzunluğu {len(k)} (AIza anahtarları 39 karakter)")
+        elif k.startswith("AQ."):
+            if len(k) < 30:
+                probs.append(f"çok kısa ({len(k)} karakter) — eksik kopyalanmış olabilir")
+        else:
+            probs.append("'AQ.' ya da 'AIza' ile başlamıyor")
     elif pid == "groq" and not k.startswith("gsk_"):
         probs.append("'gsk_' ile başlamıyor")
     lbl = PROVIDERS[pid]["label"].split(" (")[0]
@@ -178,7 +182,9 @@ def clear_key_state(pid=None):
 def _headers(pid):
     h = {"Content-Type": "application/json", "User-Agent": UA}
     key = _key(pid)
-    if key:
+    if key and pid == "gemini":
+        h["x-goog-api-key"] = key  # yeni 'AQ.' anahtarlar Bearer ile reddediliyor
+    elif key:
         h["Authorization"] = f"Bearer {key}"
     if pid == "openrouter":
         h["HTTP-Referer"] = "http://localhost"
@@ -215,6 +221,21 @@ def list_models(pid, refresh=False):
         if not refresh and pid in _model_cache and time.time() - _model_cache[pid][0] < 3600:
             return _model_cache[pid][1]
     models = []
+    if pid == "gemini":  # Google'ın kendi uç noktası (AIza ve AQ. anahtarlar)
+        from . import gemini_native
+        try:
+            models = gemini_native.list_models(_key(pid))
+            _key_bad.pop(pid, None)
+        except urllib.error.HTTPError as e:
+            try:
+                report_bad_key(pid, e.code, e.read().decode("utf-8", "ignore"))
+            except Exception:
+                pass
+        except Exception:
+            pass
+        with _cache_lock:
+            _model_cache[pid] = (time.time(), models)
+        return models
     try:
         req = urllib.request.Request(_base(pid) + "/models", headers=_headers(pid))
         with urllib.request.urlopen(req, timeout=8) as r:
@@ -372,6 +393,13 @@ class ThinkFilter:
 # ---------------- akışlı sohbet ----------------
 def stream_chat(pid, model, messages, tools=None, temperature=0.7, timeout=90):
     """Olay üretir: ("text", parça) ... ve sonda ("final", {"content":..., "tool_calls":[...]})"""
+    if pid == "gemini":
+        from . import gemini_native
+        try:
+            yield from gemini_native.stream(_key(pid), model, messages, tools, temperature, timeout)
+        except gemini_native.NativeError as e:
+            raise ProviderError(pid, e.status, e.body)
+        return
     body = {"model": model, "messages": messages, "stream": True, "temperature": temperature}
     if tools:
         body["tools"] = tools

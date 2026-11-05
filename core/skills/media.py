@@ -4,6 +4,7 @@ import os
 import re
 import sys
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 import uuid
@@ -94,17 +95,60 @@ def _multipart(fields, file_field, filename, data, mime):
     return b"".join(parts), f"multipart/form-data; boundary={b}"
 
 
-def transcribe_bytes(data, filename="ses.webm", mime="audio/webm", language="tr"):
-    """Ses → yazı. Groq Whisper (ücretsiz) ya da OPENAI_API_KEY varsa OpenAI."""
+def transcribe_gemini(data, mime="audio/wav", language="tr"):
+    """Ses → yazı, Gemini ile (hafif model; ücretsiz kotası geniş). Sessizlikte uydurmasın diye 'BOŞ' döndürmesi istenir."""
+    import base64
+    from .. import gemini_native, llm
+    if not llm.configured("gemini") or llm.key_bad("gemini"):
+        raise RuntimeError("Gemini anahtarı yok/geçersiz")
+    lang = {"tr": "Türkçe", "en": "İngilizce"}.get((language or "tr")[:2], "konuşulan dilde")
+    prompt = (f"Bu ses kaydındaki konuşmayı {lang} olarak kelimesi kelimesine yazıya dök. Yalnızca söylenen metni yaz; "
+              "açıklama, tırnak, zaman damgası ekleme. Anlaşılır konuşma yoksa sadece BOŞ yaz.")
+    err = None
+    for model in [m for m in (llm.light_model("gemini"), llm.pick_model("gemini")) if m]:
+        body = {"contents": [{"role": "user", "parts": [{"inline_data": {"mime_type": mime, "data": base64.b64encode(data).decode()}}, {"text": prompt}]}],
+                "generationConfig": {"temperature": 0}}
+        req = urllib.request.Request(f"{gemini_native.ROOT}/models/{model}:generateContent", data=json.dumps(body).encode(), method="POST",
+                                     headers=gemini_native.headers(llm._key("gemini")))
+        try:
+            with urllib.request.urlopen(req, timeout=60) as r:
+                res = json.loads(r.read())
+        except urllib.error.HTTPError as e:
+            b = e.read().decode("utf-8", "ignore")
+            if e.code == 429:
+                llm.mark_exhausted("gemini", model, b)
+            llm.report_bad_key("gemini", e.code, b)
+            err = RuntimeError(f"Gemini {e.code}")
+            continue
+        parts = ((res.get("candidates") or [{}])[0].get("content") or {}).get("parts") or []
+        text = "".join(p.get("text", "") for p in parts if not p.get("thought")).strip().strip('"').strip()
+        return "" if text.upper().rstrip(".") in ("BOŞ", "BOS", "EMPTY", "") else text
+    raise err or RuntimeError("Gemini ile yazıya çevrilemedi")
+
+
+def transcribe_bytes(data, filename="ses.webm", mime="audio/webm", language="tr", info=None):
+    """Ses → yazı. 'Sadece Gemini' açıksa önce Gemini; sonra Groq Whisper (ücretsiz) ya da OpenAI."""
+    from .. import llm
+    gem_err = None
+    if llm.configured("gemini") and (llm.only_gemini() or not (env("GROQ_API_KEY") or env("OPENAI_API_KEY"))) and mime in ("audio/wav", "audio/ogg", "audio/mpeg", "audio/mp3", "audio/flac", "audio/aac"):
+        try:
+            t = transcribe_gemini(data, mime, language)
+            if info is not None:
+                info["engine"] = "Gemini"
+            return t
+        except Exception as e:
+            gem_err = e
     targets = []
     if env("GROQ_API_KEY"):
         targets.append(("https://api.groq.com/openai/v1/audio/transcriptions", env("GROQ_API_KEY"), "whisper-large-v3-turbo"))
     if env("OPENAI_API_KEY"):
         targets.append(("https://api.openai.com/v1/audio/transcriptions", env("OPENAI_API_KEY"), "whisper-1"))
     if not targets:
-        raise RuntimeError("Ses yazıya çevirme için GROQ_API_KEY gerekli (ücretsiz).")
+        raise RuntimeError(f"Ses yazıya çevrilemedi ({gem_err})." if gem_err else "Ses yazıya çevirme için Gemini ya da Groq anahtarı gerekli (ücretsiz).")
     err = ""
     for url, key, model in targets:
+        if info is not None:
+            info["engine"] = "Whisper"
         fields = {"model": model, "response_format": "json"}
         if language:
             fields["language"] = language

@@ -238,10 +238,20 @@
   // Whisper ile tek komut dinle (Groq anahtarı varsa varsayılan: çok daha doğru tanıma)
   function whisperOnce() {
     if (JV.settings.voice_id || JV.settings.voice_lock) JV.voiceId.start();
+    let lastBar = 0;
     JV.stt.record({
       onStart: () => setStatus("listening", "DİNLİYORUM — bitince kendiliğinden gönderilir"),
-      onText: (t) => { setStatus(null); if (t) guardedSend(t); },
-      onError: (e) => { setStatus(null); toast("Konuşma tanınamadı: " + e); },
+      onLevel: (v, voice) => {
+        const now = performance.now(); if (now - lastBar < 120) return; lastBar = now;
+        const k = Math.round(v * 10); setStatus("listening", "DİNLİYORUM " + "▮".repeat(k) + "▯".repeat(10 - k) + (voice ? "  🎙 ses var" : ""));
+      },
+      onText: (t, info = {}) => {
+        setStatus(null);
+        if (t) { guardedSend(t); return; }
+        if (info.reason === "sessiz") toast(info.level < 0.004 ? "Mikrofondan hiç ses gelmiyor. Ayarlar > SES > Mikrofon'dan doğru mikrofonu seç ya da Windows'ta mikrofon sesini aç." : "Konuşma duyulmadı. Biraz daha yüksek/yakından konuş; Ayarlar > SES > MİKROFON TESTİ ile deneyebilirsin.", 9000);
+        else if (info.reason === "anlaşılmadı") toast("Ses geldi ama ne dediğin anlaşılamadı, tekrar söyler misin?", 6000);
+      },
+      onError: (e) => { setStatus(null); toast("Konuşma tanınamadı: " + e, 9000); },
     });
   }
   JV.whisperOnce = whisperOnce;
@@ -419,6 +429,7 @@
     $("#v-fx").checked = JV.settings.effects !== false;
     $("#v-stt").value = JV.settings.stt_lang || "tr-TR";
     $("#v-engine").value = JV.settings.stt_engine || "auto";
+    if (JV.loadMics) JV.loadMics();
     JV.api("/api/autostart").then((r) => { $("#o-autostart").checked = !!r.açık; }).catch(() => {});
     $("#b-on").checked = !!(JV.settings.briefing || {}).on; $("#b-time").value = (JV.settings.briefing || {}).time || "08:00";
     if (JV.voiceLab) JV.voiceLab.render($("#voice-sliders"));
@@ -435,6 +446,35 @@
   }
   $("#v-lang").onchange = (e) => saveSettings({ voice_lang: e.target.value });
   $("#v-engine").onchange = (e) => saveSettings({ stt_engine: e.target.value });
+  // mikrofon seçimi + test
+  async function loadMics() {
+    const sel = $("#v-mic"); if (!sel || !JV.stt) return;
+    let devs = await JV.stt.devices();
+    if (devs.length && !devs.some((d) => d.label)) { // adlar için bir kez izin iste
+      try { (await navigator.mediaDevices.getUserMedia({ audio: true })).getTracks().forEach((t) => t.stop()); devs = await JV.stt.devices(); } catch (e) {}
+    }
+    sel.innerHTML = '<option value="">Windows varsayılanı</option>' + devs.filter((d) => d.deviceId && d.deviceId !== "default" && d.deviceId !== "communications")
+      .map((d, i) => `<option value="${d.deviceId}">${(d.label || "Mikrofon " + (i + 1)).replace(/</g, "")}</option>`).join("");
+    sel.value = JV.settings.mic_id || "";
+  }
+  JV.loadMics = loadMics;
+  $("#v-mic").onchange = (e) => saveSettings({ mic_id: e.target.value });
+  $("#v-mictest").onclick = () => {
+    const out = $("#v-micout"), bar = $("#v-miclvl");
+    out.textContent = "Konuş… (örn. 'merhaba JARVIS')";
+    JV.stt.record({
+      waitMs: 6000, maxMs: 8000,
+      onLevel: (v, voice) => { bar.style.width = Math.round(v * 100) + "%"; bar.style.background = voice ? "#3cff8a" : "var(--c)"; },
+      onText: (t, info = {}) => {
+        bar.style.width = "0";
+        const lvl = Math.round((info.level || 0) * 1000);
+        if (t) out.innerHTML = `✓ Duyulan: <b>"${t.replace(/</g, "")}"</b> (seviye ${lvl}${info.engine ? ", " + info.engine : ""})`;
+        else if (info.reason === "sessiz") out.textContent = lvl < 4 ? `✗ Mikrofondan ses gelmiyor (seviye ${lvl}). Başka mikrofon seç ya da Windows Ses ayarlarında mikrofonu aç/yükselt.` : `✗ Ses çok kısık (seviye ${lvl}). Daha yakından konuş ya da mikrofon seviyesini yükselt.`;
+        else out.textContent = `Ses geldi (seviye ${lvl}) ama kelime anlaşılamadı. Tekrar dene.`;
+      },
+      onError: (e) => { bar.style.width = "0"; out.textContent = "✗ " + e; },
+    });
+  };
   $("#b-on").onchange = (e) => { saveSettings({ briefing: { on: e.target.checked, time: $("#b-time").value || "08:00" } }); toast(e.target.checked ? `Her gün ${$("#b-time").value} brifingi açık.` : "Sabah brifingi kapalı."); };
   $("#o-autostart").onchange = async (e) => { const r = await JV.api("/api/autostart", { body: { on: e.target.checked } }); e.target.checked = !!r.açık; toast(typeof r.sonuç === "string" ? r.sonuç : r.açık ? "JARVIS artık Windows ile birlikte açılacak." : "Otomatik başlatma kapatıldı."); };
   $("#b-time").onchange = (e) => saveSettings({ briefing: { time: e.target.value } });

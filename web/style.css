@@ -412,3 +412,5 @@ body.mode-sessiz #t-command::after{content:" · SESSİZ"}
 .model-pick{display:block;margin-top:4px;max-width:210px;font-family:var(--mono);font-size:11px;background:rgba(0,229,255,.06);color:var(--c);border:1px solid rgba(0,229,255,.3);padding:2px 4px}
 .st.bad,#prov-mini .bad{color:#ff6b6b}
 .key-err{font-size:12px;color:#ff9b9b;max-width:320px;line-height:1.35;margin-top:4px}
+.micbar{height:6px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.2);margin:4px 0 10px;border-radius:3px;overflow:hidden}
+.micbar i{display:block;height:100%;width:0;background:var(--c);transition:width .08s}

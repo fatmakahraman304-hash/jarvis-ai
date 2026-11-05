@@ -142,15 +142,18 @@ async def transcribe_api(request):
     data = await request.body()
     mime = request.headers.get("content-type", "audio/webm").split(";")[0]
     ext = {"audio/webm": "webm", "audio/ogg": "ogg", "audio/mp4": "m4a", "audio/wav": "wav", "audio/mpeg": "mp3"}.get(mime, "webm")
+    if len(data) < 2000:
+        return JSONResponse({"text": "", "engine": ""})
+    info = {}
     try:
-        text = await run_in_threadpool(transcribe_bytes, data, f"ses.{ext}", mime, request.query_params.get("lang", "tr"))
+        text = await run_in_threadpool(transcribe_bytes, data, f"ses.{ext}", mime, request.query_params.get("lang", "tr"), info)
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=502)
     # Whisper sessizlikte bazen video altyazısı uydurur: bilinen uydurmaları ele
     junk = ("altyazı m.k", "izlediğiniz için teşekkür", "abone olmayı unutmayın", "altyazı:", "thanks for watching", "subtitles by", "www.", "amara.org")
     if len(text) < 60 and any(j in text.lower() for j in junk):
         text = ""
-    return JSONResponse({"text": text})
+    return JSONResponse({"text": text, "engine": info.get("engine", "")})
 
 
 async def voice_api(request):
@@ -592,6 +595,7 @@ async def state(request):
         "version": VERSION,
         "personas": personas.public(),
         "providers": llm.status(),
+        "stt_ready": bool(llm.configured("gemini") or env("GROQ_API_KEY") or env("OPENAI_API_KEY")),
         "settings": s,
         "tts": voice.available(),
         "telegram": bool(env("TELEGRAM_BOT_TOKEN")),

@@ -52,14 +52,9 @@ def _post(pid, model, texts):
 
 
 def _post_gemini_native(model, texts):
-    """Gemini'nin kendi uç noktası (OpenAI uyumlu katman hata verirse)."""
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:batchEmbedContents"
-    body = {"requests": [{"model": f"models/{model}", "content": {"parts": [{"text": t}]}} for t in texts]}
-    req = urllib.request.Request(url, data=json.dumps(body).encode(), method="POST",
-                                 headers={"Content-Type": "application/json", "x-goog-api-key": llm._key("gemini")})
-    with urllib.request.urlopen(req, timeout=40) as r:
-        data = json.loads(r.read())
-    return [e["values"] for e in data["embeddings"]]
+    """Gemini'nin kendi uç noktası (AQ./AIza anahtarlarla çalışır)."""
+    from .. import gemini_native
+    return gemini_native.embed(llm._key("gemini"), model, texts)
 
 
 def embed(texts):
@@ -73,6 +68,9 @@ def embed(texts):
             vecs = []
             for i in range(0, len(texts), 16):  # küçük paketler: büyük toplu istek 400 verebiliyor
                 part = texts[i:i + 16]
+                if pid == "gemini":
+                    vecs += _post_gemini_native(m, part)
+                    continue
                 try:
                     vecs += _post(pid, m, part)
                 except urllib.error.HTTPError as e1:
