@@ -176,7 +176,7 @@ def _dist(a, b, method, scale):
 def identify(wav_bytes):
     p = _load()
     if not p:
-        return {"known": False, "name": None, "reason": "kayıtlı ses yok"}
+        return {"known": False, "name": None, "reason": "kayıtlı ses yok", "no_profiles": True}
     method, vec = embed(wav_bytes)
     allv = [s for v in p.values() if v["method"] == method for s in v["samples"]]
     if not allv:

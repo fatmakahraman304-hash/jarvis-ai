@@ -1,6 +1,7 @@
 """Web sunucusu: arayüz + API. Bilgisayardan, telefondan (aynı Wi-Fi) ve Telegram'dan aynı beyin."""
 import contextlib
 import json
+import re
 import secrets
 import threading
 import time
@@ -9,7 +10,7 @@ from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from starlette.responses import FileResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
+from starlette.responses import HTMLResponse, FileResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
 from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 
@@ -17,6 +18,16 @@ from . import brain, llm, memory, personas, tools, voice
 from .config import VERSION, WEB, env, load_settings, save_settings
 
 TOKEN = env("JARVIS_TOKEN")
+
+
+class NoStaleStatic(BaseHTTPMiddleware):
+    """Statik dosyalar her açılışta yeniden doğrulansın (değişmediyse 304, hızlı)."""
+
+    async def dispatch(self, request, call_next):
+        resp = await call_next(request)
+        if request.url.path.startswith("/static/") and "Cache-Control" not in resp.headers:
+            resp.headers["Cache-Control"] = "no-cache"
+        return resp
 
 
 class TokenAuth(BaseHTTPMiddleware):
@@ -55,7 +66,10 @@ async def index(request):
         except Exception as e:
             memory.notify(f"Google bağlantısı başarısız: {e}", "error")
         return RedirectResponse("/")
-    return FileResponse(WEB / "index.html")
+    # önbellek kırıcı: güncellemeden sonra tarayıcı eski CSS/JS'yi kullanmasın
+    html = (WEB / "index.html").read_text(encoding="utf-8")
+    html = re.sub(r'(/static/[\w./-]+\.(?:js|css))"', rf'\1?v={VERSION}"', html)
+    return HTMLResponse(html, headers={"Cache-Control": "no-cache"})
 
 
 def _is_local(request):
@@ -796,4 +810,4 @@ async def lifespan(app):
     yield
 
 
-app = Starlette(routes=routes, middleware=[Middleware(TokenAuth)], lifespan=lifespan)
+app = Starlette(routes=routes, middleware=[Middleware(TokenAuth), Middleware(NoStaleStatic)], lifespan=lifespan)

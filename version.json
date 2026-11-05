@@ -1,9 +1,10 @@
 {
-  "version": "3.3.0",
+  "version": "3.3.1",
   "date": "2026-11-05",
   "notes": [
-    "Ses laboratuvarı: Ayarlar > SES'te her kişilik için yüzlerce ses arasından seç (Türkçe, tüm İngilizce aksanlar, Türkçe de konuşan çok dilli sesler)",
-    "Hız, ton, yankı, oda, netlik, kalınlık, ikinci ses katmanı, metalik, distorsiyon, hologram filtresi ve yavaş çekim ayarları",
-    "DİNLE ile kaydetmeden dene; FİLM HAZIR AYARI ile varsayılana dön"
+    "Ses laboratuvarı: Ayarlar > SES'te her kişilik için ses seçimi ve film efekt ayarları",
+    "Güncelleme penceresi artık arkada kalmıyor (eski ekran dosyaları önbellekten gelmiyor)",
+    "Ses tanıma açık ama kayıtlı ses yokken herkesi 'Misafir' sayma hatası düzeltildi",
+    "Windows'ta güncelleme testi için açılış bekleme süresi uzatıldı"
   ]
 }

@@ -50,7 +50,7 @@ def main():
     base = f"http://127.0.0.1:{jport}"
     ok = True
     try:
-        for _ in range(50):
+        for _ in range(450):  # Windows'ta ilk açılış (paket yüklemeleri) uzun sürebilir: 90 sn'ye kadar bekle
             try:
                 get(base + "/api/state")
                 break

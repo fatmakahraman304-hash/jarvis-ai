@@ -167,8 +167,10 @@
       (/(reddet|iptal)/.test(low) ? card.querySelector(".mini") : card.querySelector(".btn-danger")).click();
       return;
     }
-    if (JV.settings.voice_lock && who && !who.known) { toast("Ses tanınmadı, komut yok sayıldı."); JV.say("Sesinizi tanımadım.", persona); return; }
-    const guest = !!(who && !who.known && JV.settings.voice_id); // tanınmayan ses → misafir modu
+    const noProfiles = !!(who && who.no_profiles); // henüz kimse tanıtılmadıysa herkes "sahip" sayılır
+    if (noProfiles && !JV._vidHint) { JV._vidHint = true; toast("Ses tanıma açık ama kayıtlı ses yok: Ayarlar > SES > SESİMİ TANIT ile sesini tanıt.", 9000); }
+    if (JV.settings.voice_lock && who && !who.known && !noProfiles) { toast("Ses tanınmadı, komut yok sayıldı."); JV.say("Sesinizi tanımadım.", persona); return; }
+    const guest = !!(who && !who.known && !noProfiles && JV.settings.voice_id); // tanınmayan ses → misafir modu
     if (guest) toast("Tanınmayan ses: misafir modunda cevap veriliyor.");
     send(text, { speaker: who && who.known ? who.name : guest ? "Misafir" : "", guest });
   }

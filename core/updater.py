@@ -56,6 +56,14 @@ def _get(url, timeout=30, accept="application/vnd.github+json"):
         return r.read()
 
 
+def _log(msg):
+    try:
+        with open(DATA / "guncelleme.log", "a", encoding="utf-8") as f:
+            f.write(time.strftime("%Y-%m-%d %H:%M:%S ") + msg + "\n")
+    except Exception:
+        pass
+
+
 def check(force=False):
     """Uzak sürümü okur. {'yerel','uzak','yeni_var','notlar'}"""
     if not force and STATE["uzak"] and time.time() - STATE["son_kontrol"] < 600:
@@ -193,6 +201,7 @@ def apply(restart=True):
             restore(bk)
             raise
         shutil.rmtree(work, ignore_errors=True)
+        _log(f"v{VERSION} → v{info['uzak']} kuruldu. {' | '.join(log)}")
         STATE.update({"durum": "bitti", "ilerleme": 100, "adım": f"v{info['uzak']} kuruldu, yeniden başlatılıyor"})
         try:
             from . import memory
@@ -204,6 +213,7 @@ def apply(restart=True):
         return {"durum": "güncellendi", "önceki": VERSION, "yeni": info["uzak"], "yedek": bk.name, "notlar": info.get("notlar", []), "paketler": log}
     except Exception as e:
         STATE.update({"durum": "hata", "hata": str(e), "ilerleme": 0})
+        _log(f"HATA: {e}")
         return {"durum": "hata", "hata": str(e)}
     finally:
         _lock.release()
