@@ -207,6 +207,7 @@
       if (w) {
         if (w.pid !== persona) { applyPersona(w.pid, false); saveSettings({ persona: w.pid }); }
         if (w.rest.length > 2) guardedSend(w.rest);
+        else if (JV.stt && JV.stt.available()) { JV.beep(); whisperOnce(); }
         else { JV.beep(); awaitingCmd = Date.now() + 8000; setStatus("listening", "SİZİ DİNLİYORUM"); }
       } else if (awaitingCmd > Date.now() || ([...document.querySelectorAll(".confirm")].length && /(onayla|reddet)/i.test(final))) { awaitingCmd = 0; guardedSend(final); }
     };
@@ -234,9 +235,20 @@
       setTimeout(() => mediaRec && mediaRec.state === "recording" && mediaRec.stop(), 30000);
     } catch (e) { toast("Mikrofon açılamadı: " + e.message); }
   }
+  // Whisper ile tek komut dinle (Groq anahtarı varsa varsayılan: çok daha doğru tanıma)
+  function whisperOnce() {
+    if (JV.settings.voice_id || JV.settings.voice_lock) JV.voiceId.start();
+    JV.stt.record({
+      onStart: () => setStatus("listening", "DİNLİYORUM — bitince kendiliğinden gönderilir"),
+      onText: (t) => { setStatus(null); if (t) guardedSend(t); },
+      onError: (e) => { setStatus(null); toast("Konuşma tanınamadı: " + e); },
+    });
+  }
+  JV.whisperOnce = whisperOnce;
   $("#mic").onclick = () => {
     JV.unlockAudio();
     if (JV.speaking) JV.stopSpeaking();
+    if (JV.stt && JV.stt.available()) { if (JV.stt.busy()) JV.stt.stop(); else whisperOnce(); return; }
     if (!SR) { recordFallback(); return; }
     if (recognizing && oneShot) { try { rec.stop(); } catch (e) {} return; }
     startRec(true);
@@ -377,6 +389,9 @@
     $("#v-lang").value = JV.settings.voice_lang || "auto";
     $("#v-fx").checked = JV.settings.effects !== false;
     $("#v-stt").value = JV.settings.stt_lang || "tr-TR";
+    $("#v-engine").value = JV.settings.stt_engine || "auto";
+    JV.api("/api/autostart").then((r) => { $("#o-autostart").checked = !!r.açık; }).catch(() => {});
+    $("#b-on").checked = !!(JV.settings.briefing || {}).on; $("#b-time").value = (JV.settings.briefing || {}).time || "08:00";
     if (JV.voiceLab) JV.voiceLab.render($("#voice-sliders"));
     loadVoiceIds();
     $("#tts-note").textContent = JV.state.tts ? "Film tarzı sinir ağı sesleri aktif (Microsoft Neural, ücretsiz)." : "edge-tts kurulu değil: tarayıcının kendi sesi kullanılıyor. Kurulum için: pip install edge-tts";
@@ -390,6 +405,11 @@
     pi.append(p1, p2, p3);
   }
   $("#v-lang").onchange = (e) => saveSettings({ voice_lang: e.target.value });
+  $("#v-engine").onchange = (e) => saveSettings({ stt_engine: e.target.value });
+  $("#b-on").onchange = (e) => { saveSettings({ briefing: { on: e.target.checked, time: $("#b-time").value || "08:00" } }); toast(e.target.checked ? `Her gün ${$("#b-time").value} brifingi açık.` : "Sabah brifingi kapalı."); };
+  $("#o-autostart").onchange = async (e) => { const r = await JV.api("/api/autostart", { body: { on: e.target.checked } }); e.target.checked = !!r.açık; toast(typeof r.sonuç === "string" ? r.sonuç : r.açık ? "JARVIS artık Windows ile birlikte açılacak." : "Otomatik başlatma kapatıldı."); };
+  $("#b-time").onchange = (e) => saveSettings({ briefing: { time: e.target.value } });
+  $("#b-now").onclick = () => { $("#settings").classList.add("hidden"); send("Sabah brifingimi ver (morning_briefing aracını kullan)."); };
   $("#v-fx").onchange = (e) => saveSettings({ effects: e.target.checked });
   $("#v-stt").onchange = (e) => saveSettings({ stt_lang: e.target.value });
 

@@ -656,6 +656,39 @@ try:
           [i for i in range(40) if full.count(f"Paragraf {i}:") != 1][:5])
     check("belge kaldır", kn.library_remove("kuantum").startswith("Kaldırıldı") and len(kn.library_list()) == 4)
 
+    print("SABAH BRİFİNGİ · OTOMATİK BAŞLAT")
+    from core.skills import automation as au  # noqa: E402
+    import time as _t  # noqa: E402
+    sent = []
+    _cfg.save_settings({"briefing": {"on": True, "time": "00:00"}, "briefing_last": ""})
+    _real_lt = _t.localtime
+    au.time.localtime = lambda *a: _real_lt(_t.mktime((2026, 11, 5, 1, 30, 0, 0, 0, -1)))
+    au.briefing_tick(lambda txt, kind: sent.append((kind, txt)))
+    check("brifing saati gelince gönderilir (bir kez)", len(sent) == 1 and sent[0][0] == "briefing" and sent[0][1], sent)
+    au.briefing_tick(lambda txt, kind: sent.append((kind, txt)))
+    check("aynı gün ikinci kez gönderilmez", len(sent) == 1)
+    _cfg.save_settings({"briefing": {"on": True, "time": "09:00"}, "briefing_last": ""})
+    au.briefing_tick(lambda txt, kind: sent.append((kind, txt)))
+    check("saati gelmeden gönderilmez", len(sent) == 1)
+    _cfg.save_settings({"briefing": {"on": False}})
+    au.time.localtime = _real_lt
+    import core.skills.command as _cm  # noqa: E402
+    _cm_sys = __import__("sys")
+    _old_plat, _old_app = _cm_sys.platform, os.environ.get("APPDATA")
+    os.environ["APPDATA"] = str(HOME / "AppData" / "Roaming"); _cm_sys.platform = "win32"
+    try:
+        r = _cm.autostart(True)
+        f = _cm._startup_file()
+        check("Windows ile başlat: Başlangıç klasörüne kısayol", r["durum"] == "açık" and f.exists() and "start.bat" in f.read_text(encoding="utf-8") and _cm.autostart_status())
+        _cm.autostart(False)
+        check("otomatik başlatma kapatılır", not f.exists() and not _cm.autostart_status())
+    finally:
+        _cm_sys.platform = _old_plat
+        if _old_app is None:
+            os.environ.pop("APPDATA", None)
+        else:
+            os.environ["APPDATA"] = _old_app
+
     print("ÇEVİRİ MERKEZİ")
     from core.skills import media as _media, translate as trm  # noqa: E402
     check("dil kodları (ad/kod/Whisper)", trm.code("Almanca") == "de" and trm.code("EN") == "en" and trm.code("en-US") == "en" and trm.WHISPER2CODE["turkish"] == "tr")

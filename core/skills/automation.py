@@ -9,7 +9,7 @@ import time
 import traceback
 
 from .. import memory
-from ..config import ROOT, load_settings
+from ..config import ROOT, load_settings, save_settings
 from ..tools import N, S, _schema
 
 memory.ensure("""
@@ -225,6 +225,50 @@ def daily_briefing():
     return out
 
 
+def morning_briefing(persona=""):
+    """Sabah brifingi metni: hava, takvim, önemli e-postalar, piyasa, yapılacaklar, hatırlatıcılar ve günün manşetleri;
+    seçili kişiliğin üslubuyla kısa, konuşur gibi."""
+    from .. import brain
+    data = daily_briefing()
+    try:
+        from .daily import news
+        n = news("", "TR", 5)
+        data["manşetler"] = [x.get("başlık") for x in n][:5] if isinstance(n, list) else []
+    except Exception:
+        pass
+    p = persona or load_settings().get("persona", "jarvis")
+    txt = brain.ask("Aşağıdaki verilerle kullanıcıya SABAH BRİFİNGİ ver. Selamla, sonra kısa paragraflarla: hava, bugünkü takvim, önemli e-postalar, "
+                    "piyasa (dolar/euro/altın), yapılacaklar ve hatırlatıcılar, 3 manşet. 'alınamadı' olan bölümleri atla. En fazla 12 cümle, sesli okunacak; "
+                    "madde işareti ve emoji kullanma.\n\n" + json.dumps(data, ensure_ascii=False, default=str)[:9000],
+                    "Kullanıcının kişisel asistanısın; kendi karakterinle konuş.", p)
+    return txt.strip()
+
+
+def briefing_tick(notify):
+    """Zamanlayıcı: ayarlanan saatte günde bir kez brifingi gönderir (ekran + ses + Telegram)."""
+    s = load_settings()
+    b = s.get("briefing") or {}
+    if not b.get("on"):
+        return
+    now = time.localtime()
+    today = time.strftime("%Y-%m-%d", now)
+    if s.get("briefing_last") == today:
+        return
+    try:
+        hh, mm = [int(x) for x in str(b.get("time", "08:00")).split(":")[:2]]
+    except ValueError:
+        hh, mm = 8, 0
+    if (now.tm_hour, now.tm_min) < (hh, mm) or now.tm_hour > hh + 3:  # saati gelmediyse ya da 3 saatten fazla geçtiyse (bilgisayar kapalıydı) bekle
+        if now.tm_hour > hh + 3:
+            save_settings({"briefing_last": today})
+        return
+    save_settings({"briefing_last": today})
+    try:
+        notify(morning_briefing(), "briefing")
+    except Exception as e:
+        notify(f"Sabah brifingi hazırlanamadı: {e}", "error")
+
+
 def self_test():
     r = subprocess.run([sys.executable, str(ROOT / "tests" / "test_smoke.py")], capture_output=True, text=True,
                        timeout=180, encoding="utf-8", errors="ignore")
@@ -288,6 +332,7 @@ def memory_backups(action="list", path=""):
 
 
 TOOLS = {
+    "morning_briefing": (morning_briefing, _schema("Sabah brifingi: hava, takvim, önemli mailler, piyasa, yapılacaklar ve manşetleri kısa ve konuşur gibi özetler.", {}), False),
     "schedule_task": (schedule_task, _schema(
         "Otomatik görev zamanlar; zamanı gelince JARVIS görevi kendisi yapar ve rapor verir (bilgisayar başında olmasan da). "
         "Örn: her akşam 22:00 'Belgeler klasörünü yedekle', her sabah 08:30 'günlük brifing hazırla', her 30 dk 'önemli e-postaları kontrol et'.",

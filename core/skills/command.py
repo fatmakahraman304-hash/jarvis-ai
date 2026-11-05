@@ -315,6 +315,35 @@ def readiness():
     return {"hazır": not eksik_zorunlu, "eksik_zorunlu": eksik_zorunlu, "bileşenler": out}
 
 
+# ---------------- Windows ile başlat ----------------
+
+def _startup_file():
+    import os
+    from pathlib import Path
+    return Path(os.environ.get("APPDATA", str(Path.home() / "AppData" / "Roaming"))) / "Microsoft" / "Windows" / "Start Menu" / "Programs" / "Startup" / "JARVIS.bat"
+
+
+def autostart(on=True):
+    """Windows açılınca JARVIS'i küçültülmüş pencerede kendiliğinden başlatır (Başlangıç klasörüne kısayol)."""
+    import sys
+    from ..config import ROOT
+    if not sys.platform.startswith("win"):
+        return "Bu ayar Windows içindir."
+    f = _startup_file()
+    on = str(on).lower() not in ("false", "0", "kapat", "off")
+    if on:
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(f'@echo off\r\ncd /d "{ROOT}"\r\nstart "JARVIS" /min cmd /c "{ROOT / "start.bat"}"\r\n', encoding="utf-8")
+        return {"durum": "açık", "not": "Bilgisayar açılınca JARVIS arka planda başlar; pencere görev çubuğunda küçük durur."}
+    f.unlink(missing_ok=True)
+    return {"durum": "kapalı"}
+
+
+def autostart_status():
+    import sys
+    return sys.platform.startswith("win") and _startup_file().exists()
+
+
 def command_center(open=True):
     return {"ui": "command", "open": str(open).lower() not in ("false", "0")}
 
@@ -330,6 +359,7 @@ TOOLS = {
     "macro_delete": (macro_delete, _schema("Makroyu siler.", {"name": S("ad")}, ["name"]), True),
     "module_list": (module_list, _schema("JARVIS modüllerini (yetenek gruplarını) ve açık/kapalı durumlarını listeler.", {}), False),
     "module_toggle": (module_toggle, _schema("Bir modülü açar/kapatır (kapalı modülün araçları kullanılmaz).", {"module": S("modül"), "on": {"type": "boolean"}}, ["module"]), False),
+    "autostart": (autostart, _schema("Windows açılınca JARVIS'i kendiliğinden başlatmayı açar/kapatır.", {"on": {"type": "boolean"}}), False),
     "readiness_check": (lambda: readiness(), _schema("Kurulum durumu: hangi bileşenler hazır, hangileri eksik ve nasıl tamamlanır.", {}), False),
     "command_center": (command_center, _schema("JARVIS MASTER CONTROL komuta merkezini ekranda açar/kapatır.", {"open": {"type": "boolean"}}), False),
 }

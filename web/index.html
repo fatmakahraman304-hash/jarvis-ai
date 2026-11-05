@@ -163,6 +163,7 @@
     <section data-tab="voice" hidden>
       <label class="row">Ses dili <select id="v-lang"><option value="auto">Otomatik</option><option value="tr">Türkçe</option><option value="en">İngilizce (film aksanı)</option></select></label>
       <label class="row">Film efektleri (yankı, metalik) <input type="checkbox" id="v-fx"></label>
+      <label class="row">Konuşma tanıma <select id="v-engine"><option value="auto">Otomatik (Groq varsa Whisper)</option><option value="whisper">Whisper — en doğru</option><option value="browser">Tarayıcı — en hızlı</option></select></label>
       <label class="row">Tanıma dili <select id="v-stt"><option value="tr-TR">Türkçe</option><option value="en-US">English</option></select></label>
       <div id="voice-sliders"></div>
       <h4>SES KİMLİĞİ</h4>
@@ -205,6 +206,10 @@
     </section>
     <section data-tab="tasks" hidden>
       <p class="note">Görev eklemek için JARVIS'e söylemen yeterli: <i>"Her akşam 22:00'de Belgeler klasörünü yedekle"</i>, <i>"Her sabah 8:30'da brifing ver"</i>, <i>"Yarın 15:00'e kadar raporu bitir diye yapılacaklara ekle"</i>.</p>
+      <h4>SABAH BRİFİNGİ</h4>
+      <label class="row">Her gün brifing ver (hava, takvim, mailler, piyasa, yapılacaklar, manşetler) <input type="checkbox" id="b-on"></label>
+      <label class="row">Saat <input type="time" id="b-time" value="08:00"></label>
+      <div class="row"><button class="mini" id="b-now">ŞİMDİ DİNLE</button><span class="note">Ekranda okunur, sesli söylenir ve Telegram bağlıysa telefona da gelir. Telegram'dan /brifing ile istediğin an.</span></div>
       <h4>ZAMANLANMIŞ GÖREVLER</h4><ul id="task-list" class="plain"></ul>
       <h4>YAPILACAKLAR</h4><ul id="todo-list" class="plain"></ul>
     </section>
@@ -223,6 +228,7 @@
       <ul id="fb-list" class="plain"></ul>
     </section>
     <section data-tab="platforms" hidden>
+      <label class="row">Windows açılınca JARVIS'i kendiliğinden başlat <input type="checkbox" id="o-autostart"></label>
       <div id="platform-info"></div>
     </section>
   </div>
@@ -244,6 +250,7 @@
 <script src="/static/city.js"></script>
 <script src="/static/twin.js"></script>
 <script src="/static/gesture-core.js"></script>
+<script src="/static/stt.js"></script>
 <script src="/static/app.js"></script>
 <script src="/static/gesture.js"></script>
 <script src="/static/camlive.js"></script>

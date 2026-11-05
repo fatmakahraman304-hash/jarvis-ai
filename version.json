@@ -1,9 +1,9 @@
 {
-  "version": "3.3.3",
+  "version": "3.4.0",
   "date": "2026-11-05",
   "notes": [
-    "Telegram token'ı reddedilirse (401) sebebini söylüyor: biçim hatası, eksik kopyalama, birden fazla satır ya da iptal edilmiş token",
-    "Token'a kopyalarken bulaşan tırnak/boşluk/'bot' öneki otomatik temizleniyor",
-    "Geçersiz token'da hata sürekli tekrarlanmıyor"
+    "Çok daha doğru konuşma tanıma: mikrofon artık Whisper (Groq) kullanıyor; konuşman bitince kendiliğinden gönderir (Ayarlar > SES > Konuşma tanıma)",
+    "Sabah brifingi: her gün seçtiğin saatte hava, takvim, mailler, piyasa, yapılacaklar ve manşetler; ekranda, sesli ve Telegram'da (Ayarlar > GÖREVLER). Telegram'dan /brifing",
+    "Windows açılınca JARVIS'i kendiliğinden başlat (Ayarlar > PLATFORMLAR)"
   ]
 }

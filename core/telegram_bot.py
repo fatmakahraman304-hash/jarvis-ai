@@ -160,7 +160,7 @@ def broadcast(text):
 
 HELP = ("Komutlar:\n/jarvis /friday /ultron — kişilik değiştir\n/ses — sesli cevabı aç/kapat\n"
         "/onay KOD — kritik işlemi onayla\n/iptal KOD — reddet\n/durum — bilgisayarın durumu\n/dosya YOL — bilgisayardan dosya gönder\n"
-        "/kamera — bilgisayar kamerasından fotoğraf (izin açıksa)\n/dur — ACİL DURDURMA\n"
+        "/kamera — bilgisayar kamerasından fotoğraf (izin açıksa)\n/brifing — sabah brifingi\n/dur — ACİL DURDURMA\n"
         "Sesli mesaj da gönderebilirsin. Fotoğraf/dosya gönderirsen İndirilenler'e kaydedilir.")
 
 
@@ -181,6 +181,10 @@ def _handle(chat_id, text):
     if low in ("/dur", "/acil", "acil dur"):
         from .skills import control
         send(chat_id, "⛔ " + control.emergency_stop("Telegram"))
+        return
+    if low in ("/brifing", "/sabah", "/briefing"):
+        from .skills import automation
+        send(chat_id, "☀️ " + automation.morning_briefing(_persona.get(chat_id, "")))
         return
     if low == "/durum":
         from . import tools

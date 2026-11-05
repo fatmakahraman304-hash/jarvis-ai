@@ -125,6 +125,10 @@ async def transcribe_api(request):
         text = await run_in_threadpool(transcribe_bytes, data, f"ses.{ext}", mime, request.query_params.get("lang", "tr"))
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=502)
+    # Whisper sessizlikte bazen video altyazısı uydurur: bilinen uydurmaları ele
+    junk = ("altyazı m.k", "izlediğiniz için teşekkür", "abone olmayı unutmayın", "altyazı:", "thanks for watching", "subtitles by", "www.", "amara.org")
+    if len(text) < 60 and any(j in text.lower() for j in junk):
+        text = ""
     return JSONResponse({"text": text})
 
 
@@ -365,6 +369,16 @@ async def watch_api(request):
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=502)
     return JSONResponse({"error": "bilinmeyen"}, status_code=404)
+
+
+async def autostart_api(request):
+    from .skills import command as cmd
+    if not _is_local(request):
+        return JSONResponse({"error": "yalnızca bu bilgisayardan"}, status_code=403)
+    if request.method == "POST":
+        b = await request.json()
+        return JSONResponse({"sonuç": cmd.autostart(b.get("on", True)), "açık": cmd.autostart_status()})
+    return JSONResponse({"açık": cmd.autostart_status()})
 
 
 async def update_api(request):
@@ -713,7 +727,7 @@ def _notify(text, kind="info"):
     from . import telegram_bot
     memory.notify(text, kind)
     try:
-        telegram_bot.broadcast(("⏰ " if kind == "reminder" else "🔔 ") + text)
+        telegram_bot.broadcast({"reminder": "⏰ ", "briefing": "☀️ "}.get(kind, "🔔 ") + text)
     except Exception:
         pass
 
@@ -726,6 +740,8 @@ def _scheduler():
             for r in memory.due_reminders():
                 _notify(f"Hatırlatma: {r['text']}", "reminder")
             automation.tick(_notify)
+            if n % 6 == 2:      # ~30 sn: sabah brifingi zamanı geldi mi
+                automation.briefing_tick(_notify)
             habits.tick()
             semantic.index_tick()
             daily.alarm_tick(_notify)
@@ -795,6 +811,7 @@ routes = [
     Route("/api/music", music_api, methods=["POST"]),
     Route("/api/ambient", ambient_api, methods=["POST"]),
     Route("/api/update", update_api, methods=["GET", "POST"]),
+    Route("/api/autostart", autostart_api, methods=["GET", "POST"]),
     Route("/api/translate/{kind}", translate_api, methods=["POST"]),
     Route("/api/sci/molecule", sci_api),
     Route("/api/holo/file", holo_file),
