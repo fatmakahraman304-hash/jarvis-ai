@@ -1,14 +1,12 @@
 {
-  "version": "3.5.1",
+  "version": "3.5.2",
   "date": "2026-11-05",
   "notes": [
+    "Tamamen ücretsiz kullanım: Gemini 3.8 Flash'ın ücretsiz günlük hakkı dolunca JARVIS otomatik olarak ücretsiz Gemini 3.6'ya geçer, kota yenilenince 3.8'e döner (her mesajda boşuna denemez)",
+    "Arka plan işleri (brifing, özet, çeviri, planlama) geniş ücretsiz kotalı hafif modelle yapılır; 3.8'in hakkı sohbete kalır",
+    "Ayarlar > MODELLER listesinde kotası dolan model ve yenilenme saati görünür",
     "Beyin yükseltmesi: Gemini artık en yeni Gemini 3.8 Flash (eski 2.5 sabitlemeleri otomatik kaldırıldı)",
     "3.8'in kotası dolarsa JARVIS susmaz: önce Gemini 3.6, sonra diğer sağlayıcılar",
-    "Ayarlar > MODELLER: her sağlayıcının altında hangi modelin çalıştığı görünür, istersen listeden elle seçebilirsin",
-    "Gmail ve Takvim kurulum sihirbazı: Ayarlar > BAĞLANTILAR'da 5 adım; yapıştırdığın anahtarları anında denetler, Google'a sorup doğrular, bağlandıktan sonra 'BAĞLANTIYI DENE' ile gerçek test",
-    "Telegram /panel: düğmeli uzaktan kumanda — 🔒 Kilitle, 😴 Uyut (önce 'emin misin?' sorar), 📸 Ekran, 🖥 Durum, 🔇 Ses, ☀️ Brifing, ⛔ Acil dur",
-    "Telegram /ekran: bilgisayarın ekran görüntüsü telefonuna gelir (kapatmak için Ayarlar > BAĞLANTILAR). Sesle de olur: 'ekranı telefonuma at'",
-    "Telegram sesli cevap artık gerçek sesli mesaj; /ses ile aç/kapat, ayar kalıcı. Sesli mesaj atınca JARVIS de sesle cevap verir",
-    "Telegram'da '/' menüsü: tüm komutlar telefonda listelenir"
+    "Ayarlar > MODELLER: her sağlayıcının altında hangi modelin çalıştığı görünür, istersen listeden elle seçebilirsin"
   ]
 }

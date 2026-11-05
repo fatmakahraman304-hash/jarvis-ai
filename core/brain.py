@@ -225,14 +225,15 @@ def resolve(pending_id, approve=True):
     yield from chat(note, item["persona"], item["session"], item["source"], hidden=True)
 
 
-def ask(prompt, system="", persona_id=None):
-    """Araçsız tek seferlik model çağrısı (planlama, değerlendirme). Metin döner."""
+def ask(prompt, system="", persona_id=None, light=True):
+    """Araçsız tek seferlik model çağrısı (planlama, değerlendirme). Metin döner.
+    light=True: ücretsiz kotası geniş hafif model (sohbetin güçlü modelinin günlük hakkı korunur)."""
     settings = load_settings()
     persona = personas.get(persona_id or settings.get("persona"))
     order = settings["personas"].get(persona["id"], {}).get("providers", [])
     msgs = ([{"role": "system", "content": system}] if system else []) + [{"role": "user", "content": prompt}]
     out = ""
-    for kind, data in llm.route(order, msgs, None):
+    for kind, data in llm.route(order, msgs, None, light=light):
         if kind == "text":
             out += data
         elif kind == "error":

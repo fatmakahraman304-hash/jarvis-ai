@@ -710,7 +710,9 @@ async def models(request):
         return JSONResponse({"models": [], "selected": "", "auto": "", "pinned": ""})
     llm.list_models(pid, refresh)
     return JSONResponse({"models": llm.ranked_models(pid), "selected": llm.pick_model(pid),
-                         "auto": (llm.ranked_models(pid) or [""])[0], "pinned": env(f"{pid.upper()}_MODEL")})
+                         "auto": llm.pick_model(pid) if not env(f"{pid.upper()}_MODEL") else (llm.ranked_models(pid) or [""])[0],
+                         "pinned": env(f"{pid.upper()}_MODEL"),
+                         "kota_doldu": {m: time.strftime("%H:%M", time.localtime(t)) for m in llm.ranked_models(pid) if (t := llm.cooling(pid, m))}})
 
 
 ALLOWED_KEYS = {p["key_env"] for p in llm.PROVIDERS.values() if p["key_env"]} | {

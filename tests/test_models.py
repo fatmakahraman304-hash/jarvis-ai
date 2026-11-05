@@ -56,6 +56,30 @@ llm.stream_chat = fake_stream
 evs = list(llm.route(["gemini"], [{"role": "user", "content": "selam"}], None))
 check("3.8 kotası dolunca 3.6 ile cevap verir", seen == ["gemini-3.8-flash", "gemini-3.6-flash"] and ("text", "merhaba") in evs, seen)
 
+check("kotası dolan 3.8 kenara alındı → sonraki mesaj doğrudan 3.6", llm.pick_model("gemini") == "gemini-3.6-flash")
+llm._cooldown.clear(); seen.clear()
+
+
+def daily_429(pid, model, messages, tools=None, temperature=0.7, timeout=90):
+    seen.append(model)
+    if model == "gemini-3.8-flash":
+        raise llm.ProviderError(pid, 429, '{"error":{"details":[{"quotaId":"GenerateRequestsPerDayPerProjectPerModel-FreeTier"}]}}')
+    yield ("text", "ok")
+    yield ("final", {"content": "ok", "tool_calls": []})
+
+
+llm.stream_chat = daily_429
+list(llm.route(["gemini"], [{"role": "user", "content": "a"}], None))
+t = llm.cooling("gemini", "gemini-3.8-flash")
+import time as _t  # noqa: E402
+check("günlük kota dolunca yarın yenilenene kadar atlanır", t - _t.time() > 120 and t - _t.time() <= 86400 + 600)
+seen.clear(); list(llm.route(["gemini"], [{"role": "user", "content": "b"}], None))
+check("ikinci mesajda 3.8 hiç denenmez (boşuna bekleme yok)", seen == ["gemini-3.6-flash"], seen)
+llm._cooldown.clear(); seen.clear()
+list(llm.route(["gemini"], [{"role": "user", "content": "c"}], None, light=True))
+check("arka plan işleri hafif ücretsiz modelle (3.5 Flash-Lite)", seen == ["gemini-3.5-flash-lite"], seen)
+llm._cooldown.clear()
+
 # eski sabitlemelerin temizlenmesi
 from core import server  # noqa: E402
 from core.config import load_settings, save_settings  # noqa: E402

@@ -24,6 +24,8 @@ PROVIDERS = {
         "base": "https://generativelanguage.googleapis.com/v1beta/openai",
         "key_env": "GEMINI_API_KEY",
         "prefer": ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-flash-latest", "gemini-3.5-flash-lite", "gemini-2.5-flash", "gemini-2.5-flash-lite"],
+        # arka plan işleri (brifing, özet, çeviri…) için: ücretsiz kotası geniş hafif modeller → 3.8'in günlük hakkı sohbete kalır
+        "light": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-flash-lite-latest", "gemini-2.5-flash-lite"],
         "free": True,
     },
     "groq": {
@@ -184,6 +186,35 @@ def ranked_models(pid):
     return out + [m for m in available if m not in out]
 
 
+# ---- ücretsiz kota takibi: kotası dolan model, kota yenilenene kadar atlanır (her mesajda boşuna denenmez) ----
+_cooldown = {}  # (pid, model) -> bu zamana kadar kullanma
+
+
+def _quota_reset_ts():
+    """Google ücretsiz günlük kotası Pasifik gece yarısı yenilenir (~08:00 UTC)."""
+    import datetime as _dt
+    now = _dt.datetime.now(_dt.timezone.utc)
+    nxt = now.replace(hour=8, minute=5, second=0, microsecond=0)
+    if nxt <= now:
+        nxt += _dt.timedelta(days=1)
+    return nxt.timestamp()
+
+
+def mark_exhausted(pid, model, body=""):
+    b = (body or "").lower()
+    daily = any(x in b for x in ("perday", "per day", "per_day", "requests per day", "rpd", "daily"))
+    _cooldown[(pid, model)] = _quota_reset_ts() if daily else time.time() + 65
+    return daily
+
+
+def cooling(pid, model):
+    t = _cooldown.get((pid, model), 0)
+    if t and t > time.time():
+        return t
+    _cooldown.pop((pid, model), None)
+    return 0
+
+
 def pick_model(pid, override=""):
     if override:
         return override
@@ -193,14 +224,16 @@ def pick_model(pid, override=""):
     prefer = PROVIDERS[pid]["prefer"]
     if list_models(pid):
         r = ranked_models(pid)
-        return r[0] if r else list_models(pid)[0]
-    return prefer[0] if prefer else ""
+        ready = [m for m in r if not cooling(pid, m)]
+        return (ready or r or list_models(pid))[0]
+    ready = [m for m in prefer if not cooling(pid, m)]
+    return (ready or prefer or [""])[0]
 
 
 def next_model(pid, current, tried):
     """Model kota/erişim hatası verirse AYNI sağlayıcıda bir sonraki en iyi model."""
     for m in ranked_models(pid) or PROVIDERS[pid]["prefer"]:
-        if m != current and m not in tried:
+        if m != current and m not in tried and not cooling(pid, m):
             return m
     return ""
 
@@ -326,7 +359,17 @@ def _tools_unsupported(err):
     return err.status in (400, 404, 422) and ("tool" in b or "function" in b)
 
 
-def route(order, messages, tools, model_override=""):
+def light_model(pid):
+    if env(f"{pid.upper()}_MODEL") or not PROVIDERS[pid].get("light"):
+        return ""
+    avail = set(list_models(pid))
+    for m in PROVIDERS[pid]["light"]:
+        if (m in avail or not avail) and not cooling(pid, m):
+            return m
+    return ""
+
+
+def route(order, messages, tools, model_override="", light=False):
     """Sağlayıcıları sırayla dener; kota/hata olursa sıradakine geçer (tek beyin, çok model).
 
     Olay üretir: ("provider", {...}), ("text", parça), ("final", {...}), ("error", metin)
@@ -339,6 +382,8 @@ def route(order, messages, tools, model_override=""):
         return
     for i, pid in enumerate(candidates):
         model = pick_model(pid, model_override if i == 0 else "")
+        if light and not (model_override and i == 0):
+            model = light_model(pid) or model
         if not model:
             continue
         use_tools = tools
@@ -363,6 +408,8 @@ def route(order, messages, tools, model_override=""):
                     continue
                 if e.status == 404 and attempt == 0:
                     list_models(pid, refresh=True)  # model adı eskimiş olabilir: listeyi yenile
+                if e.status == 429:
+                    mark_exhausted(pid, model, e.body)
                 if e.status in (403, 404, 429) and len(used) < 3:
                     # bu model kotada/erişilemez: aynı sağlayıcının bir sonraki en iyi modeline geç (ör. 3.8 → 3.6)
                     nm = next_model(pid, model, used)

@@ -365,7 +365,8 @@
         JV.api(`/api/models/${p.id}`).then((r) => {
           if (!r.models || !r.models.length) { ms.remove(); return; }
           const a = el("option", "", `otomatik · ${r.auto}`); a.value = ""; ms.append(a);
-          r.models.forEach((m) => { const o = el("option", "", m); o.value = m; ms.append(o); });
+          const kd = r.kota_doldu || {};
+          r.models.forEach((m) => { const o = el("option", "", m + (kd[m] ? ` · kota doldu (${kd[m]}'de yenilenir)` : "")); o.value = m; ms.append(o); });
           ms.value = r.pinned || "";
           const dl = document.getElementById("ml-" + p.id) || document.body.appendChild(Object.assign(document.createElement("datalist"), { id: "ml-" + p.id }));
           dl.innerHTML = r.models.map((m) => `<option value="${m}">`).join("");
