@@ -1,13 +1,12 @@
 {
-  "version": "3.7.2",
+  "version": "3.7.3",
   "date": "2026-11-05",
   "notes": [
+    "'İŞLENİYOR'da takılı kalma düzeltildi: Gemini'ye akışlı değil tek parça istek (bazı bilgisayarlarda antivirüs/ağ taraması akışı bekletiyordu); 45 sn'de cevap gelmezse sıradaki Gemini modeli",
+    "Bir cevap için en fazla ~100 sn: süre dolarsa JARVIS eldeki bilgiyle mutlaka cevap verir; aynı aracı tekrar tekrar çağırma döngüsü kırılır",
+    "Ekranda ne yaptığı görünür: 'DÜŞÜNÜYOR · gemini-3.8-flash', 'İNTERNETTE ARIYOR'… Siyah pencerede her adımın süresi yazar",
     "Çok daha hızlı: Gemini 3 'hızlı düşünme' modunda; internet araması tüm kaynaklara AYNI ANDA sorar ve en fazla ~12 sn bekler (eskiden sırayla, dakikalar sürebiliyordu)",
     "JARVIS bilgi aramak için artık tarayıcı açıp siteleri gezmez; tek aramayla cevaplar (tarayıcıyı sadece sen isteyince ya da form/giriş işlerinde kullanır)",
-    "'TimeoutError' hatası düzeltildi: model zamanında cevap vermezse JARVIS takılmaz, sıradaki Gemini modeliyle cevap verir; takılan araçlar süre sınırıyla kesilir",
-    "Siyah pencerede her sesli komutun kaydı görünür ([ses] … → ne duyuldu) — ses sorunlarını görmek için",
-    "Gemini 3.8 'yoğun' (503) derse JARVIS artık pes etmez: bir kez tekrar dener, olmazsa anında Gemini 3.6 ile cevap verir; yoğun model 2 dk kenara alınır",
-    "Yeni 'AQ.' Gemini anahtarları artık çalışıyor: JARVIS Gemini'ye Google'ın kendi resmi yolundan bağlanıyor ('API key not valid' hatası bundandı)",
-    "Ses tanıma yenilendi: konuşmanı Gemini yazıya döker (yedek: Whisper); ortam gürültüsüne kendini ayarlar, kısık mikrofonu yükseltir, dinlerken ses seviyesi çubuğu görünür"
+    "'TimeoutError' hatası düzeltildi: model zamanında cevap vermezse JARVIS takılmaz, sıradaki Gemini modeliyle cevap verir; takılan araçlar süre sınırıyla kesilir"
   ]
 }

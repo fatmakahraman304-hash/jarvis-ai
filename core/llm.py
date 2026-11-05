@@ -396,7 +396,7 @@ def stream_chat(pid, model, messages, tools=None, temperature=0.7, timeout=90):
     if pid == "gemini":
         from . import gemini_native
         try:
-            yield from gemini_native.stream(_key(pid), model, messages, tools, temperature, min(timeout, 60))
+            yield from gemini_native.stream(_key(pid), model, messages, tools, temperature, min(timeout, gemini_native.TIMEOUT))
         except gemini_native.NativeError as e:
             raise ProviderError(pid, e.status, e.body)
         return

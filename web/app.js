@@ -120,10 +120,14 @@
 
   function handleEvent(ev, body, sent) {
     switch (ev.type) {
-      case "provider": $("#model-badge").textContent = `MODEL: ${ev.label} · ${ev.model}`; break;
+      case "provider": $("#model-badge").textContent = `MODEL: ${ev.label} · ${ev.model}`; setStatus("thinking", "DÜŞÜNÜYOR · " + ev.model); break;
       case "token": body.textContent += ev.text; sent.push(ev.text); scrollLog(); break;
       case "tool":
-        if (ev.status === "running") { const t = el("div", "msg tool", `⚙ ${ev.name} …`); body.parentElement.before(t); scrollLog(); }
+        if (ev.status === "running") {
+          const t = el("div", "msg tool", `⚙ ${ev.name} …`); body.parentElement.before(t); scrollLog();
+          const nice = { web_search: "İNTERNETTE ARIYOR", news_search: "HABERLERE BAKIYOR", read_webpage: "SAYFAYI OKUYOR", weather: "HAVA DURUMUNA BAKIYOR" }[ev.name];
+          setStatus("thinking", nice || ("ÇALIŞIYOR: " + ev.name));
+        }
         if (ev.status === "done" && ev.result && ev.result.startsWith("{") && ev.result.includes('"ui"') && JV.uiCommand) { try { JV.uiCommand(ev.name, ev.args, ev.result); } catch (e) { console.warn(e); } }
         break;
       case "confirm": showConfirm(ev); break;

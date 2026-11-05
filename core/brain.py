@@ -16,7 +16,8 @@ import time
 from . import llm, memory, personas, tools
 from .config import load_settings
 
-MAX_STEPS = 10
+MAX_STEPS = 8
+TURN_BUDGET = 100  # bir cevap için en fazla bu kadar saniye araç/model döngüsü; sonra eldekiyle cevap verilir
 _pending = {}
 _plock = threading.Lock()
 
@@ -145,7 +146,12 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
     if guest:
         groups -= GUEST_BLOCKED
 
+    turn_t0 = time.time()
+    seen_calls = {}
     for _step in range(MAX_STEPS):
+        if time.time() - turn_t0 > TURN_BUDGET:
+            print(f"[beyin] {TURN_BUDGET} sn doldu, eldeki bilgiyle cevaplanıyor")
+            break
         if _estop() and source == "auto":
             yield {"type": "error", "text": "Acil durdurma etkin: otomatik işlem yapılmadı."}
             break
@@ -189,9 +195,16 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
                 yield {"type": "confirm", "id": pid, "name": name, "args": args, "text": describe(name, args)}
                 result = (f"BU İŞLEM KULLANICI ONAYI BEKLİYOR (onay kodu {pid}). Henüz yapılmadı. "
                           "Kullanıcıya kısaca onay vermesi gerektiğini söyle.")
+            elif (name, json.dumps(args, sort_keys=True, ensure_ascii=False)) in seen_calls:
+                # aynı aracı aynı parametrelerle tekrar çağırma döngüsünü kır
+                result = seen_calls[(name, json.dumps(args, sort_keys=True, ensure_ascii=False))] + \
+                    "\n(NOT: Bu aracı az önce aynı şekilde çağırdın; sonuç yukarıda. Tekrar çağırma, şimdi cevap ver.)"
             else:
                 yield {"type": "tool", "name": name, "args": args, "status": "running"}
+                t1 = time.time()
                 result = tools.execute(name, args)
+                print(f"[araç] {name} {time.time() - t1:.1f} sn")
+                seen_calls[(name, json.dumps(args, sort_keys=True, ensure_ascii=False))] = result[:4000]
                 yield {"type": "tool", "name": name, "args": args, "status": "done",
                        "result": result[:30000] if (result.startswith('{') and '"ui": "' in result[:30000]) else result[:600]}
             messages.append({"role": "tool", "tool_call_id": call["id"], "name": name, "content": result})

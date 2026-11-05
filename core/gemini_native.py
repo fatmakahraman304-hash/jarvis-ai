@@ -150,10 +150,11 @@ class NativeError(Exception):
         self.status, self.body = status, body
 
 
+TIMEOUT = 45  # sn: bu sürede cevap gelmezse sıradaki Gemini modeline geçilir
 _NO_THINK_CFG = set()  # bu ayarı kabul etmeyen modeller
 
 
-def stream(key, model, messages, tools=None, temperature=0.7, timeout=60):
+def stream(key, model, messages, tools=None, temperature=0.7, timeout=45):
     """("text", parça) ... ("final", {"content", "tool_calls"}) üretir — llm.stream_chat ile aynı sözleşme."""
     sys_inst, contents = convert(messages)
     body = {"contents": contents, "generationConfig": {"temperature": temperature}}
@@ -166,10 +167,14 @@ def stream(key, model, messages, tools=None, temperature=0.7, timeout=60):
     if t:
         body["tools"] = t
         body["toolConfig"] = {"functionCallingConfig": {"mode": "AUTO"}}
-    req = urllib.request.Request(f"{ROOT}/models/{model}:streamGenerateContent?alt=sse", data=json.dumps(body).encode("utf-8"),
+    # Akış yerine TEK PARÇA istek: bazı bilgisayarlarda antivirüs/ağ HTTPS taramaları akışlı (SSE) cevabı tutup
+    # bekletiyor ve JARVIS "İŞLENİYOR"da kalıyordu. Cevaplar zaten kısa; tek parça çok daha güvenilir.
+    t0 = time.time()
+    req = urllib.request.Request(f"{ROOT}/models/{model}:generateContent", data=json.dumps(body).encode("utf-8"),
                                  headers=headers(key), method="POST")
     try:
-        resp = urllib.request.urlopen(req, timeout=timeout)
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            data = json.loads(resp.read().decode("utf-8", "ignore"))
     except urllib.error.HTTPError as e:
         try:
             txt = e.read().decode("utf-8", "ignore")
@@ -179,41 +184,34 @@ def stream(key, model, messages, tools=None, temperature=0.7, timeout=60):
             _NO_THINK_CFG.add(model)  # bu model ayarı tanımıyor: ayarsız tekrar dene
             yield from stream(key, model, messages, tools, temperature, timeout)
             return
+        print(f"[gemini] {model} HTTP {e.code} ({time.time() - t0:.1f} sn): {txt[:160]}")
         raise NativeError(e.code, txt)
-    except (TimeoutError, OSError) as e:
+    except (TimeoutError, OSError, ValueError) as e:
+        print(f"[gemini] {model} cevap vermedi ({time.time() - t0:.1f} sn): {e}")
         raise NativeError(504, f"bağlantı/zaman aşımı: {e}")
-    content, calls, blocked = [], [], ""
-    with resp:
-        for raw in _lines(resp, content):
-            line = raw.decode("utf-8", "ignore").strip()
-            if not line.startswith("data:"):
+    if data.get("error"):
+        err = data["error"]
+        raise NativeError(int(err.get("code") or 500), json.dumps(err, ensure_ascii=False))
+    content, calls = [], []
+    blocked = (data.get("promptFeedback") or {}).get("blockReason", "")
+    for cand in data.get("candidates") or []:
+        for p in (cand.get("content") or {}).get("parts") or []:
+            if p.get("thought"):  # iç düşünce özeti: kullanıcıya gösterme
                 continue
-            try:
-                chunk = json.loads(line[5:].strip())
-            except Exception:
-                continue
-            if chunk.get("error"):
-                err = chunk["error"]
-                raise NativeError(int(err.get("code") or 500), json.dumps(err, ensure_ascii=False))
-            if (chunk.get("promptFeedback") or {}).get("blockReason"):
-                blocked = chunk["promptFeedback"]["blockReason"]
-            for cand in chunk.get("candidates") or []:
-                for p in (cand.get("content") or {}).get("parts") or []:
-                    if p.get("thought"):  # iç düşünce özeti: kullanıcıya gösterme
-                        continue
-                    if p.get("text"):
-                        content.append(p["text"])
-                        yield ("text", p["text"])
-                    if p.get("functionCall"):
-                        fc = p["functionCall"]
-                        calls.append({"id": f"call_{len(calls)}_{int(time.time() * 1000)}", "type": "function",
-                                      "function": {"name": fc.get("name", ""), "arguments": json.dumps(fc.get("args") or {}, ensure_ascii=False)},
-                                      **({"thought_signature": p["thoughtSignature"]} if p.get("thoughtSignature") else {})})
-    if blocked and not content and not calls:
-        msg = "Bu isteğe Google'ın güvenlik filtresi cevap vermeye izin vermedi."
-        yield ("text", msg)
-        content.append(msg)
-    yield ("final", {"content": "".join(content), "tool_calls": calls})
+            if p.get("text"):
+                content.append(p["text"])
+            if p.get("functionCall"):
+                fc = p["functionCall"]
+                calls.append({"id": f"call_{len(calls)}_{int(time.time() * 1000)}", "type": "function",
+                              "function": {"name": fc.get("name", ""), "arguments": json.dumps(fc.get("args") or {}, ensure_ascii=False)},
+                              **({"thought_signature": p["thoughtSignature"]} if p.get("thoughtSignature") else {})})
+    print(f"[gemini] {model} {time.time() - t0:.1f} sn" + (f" · araç: {', '.join(c['function']['name'] for c in calls)}" if calls else ""))
+    text = "".join(content)
+    if blocked and not text and not calls:
+        text = "Bu isteğe Google'ın güvenlik filtresi cevap vermeye izin vermedi."
+    if text:
+        yield ("text", text)
+    yield ("final", {"content": text, "tool_calls": calls})
 
 
 def embed(key, model, texts, timeout=40):

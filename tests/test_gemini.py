@@ -51,15 +51,15 @@ class G(BaseHTTPRequestHandler):
         SEEN.append(("POST", self.path, dict(self.headers), body))
         if not self._auth_ok():
             self.send_response(400); self.end_headers(); self.wfile.write(b'{"error":{"code":400,"message":"API key not valid. Please pass a valid API key."}}'); return
-        self.send_response(200); self.send_header("Content-Type", "text/event-stream"); self.end_headers()
+        self.send_response(200); self.send_header("Content-Type", "application/json"); self.end_headers()
         has_resp = any("functionResponse" in p for c in body["contents"] for p in c["parts"])
         if body.get("tools") and not has_resp:
             ev = [{"candidates": [{"content": {"role": "model", "parts": [{"text": "düşünce", "thought": True},
                    {"functionCall": {"name": "web_search", "args": {"query": "dolar kuru"}}, "thoughtSignature": "SIG123"}]}}]}]
         else:
             ev = [{"candidates": [{"content": {"parts": [{"text": "Dolar "}]}}]}, {"candidates": [{"content": {"parts": [{"text": "41,2 TL."}]}}]}]
-        for e in ev:
-            self.wfile.write(("data: " + json.dumps(e) + "\r\n\r\n").encode())
+        parts = [p for e in ev for p in e["candidates"][0]["content"]["parts"]]
+        self.wfile.write(json.dumps({"candidates": [{"content": {"role": "model", "parts": parts}}]}).encode())
 
 
 srv = ThreadingHTTPServer(("127.0.0.1", 0), G)
@@ -97,7 +97,7 @@ post = [s for s in SEEN if s[0] == "POST"][-1][3]
 model_turn = [c for c in post["contents"] if c["role"] == "model"][0]
 check("ikinci adımda thoughtSignature Gemini'ye geri gönderilir", model_turn["parts"][0].get("thoughtSignature") == "SIG123")
 check("araç sonucu functionResponse olarak gider", post["contents"][-1]["parts"][0]["functionResponse"] == {"name": "web_search", "response": {"sonuç": "41,2"}})
-check("akışlı cevap birleşir", "".join(d for k, d in evs if k == "text") == "Dolar 41,2 TL." and evs[-1][1]["content"] == "Dolar 41,2 TL.")
+check("parçalı cevap birleşir", "".join(d for k, d in evs if k == "text") == "Dolar 41,2 TL." and evs[-1][1]["content"] == "Dolar 41,2 TL.")
 r = "".join(d for k, d in llm.route(["gemini"], [{"role": "user", "content": "selam"}], None) if k == "text")
 check("tam yol (route) yeni anahtarla çalışır", r == "Dolar 41,2 TL.", r)
 check("AQ. anahtar biçimi 'doğru' sayılır", "Sorun:" not in llm.key_diagnosis("gemini"), llm.key_diagnosis("gemini"))
