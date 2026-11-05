@@ -1,10 +1,9 @@
 {
-  "version": "3.3.1",
+  "version": "3.3.2",
   "date": "2026-11-05",
   "notes": [
-    "Ses laboratuvarı: Ayarlar > SES'te her kişilik için ses seçimi ve film efekt ayarları",
-    "Güncelleme penceresi artık arkada kalmıyor (eski ekran dosyaları önbellekten gelmiyor)",
-    "Ses tanıma açık ama kayıtlı ses yokken herkesi 'Misafir' sayma hatası düzeltildi",
-    "Windows'ta güncelleme testi için açılış bekleme süresi uzatıldı"
+    "Telegram: sertifikalar artık Windows'un kendi güven deposuyla doğrulanıyor (antivirüsün HTTPS taraması olan bilgisayarlarda bağlantı hatası düzelir)",
+    "Telegram bağlanamazsa sebebini açıkça söylüyor ve hatayı sürekli tekrarlamıyor",
+    "İsteğe bağlı TELEGRAM_PROXY ayarı"
   ]
 }

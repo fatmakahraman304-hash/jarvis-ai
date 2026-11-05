@@ -6,6 +6,7 @@
 """
 import asyncio
 import json
+import re
 import threading
 import time
 import urllib.parse
@@ -21,15 +22,60 @@ _voice_on = {}
 _persona = {}
 
 
+def _cert_diagnosis():
+    """api.telegram.org'a giderken araya giren sertifikayı tanımlar (hiçbir veri göndermeden, yalnızca sertifikayı okur)."""
+    import socket
+    import ssl
+    try:
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        with socket.create_connection(("api.telegram.org", 443), timeout=10) as raw, ctx.wrap_socket(raw, server_hostname="api.telegram.org") as tls:
+            der = tls.getpeercert(binary_form=True)
+        issuer = ""
+        try:
+            from cryptography import x509
+            c = x509.load_der_x509_certificate(der)
+            issuer = c.issuer.rfc4514_string()
+        except Exception:
+            m = re.findall(rb"[\x20-\x7e]{6,}", der)
+            issuer = ", ".join(x.decode() for x in m[:6])
+    except Exception as e:
+        return f"sertifika okunamadı ({e}). İnternet bağlantısını kontrol et."
+    hint = ("Bir antivirüs/güvenlik programı (" + issuer + ") şifreli bağlantıları denetliyor. JARVIS artık Windows'un güvendiği sertifikaları kullanıyor; "
+            "yine olmuyorsa o programın 'HTTPS/SSL tarama' ayarında python.exe'yi istisnaya ekle.") if any(k in issuer.lower() for k in ("kaspersky", "avast", "avg", "eset", "bitdefender", "norton", "mcafee", "fortinet", "sophos", "zscaler", "trend")) else (
+            f"Bağlantıya araya giren bir sertifika var ({issuer}). Bu ağ (modem, iş/okul ağı ya da internet sağlayıcısı) Telegram'ı engelliyor ya da yönlendiriyor olabilir. "
+            "Edge'de https://api.telegram.org adresini aç: sertifika uyarısı çıkıyorsa engel ağda; farklı ağ/VPN dene ya da .env'e TELEGRAM_PROXY=http://adres:port ekle.")
+    return hint
+
+
 def _allowed():
     return {x.strip() for x in env("TELEGRAM_ALLOWED_IDS").split(",") if x.strip()}
+
+
+def _urlopen(req, timeout=40):
+    """Telegram'a özel açıcı. Sertifikalar Windows'un kendi güven deposuyla doğrulanır (truststore; antivirüsün HTTPS taraması
+    gibi Windows'a tanıtılmış sertifikalar da kabul edilir). .env TELEGRAM_PROXY varsa yalnızca Telegram trafiği o vekilden geçer."""
+    handlers = []
+    try:
+        import ssl
+        import truststore  # type: ignore
+        handlers.append(urllib.request.HTTPSHandler(context=truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)))
+    except Exception:
+        pass
+    px = env("TELEGRAM_PROXY")
+    if px:
+        handlers.append(urllib.request.ProxyHandler({"https": px, "http": px}))
+    if handlers:
+        return urllib.request.build_opener(*handlers).open(req, timeout=timeout)
+    return urllib.request.urlopen(req, timeout=timeout)
 
 
 def _call(method, params=None, timeout=40):
     url = API.format(token=env("TELEGRAM_BOT_TOKEN"), method=method)
     data = json.dumps(params or {}).encode("utf-8")
     req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
+    with _urlopen(req, timeout=timeout) as r:
         return json.loads(r.read().decode("utf-8"))
 
 
@@ -42,13 +88,13 @@ def _send_file(method, field, chat_id, data, filename, mime, caption=""):
     parts.append(f"--{boundary}--\r\n".encode())
     req = urllib.request.Request(API.format(token=env("TELEGRAM_BOT_TOKEN"), method=method), data=b"".join(parts),
                                  headers={"Content-Type": f"multipart/form-data; boundary={boundary}"})
-    urllib.request.urlopen(req, timeout=120).read()
+    _urlopen(req, timeout=120).read()
 
 
 def _download(file_id):
     info = _call("getFile", {"file_id": file_id})
     path = info["result"]["file_path"]
-    with urllib.request.urlopen(f"https://api.telegram.org/file/bot{env('TELEGRAM_BOT_TOKEN')}/{path}", timeout=60) as r:
+    with _urlopen(f"https://api.telegram.org/file/bot{env('TELEGRAM_BOT_TOKEN')}/{path}", timeout=60) as r:
         return r.read(), path
 
 
@@ -63,7 +109,7 @@ def _send_audio(chat_id, audio_bytes, title):
     req = urllib.request.Request(API.format(token=env("TELEGRAM_BOT_TOKEN"), method="sendAudio"),
                                  data=b"".join(parts),
                                  headers={"Content-Type": f"multipart/form-data; boundary={boundary}"})
-    urllib.request.urlopen(req, timeout=60).read()
+    _urlopen(req, timeout=60).read()
 
 
 def send(chat_id, text):
@@ -175,8 +221,21 @@ def _loop():
                     continue
                 threading.Thread(target=_safe_handle, args=(chat_id, text), daemon=True).start()
         except Exception as e:
-            print("[telegram]", e)
-            time.sleep(5)
+            fails = getattr(_loop, "fails", 0) + 1
+            _loop.fails = fails
+            if "CERTIFICATE_VERIFY_FAILED" in str(e):
+                if fails == 1:
+                    print("[telegram]", _cert_diagnosis())
+                    try:
+                        from . import memory
+                        memory.notify("Telegram bağlanamıyor: " + _cert_diagnosis(), "error")
+                    except Exception:
+                        pass
+            elif fails <= 3 or fails % 20 == 0:
+                print("[telegram]", e)
+            time.sleep(min(300, 5 * fails))  # sürekli hata basmasın: giderek seyrek dene
+            continue
+        _loop.fails = 0
 
 
 def _safe_media(chat_id, msg):
