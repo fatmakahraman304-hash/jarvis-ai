@@ -1,12 +1,13 @@
 {
-  "version": "3.5.3",
+  "version": "3.5.4",
   "date": "2026-11-05",
   "notes": [
+    "Canlı internet araması yenilendi: Google Arama (Gemini ile, ücretsiz) + Bing + DuckDuckGo + Google Haberler; biri engellenirse diğeri devreye girer",
+    "JARVIS artık güncel olabilecek her şeyi (haber, fiyat, kişi, sürüm, skor) kendi eski bilgisinden değil, aramadan cevaplar ve bilginin tarihini söyler",
+    "Yeni araç: tarihli canlı haber araması",
+    "'[anlamsal hafıza] HTTP Error 400' hatası düzeltildi (Gemini'nin kendi uç noktasına otomatik geçiş, küçük paketler)",
     "Groq beyni en güçlü ücretsiz modele yükseltildi: GPT-OSS 120B (günde 1000 ücretsiz istek); dolarsa Qwen 3.8 → Llama 3.3 70B",
     "Groq'ta arka plan işleri hafif GPT-OSS 20B ile; eski Llama sabitlemeleri otomatik kaldırıldı",
-    "Düşünen modellerin iç düşüncesi (<think>) artık cevaba ve sese karışmaz",
-    "Tamamen ücretsiz kullanım: Gemini 3.8 Flash'ın ücretsiz günlük hakkı dolunca JARVIS otomatik olarak ücretsiz Gemini 3.6'ya geçer, kota yenilenince 3.8'e döner (her mesajda boşuna denemez)",
-    "Arka plan işleri (brifing, özet, çeviri, planlama) geniş ücretsiz kotalı hafif modelle yapılır; 3.8'in hakkı sohbete kalır",
-    "Ayarlar > MODELLER listesinde kotası dolan model ve yenilenme saati görünür"
+    "Düşünen modellerin iç düşüncesi (<think>) artık cevaba ve sese karışmaz"
   ]
 }

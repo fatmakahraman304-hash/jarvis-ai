@@ -14,6 +14,7 @@ import shutil
 import subprocess
 import sys
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 import webbrowser
@@ -375,23 +376,158 @@ def big_files(root="", min_mb=200, limit=20):
 
 
 # ===================== İNTERNET =====================
-def web_search(query, max_results=6):
-    url = "https://html.duckduckgo.com/html/?" + urllib.parse.urlencode({"q": query, "kl": "tr-tr"})
-    try:
-        page = _http_get(url)
-    except Exception as e:
-        return f"Arama yapılamadı: {e}"
-    results = []
-    blocks = re.findall(r'<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>(.*?)</a>.*?(?:class="result__snippet"[^>]*>(.*?)</a>)?',
-                        page, re.S)
-    for href, title, snip in blocks:
+# ---- canlı arama: birden çok kaynak, biri engellenirse diğeri (hepsi ücretsiz, anahtarsız) ----
+def _clean(s):
+    return html.unescape(re.sub(r"<[^>]+>", "", s or "")).strip()
+
+
+def _bing_url(href):
+    """Bing bazen linki /ck/a?...&u=a1<base64> içine sarar; gerçek adresi çıkar."""
+    if "bing.com/ck/a" in href and "u=a1" in href:
+        import base64
+        enc = urllib.parse.unquote(href.split("u=a1", 1)[1].split("&", 1)[0])
+        try:
+            return base64.urlsafe_b64decode(enc + "=" * (-len(enc) % 4)).decode("utf-8", "ignore")
+        except Exception:
+            return href
+    return html.unescape(href)
+
+
+def _search_bing(query, n):
+    page = _http_get("https://www.bing.com/search?" + urllib.parse.urlencode({"q": query, "setlang": "tr", "cc": "TR", "count": 15}))
+    out = []
+    for blk in re.findall(r'<li class="b_algo"(.*?)</li>', page, re.S):
+        m = re.search(r'<h2[^>]*>\s*<a[^>]+href="([^"]+)"[^>]*>(.*?)</a>', blk, re.S)
+        if not m:
+            continue
+        sn = re.search(r'<p[^>]*>(.*?)</p>', blk, re.S) or re.search(r'class="b_caption"[^>]*>(.*?)</div>', blk, re.S)
+        out.append({"başlık": _clean(m.group(2)), "özet": _clean(sn.group(1) if sn else ""), "link": _bing_url(m.group(1))})
+        if len(out) >= n:
+            break
+    return out
+
+
+def _search_ddg(query, n):
+    req = urllib.request.Request("https://html.duckduckgo.com/html/", data=urllib.parse.urlencode({"q": query, "kl": "tr-tr"}).encode(),
+                                 headers={"User-Agent": UA, "Accept-Language": "tr,en;q=0.8", "Content-Type": "application/x-www-form-urlencoded"})
+    with urllib.request.urlopen(req, timeout=12) as r:
+        page = r.read(2_000_000).decode("utf-8", "ignore")
+    if "anomaly" in page and "result__a" not in page:
+        raise RuntimeError("DuckDuckGo robot doğrulaması istedi")
+    out = []
+    for href, title, snip in re.findall(r'<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>(.*?)</a>.*?(?:class="result__snippet"[^>]*>(.*?)</a>)?', page, re.S):
         if "uddg=" in href:
             href = urllib.parse.unquote(href.split("uddg=")[1].split("&")[0])
-        clean = lambda s: html.unescape(re.sub(r"<[^>]+>", "", s or "")).strip()
-        results.append({"başlık": clean(title), "özet": clean(snip), "link": href})
-        if len(results) >= int(max_results):
+        if "duckduckgo.com/y.js" in href:  # reklam
+            continue
+        out.append({"başlık": _clean(title), "özet": _clean(snip), "link": href})
+        if len(out) >= n:
             break
-    return results or "Sonuç bulunamadı."
+    return out
+
+
+def _search_ddg_lite(query, n):
+    page = _http_get("https://lite.duckduckgo.com/lite/?" + urllib.parse.urlencode({"q": query, "kl": "tr-tr"}))
+    links = re.findall(r"<a[^>]+href=\"([^\"]+)\"[^>]*class=['\"]result-link['\"][^>]*>(.*?)</a>", page, re.S)
+    snips = re.findall(r"class=['\"]result-snippet['\"][^>]*>(.*?)</td>", page, re.S)
+    out = []
+    for i, (href, title) in enumerate(links):
+        if "uddg=" in href:
+            href = urllib.parse.unquote(href.split("uddg=")[1].split("&")[0])
+        out.append({"başlık": _clean(title), "özet": _clean(snips[i] if i < len(snips) else ""), "link": href})
+        if len(out) >= n:
+            break
+    return out
+
+
+def news_search(query, max_results=8):
+    """Google Haberler (canlı, tarihli). Anahtar gerekmez."""
+    import xml.etree.ElementTree as ET
+    from email.utils import parsedate_to_datetime
+    raw = _http_get("https://news.google.com/rss/search?" + urllib.parse.urlencode({"q": query, "hl": "tr", "gl": "TR", "ceid": "TR:tr"}))
+    out = []
+    for it in ET.fromstring(raw.encode("utf-8")).iter("item"):
+        when = it.findtext("pubDate") or ""
+        try:
+            when = parsedate_to_datetime(when).astimezone().strftime("%d.%m.%Y %H:%M")
+        except Exception:
+            pass
+        out.append({"başlık": _clean(it.findtext("title")), "kaynak": _clean(it.findtext("source")), "tarih": when, "link": it.findtext("link") or ""})
+        if len(out) >= int(max_results):
+            break
+    return out or "Haber bulunamadı."
+
+
+def _grounded(query):
+    """Gemini + Google Arama (canlı): kısa güncel cevap + kaynaklar. Ücretsiz kotası dolarsa sessizce atlanır."""
+    from . import llm
+    if not llm.configured("gemini"):
+        return None
+    tried = []
+    for model in (llm.light_model("gemini"), llm.pick_model("gemini")):
+        if not model or model in tried or llm.cooling("gemini", model):
+            continue
+        tried.append(model)
+        body = {"contents": [{"role": "user", "parts": [{"text": f"Bugün {time.strftime('%d.%m.%Y')}. Google'da arayıp EN GÜNCEL bilgiyle, "
+                                                                  f"tarih belirterek kısa Türkçe cevapla: {query}"}]}],
+                "tools": [{"google_search": {}}]}
+        req = urllib.request.Request(f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+                                     data=json.dumps(body).encode(), method="POST",
+                                     headers={"Content-Type": "application/json", "x-goog-api-key": llm._key("gemini")})
+        try:
+            with urllib.request.urlopen(req, timeout=30) as r:
+                data = json.loads(r.read())
+        except urllib.error.HTTPError as e:
+            if e.code == 429:
+                llm.mark_exhausted("gemini", model, e.read().decode("utf-8", "ignore"))
+            continue
+        except Exception:
+            continue
+        cand = (data.get("candidates") or [{}])[0]
+        text = "".join(p.get("text", "") for p in (cand.get("content") or {}).get("parts", [])).strip()
+        meta = cand.get("groundingMetadata") or {}
+        srcs = [{"başlık": (c.get("web") or {}).get("title", ""), "link": (c.get("web") or {}).get("uri", "")} for c in meta.get("groundingChunks", [])][:6]
+        if text:
+            return {"kaynak": "Google Arama (canlı, Gemini)", "cevap": text, "kaynaklar": srcs}
+    return None
+
+
+_NEWSY = re.compile(r"haber|son dakika|bugün|dün|şu an|şimdi|güncel|en son|en yeni|son durum|maç|skor|seçim|deprem|fiyat|kur|borsa|"
+                    r"\b20[2-3]\d\b|news|latest|today", re.I)
+
+
+def web_search(query, max_results=6, recent=False):
+    """Canlı web araması: Gemini+Google (varsa) → Bing → DuckDuckGo → DuckDuckGo Lite; haber/güncel sorularda Google Haberler da eklenir."""
+    n = int(max_results)
+    out, errors = {}, []
+    want_news = recent or bool(_NEWSY.search(query))
+    g = _grounded(query)
+    if g:
+        out["canlı_cevap"] = g
+    results = []
+    for name, fn in (("bing", _search_bing), ("duckduckgo", _search_ddg), ("duckduckgo-lite", _search_ddg_lite)):
+        try:
+            results = fn(query, n)
+        except Exception as e:
+            errors.append(f"{name}: {str(e)[:60]}")
+            results = []
+        if results:
+            out["motor"] = name
+            break
+    if results:
+        out["sonuçlar"] = results
+    if want_news or not results:
+        try:
+            nw = news_search(query, 6)
+            if isinstance(nw, list) and nw:
+                out["haberler"] = nw
+        except Exception as e:
+            errors.append(f"haberler: {str(e)[:60]}")
+    if not out:
+        return "Arama yapılamadı (" + "; ".join(errors) + "). İnternet bağlantısını kontrol et."
+    out["not"] = (f"Bugün {time.strftime('%d.%m.%Y')}. Bu sonuçlar CANLI; kendi eski bilginle çelişirse bunlara güven. "
+                  "Ayrıntı gerekiyorsa read_webpage ile en ilgili linki aç.")
+    return out
 
 
 def read_webpage(url, max_chars=7000):
@@ -499,7 +635,8 @@ TOOLS = {
     "move_file": (move_file, _schema("Dosya taşır / yeniden adlandırır.", {"src": S("kaynak"), "dst": S("hedef")},
                   ["src", "dst"]), True),
     "delete_file": (delete_file, _schema("Dosyayı geri dönüşüm kutusuna gönderir.", {"path": S("yol")}, ["path"]), True),
-    "web_search": (web_search, _schema("İnternette arar; güncel bilgi, haber, fiyat için.",
+    "news_search": (news_search, _schema("Google Haberler'de CANLI haber arar (tarihli, kaynaklı).", {"query": S("konu"), "max_results": N("adet")}, ["query"]), False),
+    "web_search": (web_search, _schema("İnternette CANLI arar (Google/Bing/DuckDuckGo + haberler). Güncel olabilecek HER şey için önce bunu kullan: haber, fiyat, kişi, sürüm, skor, etkinlik, 'en son/en yeni'.",
                    {"query": S("arama")}, ["query"]), False),
     "read_webpage": (read_webpage, _schema("Bir web sayfasının metnini okur.", {"url": S("adres")}, ["url"]), False),
     "weather": (weather, _schema("Hava durumu.", {"city": S("şehir")}), False),

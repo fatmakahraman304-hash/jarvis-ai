@@ -5,6 +5,7 @@ import json
 import math
 import threading
 import time
+import urllib.error
 import urllib.request
 
 from .. import llm, memory
@@ -22,22 +23,74 @@ _last = [0.0]
 _disabled_until = [0.0]
 
 
+_working = {}  # pid -> çalıştığı doğrulanan embedding modeli
+
+
 def _provider():
     for pid, model in EMBED:
         if llm.configured(pid):
-            return pid, env(f"{pid.upper()}_EMBED_MODEL") or model
+            return pid, env(f"{pid.upper()}_EMBED_MODEL") or _working.get(pid) or model
     return None, None
+
+
+def _candidates(pid, first):
+    """Önce ayarlı model, sonra bu hesapta gerçekten açık olan embedding modelleri (Google model adını değiştirirse kendini onarır)."""
+    out = [first]
+    try:
+        out += sorted((m for m in llm.list_models(pid) if "embed" in m and m not in out), key=lambda m: ("gemini" not in m, m), reverse=False)
+    except Exception:
+        pass
+    return out
+
+
+def _post(pid, model, texts):
+    req = urllib.request.Request(llm._base(pid) + "/embeddings", data=json.dumps({"model": model, "input": texts}).encode(),
+                                 headers=llm._headers(pid), method="POST")
+    with urllib.request.urlopen(req, timeout=40) as r:
+        data = json.loads(r.read())
+    return [d["embedding"] for d in sorted(data["data"], key=lambda d: d.get("index", 0))]
+
+
+def _post_gemini_native(model, texts):
+    """Gemini'nin kendi uç noktası (OpenAI uyumlu katman hata verirse)."""
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:batchEmbedContents"
+    body = {"requests": [{"model": f"models/{model}", "content": {"parts": [{"text": t}]}} for t in texts]}
+    req = urllib.request.Request(url, data=json.dumps(body).encode(), method="POST",
+                                 headers={"Content-Type": "application/json", "x-goog-api-key": llm._key("gemini")})
+    with urllib.request.urlopen(req, timeout=40) as r:
+        data = json.loads(r.read())
+    return [e["values"] for e in data["embeddings"]]
 
 
 def embed(texts):
     pid, model = _provider()
     if not pid:
         return None, None
-    req = urllib.request.Request(llm._base(pid) + "/embeddings", data=json.dumps({"model": model, "input": texts}).encode(),
-                                 headers=llm._headers(pid), method="POST")
-    with urllib.request.urlopen(req, timeout=40) as r:
-        data = json.loads(r.read())
-    return f"{pid}:{model}", [d["embedding"] for d in sorted(data["data"], key=lambda d: d.get("index", 0))]
+    texts = [t if t.strip() else "." for t in texts]  # boş metin 400 verir
+    last = None
+    for m in _candidates(pid, model):
+        try:
+            vecs = []
+            for i in range(0, len(texts), 16):  # küçük paketler: büyük toplu istek 400 verebiliyor
+                part = texts[i:i + 16]
+                try:
+                    vecs += _post(pid, m, part)
+                except urllib.error.HTTPError:
+                    if pid != "gemini":
+                        raise
+                    vecs += _post_gemini_native(m, part)
+            _working[pid] = m
+            return f"{pid}:{m}", vecs
+        except urllib.error.HTTPError as e:
+            body = ""
+            try:
+                body = e.read().decode("utf-8", "ignore")[:200]
+            except Exception:
+                pass
+            last = RuntimeError(f"{m}: HTTP {e.code} {body}")
+            if e.code not in (400, 404):
+                break
+    raise last or RuntimeError("embedding yapılamadı")
 
 
 def _cos(a, b):
@@ -68,7 +121,7 @@ def index_tick():
             memory._q("INSERT OR REPLACE INTO vectors(kind,ref,model,vec) VALUES(?,?,?,?)",
                       (t["kind"], t["ref"], m, json.dumps([round(x, 5) for x in v])), commit=True)
     except Exception as e:
-        print("[anlamsal hafıza]", str(e)[:120])
+        print("[anlamsal hafıza]", str(e)[:220], "(kelime aramasıyla devam ediliyor)")
         _disabled_until[0] = now + 600
     finally:
         _lock.release()
