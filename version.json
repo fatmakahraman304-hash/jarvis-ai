@@ -1,13 +1,14 @@
 {
-  "version": "3.5.4",
+  "version": "3.5.5",
   "date": "2026-11-05",
   "notes": [
+    "Anahtar sağlığı: geçersiz API anahtarı artık açıkça söylenir (Ayarlar > MODELLER'de kırmızı 'ANAHTAR GEÇERSİZ' + nedeni), JARVIS onu her mesajda denemeden çalışan sağlayıcıyla cevap verir",
+    "Anahtar kaydedilince hemen denenir: 'ÇALIŞIYOR ✓' ya da sorunun ne olduğu yazar",
+    "Yapıştırırken bulaşan tırnak, boşluk ve 'GEMINI_API_KEY=' öneki otomatik temizlenir",
+    "Anlamsal hafıza bozuk anahtarda siyah pencereyi hata mesajıyla doldurmaz",
     "Canlı internet araması yenilendi: Google Arama (Gemini ile, ücretsiz) + Bing + DuckDuckGo + Google Haberler; biri engellenirse diğeri devreye girer",
     "JARVIS artık güncel olabilecek her şeyi (haber, fiyat, kişi, sürüm, skor) kendi eski bilgisinden değil, aramadan cevaplar ve bilginin tarihini söyler",
     "Yeni araç: tarihli canlı haber araması",
-    "'[anlamsal hafıza] HTTP Error 400' hatası düzeltildi (Gemini'nin kendi uç noktasına otomatik geçiş, küçük paketler)",
-    "Groq beyni en güçlü ücretsiz modele yükseltildi: GPT-OSS 120B (günde 1000 ücretsiz istek); dolarsa Qwen 3.8 → Llama 3.3 70B",
-    "Groq'ta arka plan işleri hafif GPT-OSS 20B ile; eski Llama sabitlemeleri otomatik kaldırıldı",
-    "Düşünen modellerin iç düşüncesi (<think>) artık cevaba ve sese karışmaz"
+    "'[anlamsal hafıza] HTTP Error 400' hatası düzeltildi (Gemini'nin kendi uç noktasına otomatik geçiş, küçük paketler)"
   ]
 }

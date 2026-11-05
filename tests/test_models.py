@@ -90,6 +90,32 @@ check("Groq arka plan işi = GPT-OSS 20B", llm.light_model("groq") == "openai/gp
 f = llm.ThinkFilter()
 check("Qwen'in <think> iç düşüncesi cevaba karışmaz", "".join(f.feed(x) for x in ["<thi", "nk>plan…</thi", "nk>\n\nTamam efendim."]) + f.flush() == "Tamam efendim.")
 
+print("ANAHTAR SAĞLIĞI")
+check("tırnak/boşluk/önek temizlenir", llm.clean_key(' "GEMINI_API_KEY=AIzaSyA1234567890abcdefghijklmnopqrstu " ') == "AIzaSyA1234567890abcdefghijklmnopqrstu")
+os.environ["GEMINI_API_KEY"] = "AIzaYANLIS"
+seen.clear()
+
+
+def badkey(pid, model, messages, tools=None, temperature=0.7, timeout=90):
+    seen.append(pid)
+    if pid == "gemini":
+        raise llm.ProviderError(pid, 400, '{"error":{"code":400,"message":"API key not valid. Please pass a valid API key.","status":"INVALID_ARGUMENT"}}')
+    yield ("text", "groq cevabı")
+    yield ("final", {"content": "groq cevabı", "tool_calls": []})
+
+
+llm.stream_chat = badkey
+llm.configured = lambda pid: pid in ("gemini", "groq")
+evs = list(llm.route(["gemini", "groq"], [{"role": "user", "content": "x"}], None))
+check("geçersiz Gemini anahtarı → başka Gemini modeli denenmeden Groq cevap verir", seen == ["gemini", "groq"] and ("text", "groq cevabı") in evs, seen)
+d = llm.key_bad("gemini")
+check("anlaşılır teşhis (AIza / 39 karakter)", "geçersiz" in d and "uzunluğu 10" in d and "AIza" in d, d)
+seen.clear(); list(llm.route(["gemini", "groq"], [{"role": "user", "content": "y"}], None))
+check("sonraki mesajda bozuk anahtar hiç denenmez", seen == ["groq"], seen)
+check("Ayarlar'da 'anahtar geçersiz' görünür", any(p["id"] == "gemini" and p["key_error"] for p in llm.status()))
+llm.clear_key_state(); os.environ["GEMINI_API_KEY"] = "test"
+llm.configured = lambda pid: pid == "gemini"
+
 # eski sabitlemelerin temizlenmesi
 from core import server  # noqa: E402
 from core.config import load_settings, save_settings  # noqa: E402

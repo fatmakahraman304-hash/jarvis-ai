@@ -461,7 +461,7 @@ def news_search(query, max_results=8):
 def _grounded(query):
     """Gemini + Google Arama (canlı): kısa güncel cevap + kaynaklar. Ücretsiz kotası dolarsa sessizce atlanır."""
     from . import llm
-    if not llm.configured("gemini"):
+    if not llm.configured("gemini") or llm.key_bad("gemini"):
         return None
     tried = []
     for model in (llm.light_model("gemini"), llm.pick_model("gemini")):
@@ -478,8 +478,11 @@ def _grounded(query):
             with urllib.request.urlopen(req, timeout=30) as r:
                 data = json.loads(r.read())
         except urllib.error.HTTPError as e:
+            b = e.read().decode("utf-8", "ignore")
+            if llm.report_bad_key("gemini", e.code, b):
+                return None
             if e.code == 429:
-                llm.mark_exhausted("gemini", model, e.read().decode("utf-8", "ignore"))
+                llm.mark_exhausted("gemini", model, b)
             continue
         except Exception:
             continue

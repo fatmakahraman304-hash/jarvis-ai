@@ -8,6 +8,7 @@ Ek kütüphane gerektirmez (urllib). Model adları her açılışta sağlayıcı
 /models listesinden otomatik seçilir; böylece model isimleri değişse de çalışır.
 """
 import json
+import re
 import socket
 import threading
 import time
@@ -99,9 +100,79 @@ def _base(pid):
     return PROVIDERS[pid]["base"]
 
 
+def clean_key(v):
+    """Kopyalarken bulaşan tırnak, boşluk, 'Bearer', 'KEY=' önekini temizler."""
+    v = (v or "").strip().strip('"').strip("'").strip()
+    if v.lower().startswith("bearer "):
+        v = v[7:]
+    if "=" in v and v.split("=", 1)[0].isupper():  # GEMINI_API_KEY=AIza… yapıştırılmışsa
+        v = v.split("=", 1)[1]
+    return re.sub(r"\s+", "", v).strip('"').strip("'")
+
+
 def _key(pid):
     k = PROVIDERS[pid]["key_env"]
-    return env(k) if k else ""
+    return clean_key(env(k)) if k else ""
+
+
+# ---- anahtar sağlığı: geçersiz anahtar her mesajda denenmesin, kullanıcıya açıkça söylensin ----
+_key_bad = {}  # pid -> (zaman, mesaj)
+_KEY_HINT = {"gemini": "Gemini anahtarı genelde 'AIza' ile başlar, 39 karakterdir. https://aistudio.google.com/apikey → Create API key → kopyala.",
+             "groq": "Groq anahtarı 'gsk_' ile başlar. https://console.groq.com/keys",
+             "openrouter": "OpenRouter anahtarı 'sk-or-' ile başlar.", "xai": "xAI anahtarı 'xai-' ile başlar."}
+
+
+def key_diagnosis(pid):
+    k = _key(pid)
+    shown = (k[:6] + "…" + k[-4:]) if len(k) > 12 else ("(boş)" if not k else "(çok kısa)")
+    probs = []
+    if pid == "gemini":
+        if not k.startswith("AIza"):
+            probs.append("'AIza' ile başlamıyor")
+        if len(k) != 39:
+            probs.append(f"uzunluğu {len(k)} (normalde 39)")
+    elif pid == "groq" and not k.startswith("gsk_"):
+        probs.append("'gsk_' ile başlamıyor")
+    lbl = PROVIDERS[pid]["label"].split(" (")[0]
+    return (f"{lbl} anahtarı geçersiz. Okunan: {shown}. " + ("Sorun: " + ", ".join(probs) + ". " if probs else "Biçim doğru görünüyor; anahtar silinmiş/iptal edilmiş olabilir. ")
+            + _KEY_HINT.get(pid, "") + " Yeni anahtarı Ayarlar > MODELLER'e yapıştırıp kaydet.")
+
+
+def _is_bad_key(status, body):
+    b = (body or "").lower()
+    return status in (401, 403) and ("key" in b or "auth" in b or "unauthor" in b) or (status == 400 and "api key not valid" in b) or "api_key_invalid" in b
+
+
+def report_bad_key(pid, status, body):
+    if not _is_bad_key(status, body):
+        return False
+    first = pid not in _key_bad
+    _key_bad[pid] = (time.time(), key_diagnosis(pid))
+    if first:
+        print("[anahtar]", _key_bad[pid][1])
+        try:
+            from . import memory
+            memory.notify(_key_bad[pid][1], "error")
+        except Exception:
+            pass
+    return True
+
+
+def key_bad(pid):
+    v = _key_bad.get(pid)
+    if not v:
+        return ""
+    if time.time() - v[0] > 1800:  # yarım saatte bir tekrar dene (anahtar düzeltilmiş olabilir)
+        _key_bad.pop(pid, None)
+        return ""
+    return v[1]
+
+
+def clear_key_state(pid=None):
+    if pid:
+        _key_bad.pop(pid, None)
+    else:
+        _key_bad.clear()
 
 
 def _headers(pid):
@@ -148,12 +219,19 @@ def list_models(pid, refresh=False):
         req = urllib.request.Request(_base(pid) + "/models", headers=_headers(pid))
         with urllib.request.urlopen(req, timeout=8) as r:
             data = json.loads(r.read().decode("utf-8", "ignore"))
+        _key_bad.pop(pid, None)  # liste geldiyse anahtar çalışıyor
         for m in data.get("data", data.get("models", [])):
             mid = m.get("id") or m.get("name") or ""
             if mid.startswith("models/"):
                 mid = mid[len("models/"):]
             if mid:
                 models.append(mid)
+    except urllib.error.HTTPError as e:
+        try:
+            report_bad_key(pid, e.code, e.read().decode("utf-8", "ignore"))
+        except Exception:
+            pass
+        models = []
     except Exception:
         models = []
     suffix = PROVIDERS[pid].get("only_free_suffix")
@@ -249,6 +327,7 @@ def status():
             "configured": configured(pid),
             "free": p["free"],
             "key_env": p["key_env"],
+            "key_error": key_bad(pid) if configured(pid) else "",
         })
     return out
 
@@ -422,6 +501,8 @@ def route(order, messages, tools, model_override="", light=False):
     tried = []
     candidates = [p for p in order if p in PROVIDERS] + [p for p in PROVIDERS if p not in order]
     candidates = [p for p in candidates if configured(p)]
+    good = [p for p in candidates if not key_bad(p)]
+    candidates = good or candidates  # hepsi bozuksa yine de dene
     if not candidates:
         yield ("error", "NO_PROVIDER")
         return
@@ -444,6 +525,8 @@ def route(order, messages, tools, model_override="", light=False):
                 return
             except ProviderError as e:
                 tried.append(f"{pid}: {e.status}")
+                if report_bad_key(pid, e.status, e.body):
+                    break  # anahtar geçersiz: bu sağlayıcının başka modelini denemenin anlamı yok
                 if emitted:
                     yield ("text", "\n[bağlantı kesildi]")
                     yield ("final", {"content": "", "tool_calls": []})

@@ -321,7 +321,7 @@
     const g = JV.state.google || {};
     const gl = el("li"); gl.append(el("span", "", "Gmail + Takvim"), el("span", g.connected ? "on" : "off", g.connected ? "● BAĞLI" : "○ yok")); ul.append(gl);
     JV.state.providers.filter((p) => p.id !== "custom" || p.configured).forEach((p) => {
-      const li = el("li"); li.append(el("span", "", p.label.split(" (")[0]), el("span", p.configured ? "on" : "off", p.configured ? "● AKTİF" : "○ yok")); ul.append(li);
+      const li = el("li"); li.append(el("span", "", p.label.split(" (")[0]), el("span", p.key_error ? "bad" : p.configured ? "on" : "off", p.key_error ? "✗ ANAHTAR" : p.configured ? "● AKTİF" : "○ yok")); ul.append(li);
     });
   }
 
@@ -351,7 +351,8 @@
     const pl = $("#prov-list"); pl.innerHTML = "";
     JV.state.providers.forEach((p) => {
       const row = el("div", "prov");
-      const name = el("div"); name.append(el("b", "", p.label), el("div", "st " + (p.configured ? "on" : "off"), p.configured ? "● BAĞLI" : "○ bağlı değil"));
+      const name = el("div"); name.append(el("b", "", p.label), el("div", "st " + (p.key_error ? "bad" : p.configured ? "on" : "off"), p.key_error ? "✗ ANAHTAR GEÇERSİZ" : p.configured ? "● BAĞLI" : "○ bağlı değil"));
+      if (p.key_error) name.append(el("div", "key-err", p.key_error));
       let inp;
       if (p.id === "ollama") { inp = el("div", "note", "Anahtar gerekmez — Ollama'yı kur, `ollama pull qwen2.5` çalıştır."); }
       else if (p.id === "custom") { inp = el("input"); inp.placeholder = "CUSTOM_BASE_URL (örn. http://localhost:1234/v1)"; inp.dataset.env = "CUSTOM_BASE_URL"; }
@@ -382,7 +383,11 @@
     save.onclick = async () => {
       const keys = {}; pl.querySelectorAll("input[data-env]").forEach((i) => { if (i.value.trim()) keys[i.dataset.env] = i.value.trim(); });
       const r = await JV.api("/api/keys", { body: keys });
-      toast(r.ok ? "Kaydedildi. Modeller hazır." : (r.error || "Kaydedilemedi")); openSettings();
+      if (r.ok && r.checks) {
+        const bad = Object.entries(r.checks).filter(([, v]) => v !== "ok");
+        toast(bad.length ? "⚠ " + bad.map(([, v]) => v).join(" · ") : "Kaydedildi ve denendi: anahtar(lar) ÇALIŞIYOR ✓", bad.length ? 15000 : 4000);
+      } else toast(r.ok ? "Kaydedildi. Modeller hazır." : (r.error || "Kaydedilemedi"));
+      openSettings();
     };
     pl.append(save);
     // kişilik → model

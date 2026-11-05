@@ -735,13 +735,21 @@ async def keys(request):
     for k, v in body.items():
         if k not in ALLOWED_KEYS or not isinstance(v, str) or "\n" in v:
             continue
-        v = v.strip()
+        v = llm.clean_key(v) if k.endswith("_API_KEY") or k == "TELEGRAM_BOT_TOKEN" else v.strip()
         lines = [ln for ln in lines if not ln.startswith(k + "=")]
         lines.append(f"{k}={v}")
         os.environ[k] = v
         changed += 1
     env_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
     llm._model_cache.clear()
+    llm.clear_key_state()
+    checks = {}
+    for pid, p in llm.PROVIDERS.items():  # yeni girilen anahtarı hemen dene
+        if p["key_env"] in body and llm.configured(pid):
+            await asyncio.to_thread(llm.list_models, pid, True)
+            checks[pid] = llm.key_bad(pid) or "ok"
+    if checks:
+        return JSONResponse({"ok": True, "changed": changed, "checks": checks})
     return JSONResponse({"ok": True, "changed": changed})
 
 

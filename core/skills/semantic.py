@@ -75,9 +75,12 @@ def embed(texts):
                 part = texts[i:i + 16]
                 try:
                     vecs += _post(pid, m, part)
-                except urllib.error.HTTPError:
+                except urllib.error.HTTPError as e1:
+                    b1 = e1.read().decode("utf-8", "ignore")[:300]
+                    if llm.report_bad_key(pid, e1.code, b1):
+                        raise RuntimeError("anahtar geçersiz") from None
                     if pid != "gemini":
-                        raise
+                        raise urllib.error.HTTPError(e1.url, e1.code, b1, e1.headers, None) from None
                     vecs += _post_gemini_native(m, part)
             _working[pid] = m
             return f"{pid}:{m}", vecs
@@ -87,6 +90,8 @@ def embed(texts):
                 body = e.read().decode("utf-8", "ignore")[:200]
             except Exception:
                 pass
+            if llm.report_bad_key(pid, e.code, body):
+                raise RuntimeError("anahtar geçersiz") from None
             last = RuntimeError(f"{m}: HTTP {e.code} {body}")
             if e.code not in (400, 404):
                 break
@@ -108,7 +113,7 @@ def index_tick():
     _last[0] = now
     try:
         pid, model = _provider()
-        if not pid:
+        if not pid or llm.key_bad(pid):
             return
         tag = f"{pid}:{model}"
         todo = memory._q("SELECT 'fact' kind, id ref, fact txt FROM facts WHERE id NOT IN (SELECT ref FROM vectors WHERE kind='fact' AND model=?) LIMIT 40", (tag,))
@@ -121,7 +126,8 @@ def index_tick():
             memory._q("INSERT OR REPLACE INTO vectors(kind,ref,model,vec) VALUES(?,?,?,?)",
                       (t["kind"], t["ref"], m, json.dumps([round(x, 5) for x in v])), commit=True)
     except Exception as e:
-        print("[anlamsal hafıza]", str(e)[:220], "(kelime aramasıyla devam ediliyor)")
+        if "anahtar geçersiz" not in str(e):
+            print("[anlamsal hafıza]", str(e).replace("\n", " ")[:220], "(kelime aramasıyla devam ediliyor)")
         _disabled_until[0] = now + 600
     finally:
         _lock.release()

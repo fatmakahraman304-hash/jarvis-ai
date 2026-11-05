@@ -410,3 +410,5 @@ body.mode-sessiz #t-command::after{content:" · SESSİZ"}
 .gtest{font-family:var(--mono);font-size:12.5px;margin-top:8px;min-height:1em}
 .gtest.ok{color:#3cff8a}.gtest.bad{color:#ff6b6b}
 .model-pick{display:block;margin-top:4px;max-width:210px;font-family:var(--mono);font-size:11px;background:rgba(0,229,255,.06);color:var(--c);border:1px solid rgba(0,229,255,.3);padding:2px 4px}
+.st.bad,#prov-mini .bad{color:#ff6b6b}
+.key-err{font-size:12px;color:#ff9b9b;max-width:320px;line-height:1.35;margin-top:4px}
