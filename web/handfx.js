@@ -11,7 +11,7 @@
   const G = () => JV.GestureCore;
   const TAU = Math.PI * 2;
   const OPT_KEY = "jv_handfx_opts";
-  const DEF = { palm: true, draw: false, mask: false, library: true, fire: true, seal: true, planet: true, blast: true, lightning: true, trail: true, controls: true, face: true, sound: true, skeleton: false };
+  const DEF = { helmet: true, palm: true, draw: false, mask: false, library: true, fire: true, seal: true, planet: true, blast: true, lightning: true, trail: true, controls: true, face: true, sound: true, skeleton: false };
   let opts = { ...DEF };
   try { Object.assign(opts, JSON.parse(localStorage.getItem(OPT_KEY) || "{}")); } catch (e) {}
   const saveOpts = () => { try { localStorage.setItem(OPT_KEY, JSON.stringify(opts)); } catch (e) {} };
@@ -52,13 +52,14 @@
     stage = document.createElement("div"); stage.id = "arstage"; stage.className = "hidden";
     stage.innerHTML = `<video id="ar-video" muted playsinline></video><canvas id="ar-canvas"></canvas>
       <div id="ar-top"><b>AR · EFEKT</b><span id="ar-fps"></span><span id="ar-hint">✋ ateş · ✋✋ mühür · 🤏 gezegen · ✊→✋ patlat · ☝☝ şimşek · ☝ ışık izi · 👍 komut · ✌ mikrofon</span>
-        <button class="mini" id="ar-opts-b">⚙ EFEKTLER</button><button class="mini" id="ar-close">✕ KAPAT</button></div>
+        <button class="mini" id="ar-desk-b">🖥 MASAÜSTÜ</button><button class="mini" id="ar-opts-b">⚙ EFEKTLER</button><button class="mini" id="ar-close">✕ KAPAT</button></div>
       <div id="ar-opts" class="hidden"></div><div id="ar-msg"></div>`;
     document.body.append(stage);
     cv = stage.querySelector("#ar-canvas"); ctx = cv.getContext("2d"); vid = stage.querySelector("#ar-video");
     stage.querySelector("#ar-close").onclick = () => api.stop();
+    stage.querySelector("#ar-desk-b").onclick = () => JV.ardesk && JV.ardesk.toggle();
     stage.querySelector("#ar-opts-b").onclick = () => stage.querySelector("#ar-opts").classList.toggle("hidden");
-    const LBL = { palm: "Avuçta HUD (saat/hava/etkinlik)", draw: "Havaya çizim", mask: "Iron Man kask HUD'u", library: "Kitaplık (raftan kitap çek)", fire: "Ateş", seal: "Mühür halkası", planet: "Gezegen", blast: "Patlatma", lightning: "Şimşek", trail: "Işık izi", controls: "JARVIS kontrolleri (👍 ✌ ✊)", face: "Yüz kilidi", sound: "Efekt sesleri", skeleton: "El iskeleti" };
+    const LBL = { helmet: "Kask HUD'unda Iron Man kaskı çiz", palm: "Avuçta HUD (saat/hava/etkinlik)", draw: "Havaya çizim", mask: "Iron Man kask HUD'u", library: "Kitaplık (raftan kitap çek)", fire: "Ateş", seal: "Mühür halkası", planet: "Gezegen", blast: "Patlatma", lightning: "Şimşek", trail: "Işık izi", controls: "JARVIS kontrolleri (👍 ✌ ✊)", face: "Yüz kilidi", sound: "Efekt sesleri", skeleton: "El iskeleti" };
     const box = stage.querySelector("#ar-opts");
     Object.keys(DEF).forEach((k) => { const l = document.createElement("label"); const c = document.createElement("input"); c.type = "checkbox"; c.checked = !!opts[k]; c.onchange = () => { opts[k] = c.checked; saveOpts(); }; l.append(c, " " + LBL[k]); box.append(l); });
     const pl = document.createElement("div"); pl.className = "ar-planets";
@@ -379,11 +380,33 @@
   function clearDrawing() { strokes = []; curStroke = null; msg("Çizim silindi"); }
 
   // ---------------- IRON MAN KASK HUD ----------------
+  const OVAL = [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109];
+  function helmet(F, ew) { // yüze oturan özgün kask çizimi: kırmızı kabuk, altın yüz plakası, parlayan göz yarıkları
+    const c = F[1], ov = OVAL.map((i) => F[i]).filter(Boolean); if (ov.length < 30) return;
+    const grow = (p, k) => ({ x: c.x + (p.x - c.x) * k, y: c.y + (p.y - c.y) * k });
+    ctx.save(); ctx.shadowBlur = 0;
+    const shell = ov.map((p) => grow(p, 1.12)); // kabuk (yüzden biraz büyük)
+    const g = ctx.createLinearGradient(c.x - ew * 1.5, c.y - ew * 2, c.x + ew * 1.5, c.y + ew * 2); g.addColorStop(0, "rgba(190,20,25,0.92)"); g.addColorStop(0.5, "rgba(140,10,15,0.92)"); g.addColorStop(1, "rgba(90,5,10,0.92)");
+    ctx.fillStyle = g; ctx.beginPath(); shell.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y))); ctx.closePath(); ctx.fill();
+    const browY = Math.min(F[105].y, F[334].y) - ew * 0.15; // yüz plakası: kaşların biraz üstünden çeneye
+    const plate = ov.map((p) => grow(p, 0.86)).map((p) => ({ x: p.x, y: Math.max(p.y, browY) }));
+    const gp = ctx.createLinearGradient(0, browY, 0, F[152].y); gp.addColorStop(0, "rgba(255,205,90,0.95)"); gp.addColorStop(1, "rgba(200,140,40,0.95)");
+    ctx.fillStyle = gp; ctx.beginPath(); plate.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y))); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = "rgba(90,40,0,0.6)"; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = "rgba(220,250,255,0.95)"; ctx.shadowColor = "#9ef"; ctx.shadowBlur = 18; // göz yarıkları
+    [[33, 133, 159, 145], [362, 263, 386, 374]].forEach(([a, b, t, bt]) => { const A = F[a], B = F[b], T = F[t], Bt = F[bt]; if (!A || !B) return; const h = Math.max(3, Math.abs((Bt || A).y - (T || A).y) * 0.6);
+      ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo((A.x + B.x) / 2, (A.y + B.y) / 2 - h); ctx.lineTo(B.x, B.y); ctx.lineTo((A.x + B.x) / 2, (A.y + B.y) / 2 + h * 0.5); ctx.closePath(); ctx.fill(); });
+    ctx.shadowBlur = 0; ctx.strokeStyle = "rgba(80,30,0,0.75)"; ctx.lineWidth = 2; // ağız çizgisi ve yanak hatları
+    if (F[61] && F[291]) { ctx.beginPath(); ctx.moveTo(F[61].x, F[61].y + 2); ctx.lineTo(F[291].x, F[291].y + 2); ctx.stroke(); }
+    [[F[234], F[61]], [F[454], F[291]]].forEach(([a, b]) => { if (a && b) { ctx.beginPath(); ctx.moveTo(grow(a, 0.88).x, grow(a, 0.88).y); ctx.lineTo(b.x, b.y); ctx.stroke(); } });
+    ctx.restore();
+  }
   let lastFaces = null;
   function maskHud(now, M) {
     if (!lastFaces || !lastFaces[0]) return;
     const F = lastFaces[0].map(M), L = F[33], R = F[263], nose = F[1], chin = F[152], top = F[10], ew = Math.hypot(R.x - L.x, R.y - L.y);
     const roll = Math.atan2(R.y - L.y, R.x - L.x);
+    if (opts.helmet !== false && F.length > 400) helmet(F, ew);
     ctx.save(); ctx.strokeStyle = "rgba(255,90,60,0.9)"; ctx.fillStyle = "rgba(255,200,120,0.95)"; ctx.shadowColor = "#f53"; ctx.shadowBlur = 12; ctx.lineWidth = 1.5;
     [F[468] || L, F[473] || R].forEach((e, i) => { // göz nişangâhları (dönen halkalar)
       ctx.save(); ctx.translate(e.x, e.y); ctx.rotate(now / 700 * (i ? -1 : 1));
@@ -428,7 +451,8 @@
 
     // kitaplık (raf haritası varsa): seçim, çekme, açık kitap — açıkken diğer efektler susar
     const L = (JV.library && opts.library !== false) ? JV.library.arFrame(ctx, H2, M, now) : { busy: false };
-    const calm = L.busy || L.inShelf || !!game;
+    const D = (JV.ardesk && JV.ardesk.on) ? JV.ardesk.frame(ctx, H2, M, now) : { busy: false };
+    const calm = L.busy || L.inShelf || !!game || D.busy;
     if (game) gameStep(H2, now);
     const holds = L.holds || null;
     // iki elle çimdik → gezegeni büyüt
@@ -460,7 +484,7 @@
       }
       const still = Math.hypot(st.vel[0], st.vel[1]) < 3.5, upright = h.lm[12].y < h.lm[0].y - 0.08;
       if (pose === "open" && still && upright) { st.stillSince = st.stillSince || now; } else st.stillSince = 0;
-      const palmOn = opts.palm && !calm && pose === "open" && st.stillSince && now - st.stillSince > 1000 && H2.length === 1;
+      const palmOn = opts.palm && !calm && !(JV.ardesk && JV.ardesk.on) && pose === "open" && st.stillSince && now - st.stillSince > 1000 && H2.length === 1;
       if (palmOn) palmHud(P, sc, (now - st.stillSince - 1000) / 300);
       if (opts.draw && !calm) {
         if (h.pointing) { if (!curStroke) { curStroke = []; strokes.push(curStroke); } const lp = curStroke[curStroke.length - 1]; if (!lp || Math.hypot(lp.x - P[8].x, lp.y - P[8].y) > 3) curStroke.push({ x: P[8].x, y: P[8].y }); }
@@ -538,6 +562,7 @@
     cmd(r) {
       if (r.action === "close") return api.stop();
       if (r.action === "face") { opts.face = !opts.face; saveOpts(); return; }
+      if (r.action === "desktop") { if (!on && JV.gesture) JV.gesture.start("efekt"); setTimeout(() => JV.ardesk && JV.ardesk.toggle(true, r.panel || ""), on ? 0 : 2500); return; }
       if (r.action === "game") { if (!on && JV.gesture) JV.gesture.start("efekt"); setTimeout(() => startGame(r.game || "rps"), on ? 0 : 2500); return; }
       if (r.action === "extra") {
         if (r.extra === "draw") { opts.draw = true; strokes = []; msg("✏ Havaya çiz: ☝ çiz · ✌ ne çizdim? · ✊ sil · 👍 bitir", 4000); }

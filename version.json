@@ -1,15 +1,14 @@
 {
-  "version": "4.1.0",
+  "version": "4.2.0",
   "date": "2026-11-05",
   "notes": [
+    "⛅ Büyük hava paneli ('hava durumunu göster'): anlık derece, yüksek/düşük, yağmur, UV, gün doğumu/batımı, 24 saatlik eğri, 7 günlük kartlar — Open-Meteo (ücretsiz)",
+    "🖥 AR masaüstü (EL > EFEKT > MASAÜSTÜ ya da 'AR masaüstünü aç'): avucunu sabit tut → dairesel menü; alttaki dock; paneller (saat, sistem halkaları CPU/RAM/GPU/DİSK, hava, haberler, işler, müzik kumandası)",
+    "🤏 Panelleri elinle yönet: çimdikle tut-taşı, iki elle büyüt, parmakla ✕ — fareyle de sürüklenir",
+    "🌍 Dock'taki Dünya: 3D dünyayı el hareketleriyle döndür/yakınlaştır",
+    "🛡 Kask modunda yüzüne oturan Iron Man kaskı (kırmızı kabuk, altın yüz plakası, parlayan gözler)",
     "🎙 Toplantı asistanı: canlı döküm; bitince özet, kararlar, yapılacaklar (listene eklenir) ve Belgeler'e kayıt",
     "⏳ Odak modu (pomodoro): hologram halka sayaç, bildirimler susar, mola hatırlatması, günlük/haftalık odak istatistiği",
-    "📰 'Aydınlat beni': güncel haberler ekranda sahne sahne, büyük sayılar ve kaynaklarla, sesli",
-    "🌱 Bitki doktoru (TARA > BİTKİ): tür, sağlık, bakım; sulama hatırlatıcısı ('monsterayı suladım')",
-    "📌 Nesnelere hologram not: 'buzdolabına not bırak: süt al' → taramada buzdolabının yanında çıkar",
-    "📔 Günlük: 'günlüğüme yaz', 'bu hafta nasıldım'",
-    "🎮 AR oyunları: taş-kağıt-makas (elini okur) ve balon patlatma (rekor tutulur)",
-    "🔎 ODAYI TARA: nesneler kutulanır, birine TIKLA → hologram olarak öne gelir (döner, sürükle-çevir, yakınlaş) + bilgi kartı: ne, marka, boyut, ipucu, nerede satılır, yerini hatırla, soru sor",
-    "📍 Nesne hafızası: 'kumandayı nerede bıraktım?' · 🔍 Canlı bulucu: 'kumandayı bul' (bulunca işaretler ve söyler)"
+    "📰 'Aydınlat beni': güncel haberler ekranda sahne sahne, büyük sayılar ve kaynaklarla, sesli"
   ]
 }

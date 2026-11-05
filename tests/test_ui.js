@@ -220,6 +220,38 @@ const check = (name, cond, extra = "") => { console.log((cond ? "  ✓ " : "  �
     check("🌱 bitki doktoru kartı", lf.plant.includes("Monstera") && lf.plant.includes("7 günde bir"), lf.plant);
     check("✊✋✌ taş-kağıt-makas: elin okunur, tur sonuçlanır", lf.rps && lf.rps.phase === "result" && lf.rps.pick === "taş" && ["KAZANDIN", "KAYBETTİN", "BERABERE"].includes(lf.rps.res), JSON.stringify(lf.rps));
     check("🎈 balon patlatma: parmakla patlar", lf.popped >= 1, JSON.stringify(lf));
+    console.log("HAVA PANELİ + AR MASAÜSTÜ + KASK");
+    await p.route("**/api/hud/system", (r) => r.fulfill({ json: { cpu: 6, ram: 56, gpu: 27, disk: 91 } }));
+    const wx = { şehir: "İstanbul", ülke: "Türkiye", derece: 18, hissedilen: 15, nem: 63, rüzgar: 14, durum: "Parçalı bulutlu", ikon: "partly", yüksek: 19, düşük: 16, yağmur: 63, uv: 5, doğuş: "07:01", batış: "18:44", kaynak: "Open-Meteo",
+      saatlik: Array.from({ length: 24 }, (_, i) => ({ saat: i + ":00", derece: 17 + (i % 4), yağmur: 10, ikon: "cloud" })), günler: Array.from({ length: 7 }, (_, i) => ({ gün: i ? "CUM" : "BUGÜN", max: 20, min: 14, yağmur: 0, ikon: "sun" })) };
+    await p.route("**/api/hud/weather*", (r) => r.fulfill({ json: wx }));
+    const hd = await p.evaluate(async (wx) => {
+      const out = {};
+      JV.uiCommand("weather_panel", {}, JSON.stringify({ ui: "weather", data: wx })); await new Promise((r) => setTimeout(r, 300));
+      out.wx = { t: (document.querySelector(".wx-t") || {}).textContent, days: document.querySelectorAll(".wx-day").length, curve: !!document.querySelector(".wx-curve path") };
+      JV.weather.close();
+      const H = JV.handfx; H.show(null); JV.ardesk.toggle(true);
+      const run = async (n, mk) => { for (let i = 0; i < n; i++) { H.frame(mk(i), null); await new Promise((r) => setTimeout(r, 30)); } };
+      await run(40, () => [{ lm: H._synth(0.62, 0.55, 0.55, "open"), handed: "Right" }]); out.menu = JV.ardesk._menu();
+      const probe = H._synth(0.5, 0.5, 0.5, "point"), dx = probe[8].x - 0.5, dy = probe[8].y - 0.5;
+      const at = async (sel, n = 30) => { const b = document.querySelector(sel).getBoundingClientRect(), l = H._toLm(b.x + b.width / 2, b.y + b.height / 2); await run(n, () => [{ lm: H._synth(l.x - dx, l.y - dy, 0.5, "point"), handed: "Right" }]); };
+      await at('.ad-mi[data-air="system"]'); out.p1 = JV.ardesk._panels();
+      await at('.ad-dock [data-air="music"]'); out.p2 = JV.ardesk._panels();
+      await new Promise((r) => setTimeout(r, 2500)); out.rings = document.querySelectorAll('.ad-panel[data-panel="system"] .ad-ring').length;
+      const sp = document.querySelector('.ad-panel[data-panel="system"]'), r3 = sp.getBoundingClientRect(), x0 = r3.left;
+      const pin = H._synth(0.5, 0.5, 0.5, "pinch"), pdx = (pin[4].x + pin[8].x) / 2 - 0.5, pdy = (pin[4].y + pin[8].y) / 2 - 0.5, l3 = H._toLm(r3.x + 60, r3.y + 70);
+      await run(3, () => [{ lm: H._synth(l3.x - pdx, l3.y - pdy, 0.5, "point"), handed: "Right" }]);
+      await run(20, (i) => [{ lm: H._synth(l3.x - pdx - i * 0.01, l3.y - pdy, 0.5, "pinch"), handed: "Right" }]);
+      out.moved = Math.round(sp.getBoundingClientRect().left - x0);
+      await at('.ad-panel[data-panel="music"] .ad-pc'); out.p3 = JV.ardesk._panels();
+      JV.ardesk.toggle(false); H.stop();
+      return out;
+    }, wx);
+    check("⛅ büyük hava paneli (derece, 7 gün, saatlik eğri)", hd.wx.t === "18°" && hd.wx.days === 7 && hd.wx.curve, JSON.stringify(hd));
+    check("✋ sabit avuç → dairesel menü → ☝ dokun → panel", hd.menu && hd.p1.includes("system"), JSON.stringify(hd));
+    check("dock'tan panel + sistem halkaları", hd.p2.includes("music") && hd.rings === 4, JSON.stringify(hd));
+    check("🤏 paneli çimdikle tut-taşı", hd.moved > 100, JSON.stringify(hd));
+    check("☝ ✕ ile panel kapanır", !hd.p3.includes("music"), JSON.stringify(hd));
     console.log("GOOGLE SİHİRBAZI");
     await p.click("text=AYARLAR"); await wait(500); await p.click('[data-tab="links"]'); await wait(900);
     check("adım 1 görünüyor", (await p.textContent(".gw-body")).includes("JARVIS") && (await p.$$(".gw-dots span")).length === 5);

@@ -560,6 +560,13 @@ def read_webpage(url, max_chars=7000):
 
 
 def weather(city="Istanbul"):
+    try:  # önce Open-Meteo (daha güvenilir), olmazsa wttr.in
+        from .skills.hud import weather_full
+        w = weather_full(city)
+        return {"şehir": w["şehir"], "sıcaklık": f"{w['derece']}°C", "hissedilen": f"{w['hissedilen']}°C", "durum": w["durum"], "nem": f"{w['nem']}%",
+                "rüzgar_kmh": w["rüzgar"], "yağmur_ihtimali": f"%{w['yağmur']}", "3_gün": [{"tarih": d["tarih"], "min": d["min"], "max": d["max"], "durum": d["durum"]} for d in w["günler"][:3]]}
+    except Exception:
+        pass
     try:
         data = json.loads(_http_get(f"https://wttr.in/{urllib.parse.quote(city)}?format=j1&lang=tr"))
         cur = data["current_condition"][0]
@@ -657,7 +664,7 @@ TOOLS = {
     "web_search": (web_search, _schema("İnternette CANLI arar (Google/Bing/DuckDuckGo + haberler). Güncel olabilecek HER şey için önce bunu kullan: haber, fiyat, kişi, sürüm, skor, etkinlik, 'en son/en yeni'.",
                    {"query": S("arama")}, ["query"]), False),
     "read_webpage": (read_webpage, _schema("Bir web sayfasının metnini okur.", {"url": S("adres")}, ["url"]), False),
-    "weather": (weather, _schema("Hava durumu.", {"city": S("şehir")}), False),
+    "weather": (weather, _schema("Hava durumu (kısa). Ekranda büyük panel için weather_panel.", {"city": S("şehir")}), False),
     "currency": (currency, _schema("Döviz kurları.", {"base": S("baz para, örn USD"), "targets": S("TRY,EUR")}), False),
     "remember": (remember, _schema("Kullanıcı hakkında kalıcı bilgi kaydeder.",
                  {"fact": S("bilgi"), "category": S("kategori")}, ["fact"]), False),
@@ -707,6 +714,7 @@ GROUP_INFO = {
     "nodes": ("çoklu bilgisayar: diğer JARVIS'leri bağla, durum, uzaktan komut, dosya gönder/al, kuyruk", "bilgisayar bilgisayara bilgisayarda pc laptop dizüstü masaüstü düğüm ağdaki diğer uzak uzaktaki gönder oradaki ofisteki evdeki tüm bilgisayarlar"),
     "twin": ("dijital ikiz (bilgisayar/ev 3D canlı), protein yapıları, hücre modeli", "vr ar sanal gerçeklik artırılmış gözlük quest ikiz dijital ikiz protein enzim hemoglobin insülin pdb hücre organel mitokondri çekirdek bakteri biyoloji kasa donanım içini"),
     "music": ("müzik/ritim besteleme, MIDI", "müzik beste besteler şarkı melodi ritim davul beat lofi caz piyano ambient sinematik elektronik hiphop trap rock midi enstrümantal fon müziği"),
+    "hud": ("büyük hava durumu paneli, AR masaüstü (elle yönetilen HUD panelleri, dairesel menü)", "hava havayı havada durumu tahmin yağmur sıcaklık derece masaüstü masaüstünü hud panel paneli dock menü"),
     "life": ("toplantı asistanı, odak/pomodoro, günlük, bitki doktoru, sulama, aydınlat beni haber sahneleri, AR oyunları", "toplantı toplantıyı toplantıya kayıt altyazı odak odaklan pomodoro çalışma günlük günlüğüme günlüğe nasıldım bitki bitkim bitkiyi çiçek sula suladım sulama yaprak aydınlat gündem haberleri oyun oyna taş kağıt makas balon"),
     "scene": ("odayı tara, nesne bul/nerede, belge tara, QR, renk, egzersiz sayacı, duruş, ruh hali, avuç HUD, havaya çizim, kask", "not bırak buzdolabına kapıya tara taraması odayı oda nesne nesneleri nerede bul bıraktım hologram belge belgeyi fatura yazıyı qr barkod karekod renk squat şınav zıplama egzersiz spor say tekrar duruş oturuş göz mola molası ruh duygu modum avuç avucumda çiz çizim çizdim maske kask hud"),
     "cams": ("telefon kameraları (JARVIS'in gözü), güvenlik modu", "kamera kameraya kameradan mutfak mutfakta salon salonda kapı kapıya bahçe oda odada bak göz izle güvenlik hareket alarm bebek ne var"),

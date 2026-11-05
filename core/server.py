@@ -152,6 +152,23 @@ async def scene_api(request):
     return JSONResponse({"error": "bilinmeyen"}, status_code=404)
 
 
+async def hud_api(request):
+    from .skills import hud
+    what = request.path_params.get("what", "")
+    try:
+        if what == "weather":
+            return JSONResponse(await asyncio.to_thread(hud.weather_full, request.query_params.get("city", "")))
+        if what == "system":
+            return JSONResponse(await asyncio.to_thread(hud.system_full))
+        if what == "news":
+            return JSONResponse(await asyncio.to_thread(hud.news_top))
+        if what == "tasks":
+            return JSONResponse(await asyncio.to_thread(hud.tasks_top))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=500)
+    return JSONResponse({"error": "bilinmeyen"}, status_code=404)
+
+
 async def life_api(request):
     from .skills import life
     what = request.path_params.get("what", "")
@@ -997,6 +1014,7 @@ routes = [
     Route("/api/library", library_api),
     Route("/api/scene/{what}", scene_api, methods=["GET", "POST"]),
     Route("/api/life/{what}", life_api, methods=["GET", "POST"]),
+    Route("/api/hud/{what}", hud_api),
     Route("/api/library/{what}", library_api, methods=["POST"]),
     Route("/api/cams/{cid}", cams_api),
     Route("/api/vision", vision_api, methods=["POST"]),
