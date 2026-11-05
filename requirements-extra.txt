@@ -1,0 +1,18 @@
+# İsteğe bağlı ama önerilir: start.bat hepsini otomatik kurar
+pypdf            # PDF okuma, birleştirme, ayırma
+python-docx      # Word okuma/oluşturma
+openpyxl         # Excel okuma/oluşturma
+python-pptx      # PowerPoint oluşturma
+reportlab        # PDF oluşturma
+matplotlib       # grafik çizme
+pillow           # ekran görüntüsü, ekranı görme
+send2trash       # silinenler geri dönüşüm kutusuna
+opencv-python    # kamerayı sunucudan kullanma (arayüz kamerası bunsuz da çalışır)
+pyserial         # Arduino / robot seri bağlantısı
+youtube-transcript-api  # YouTube video özeti
+numpy            # ses kimliği
+cryptography     # şifre kasası (Windows dışı sistemler için)
+winrt-Windows.UI.Notifications; sys_platform == "win32"   # Windows bildirimlerini okuma
+winrt-Windows.UI.Notifications.Management; sys_platform == "win32"
+# Daha doğru ses kimliği için (büyük, ~1 GB): pip install resemblyzer
+playwright       # tarayıcı otomasyonu (yüklü Edge/Chrome'u kullanır)

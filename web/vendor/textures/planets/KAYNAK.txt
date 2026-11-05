@@ -1,0 +1,2 @@
+Gezegen dokuları: threex.planets (MIT) / planetpixelemporium.com (James Hastings-Trew), kişisel kullanım.
+Yıldız verisi: d3-celestial (BSD-3) — Hipparcos/Yale Bright Star tabanlı.

@@ -1,0 +1,10 @@
+{
+  "name": "J.A.R.V.I.S. Personal AI",
+  "short_name": "JARVIS",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#02060a",
+  "theme_color": "#02060a",
+  "icons": [{ "src": "/static/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

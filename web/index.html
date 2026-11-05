@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#02060a">
+<title>J.A.R.V.I.S.</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div id="bg"></div>
+<canvas id="three"></canvas>
+<canvas id="hud"></canvas>
+<canvas id="world"></canvas>
+<div id="world-panel" class="hidden"></div>
+<div id="world-caption"></div>
+<div id="world-tip"></div>
+<div id="globe-layers" class="hidden"></div>
+<button id="street-hint" class="btn-primary hidden">SOKAK SEVİYESİNE İN</button>
+<div id="holo-panel" class="hidden"></div>
+<div id="space-time" class="hidden"></div>
+<div id="space-menu"></div>
+<div id="map-panel" class="hidden"><div class="map-head"><span>HARİTA · UYDU</span><button class="mini" id="map-close">KAPAT ✕</button></div><div id="map-view"></div></div>
+<nav id="views">
+  <button data-view="core" class="on">◉ ÇEKİRDEK</button>
+  <button data-view="globe">🌍 DÜNYA</button>
+  <button data-view="lab">🧊 ATÖLYE</button>
+  <button data-view="science">🔬 BİLİM</button>
+  <button data-view="space">🚀 UZAY</button>
+  <button data-view="city">🏙 ŞEHİR</button>
+  <button data-view="twin">🖥 İKİZ</button>
+  <button data-view="bio">🧬 BİYO</button>
+</nav>
+
+<!-- açılış ekranı -->
+<div id="boot">
+  <div class="boot-inner">
+    <div class="boot-logo">J.A.R.V.I.S.</div>
+    <div class="boot-sub">PERSONAL AI · TEK BEYİN · ÇOK PLATFORM</div>
+    <pre id="boot-log"></pre>
+    <button id="boot-btn" class="btn-primary">SİSTEMİ BAŞLAT</button>
+    <div class="boot-hint">Ses ve mikrofon için bir kez tıklaman gerekiyor</div>
+  </div>
+</div>
+
+<header id="top">
+  <div class="brand">
+    <div id="p-name">J.A.R.V.I.S.</div>
+    <div id="p-full">Just A Rather Very Intelligent System</div>
+  </div>
+  <nav id="personas"></nav>
+  <div class="top-right">
+    <div id="model-badge" title="Şu an cevaplayan model">MODEL: —</div>
+    <div id="clock">--:--</div>
+  </div>
+</header>
+
+<aside id="left" class="panel">
+  <div class="panel-title">SİSTEM</div>
+  <div class="gauges">
+    <div class="gauge" data-k="cpu"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" class="g-bg"/><circle cx="50" cy="50" r="42" class="g-fg"/></svg><b>0%</b><span>CPU</span></div>
+    <div class="gauge" data-k="ram"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" class="g-bg"/><circle cx="50" cy="50" r="42" class="g-fg"/></svg><b>0%</b><span>RAM</span></div>
+    <div class="gauge" data-k="disk"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" class="g-bg"/><circle cx="50" cy="50" r="42" class="g-fg"/></svg><b>0%</b><span>DİSK</span></div>
+  </div>
+  <div class="kv" id="sysinfo"></div>
+  <div class="panel-title small">İŞLEMLER</div>
+  <ul id="procs"></ul>
+  <div class="panel-title small">MODELLER</div>
+  <ul id="prov-mini"></ul>
+</aside>
+
+<aside id="right" class="panel">
+  <div class="panel-title">DİYALOG <button id="clear-btn" class="mini" title="Geçmişi temizle">TEMİZLE</button></div>
+  <div id="log"></div>
+</aside>
+
+<div id="status-line"><span id="status-dot"></span><span id="status-text">BEKLEMEDE</span></div>
+<div id="live-caption"></div>
+
+<div id="confirms"></div>
+<div id="toasts"></div>
+
+<footer id="bottom">
+  <div class="ctrl-row">
+    <button class="tog" id="t-visual" title="Görünüm">◉ KÜRE</button>
+    <button class="tog" id="t-voice" title="Sesli cevap">🔊 SES</button>
+    <button class="tog" id="t-wake" title='"JARVIS" deyince uyan'>👂 UYANDIRMA</button>
+    <button class="tog" id="t-camera" title="Kamerayla göster">📷 KAMERA</button>
+    <button class="tog" id="t-command" title="Komuta merkezi (Ctrl+Shift+K)">⌘ KOMUTA</button>
+    <button class="tog" id="t-ambient" title="Ortam seslerini dinle (alarm, cam kırılması, bebek, kapı zili…)">🎧 ORTAM</button>
+    <button class="tog" id="t-music" title="Müzik stüdyosu">🎵 MÜZİK</button>
+    <button class="tog" id="t-finlab" title="Finans laboratuvarı">📈 FİNANS</button>
+    <button class="tog" id="t-library" title="Bilgi merkezi">📚 BİLGİ</button>
+    <button class="tog" id="t-translate" title="Canlı tercüman">🌐 ÇEVİRMEN</button>
+    <button class="tog" id="t-gesture" title="El / baş / göz kontrolü">✋ EL</button>
+    <button class="tog danger" id="t-estop" title="Acil durdur: tüm otomasyonları durdurur">⛔ ACİL DUR</button>
+    <button class="tog" id="t-update" title="Tek tuşla güncelle">⟳ GÜNCELLE</button>
+    <button class="tog" id="t-settings" title="Ayarlar">⚙ AYARLAR</button>
+  </div>
+  <form id="ask">
+    <button type="button" id="mic" title="Konuş (Boşluk)"><span></span></button>
+    <input id="q" autocomplete="off" placeholder="JARVIS'e yaz ya da mikrofona bas…">
+    <button id="send" class="btn-primary" type="submit">GÖNDER</button>
+  </form>
+</footer>
+
+<!-- alarm -->
+<div id="alarm" class="hidden"><div class="alarm-card"><div class="alarm-t">⏰</div><div id="alarm-text"></div><button class="btn-primary" id="alarm-off">KAPAT</button><button class="mini" id="alarm-snooze">5 DK ERTELE</button></div></div>
+
+<!-- el kontrolü -->
+<div id="gesture-hud" class="hidden">
+  <canvas id="g-canvas" width="240" height="180"></canvas>
+  <div id="g-modes"><button data-m="nesne">NESNE</button><button data-m="fare">FARE</button><button data-m="klavye">KLAVYE</button><button data-m="komut">KOMUT</button><button data-m="robot">ROBOT</button><button data-m="bas">BAŞ/GÖZ</button></div>
+  <div id="g-help"></div>
+  <label class="g-opt"><input type="checkbox" id="g-os"> baş/göz modunda gerçek fareyi kullan</label>
+  <div class="g-row"><button class="mini" id="g-teach">HAREKET ÖĞRET</button><button class="mini" id="g-close">KAPAT</button></div>
+  <ul id="g-custom" class="plain"></ul>
+  <div id="g-status"></div>
+</div>
+<div id="g-cursor"></div>
+<div id="g-flash"></div>
+<div id="air-kb" class="hidden"></div>
+
+<!-- kamera -->
+<div id="camera" class="hidden">
+  <div class="cam-card">
+    <div class="cam-wrap"><video id="cam-video" autoplay playsinline muted></video><canvas id="cam-overlay"></canvas></div>
+    <div class="cam-row cam-tools"><button class="mini" id="cam-det">NESNE / İNSAN</button><button class="mini" id="cam-pose">VÜCUT</button><button class="mini" id="cam-face">YÜZ TANI</button><button class="mini" id="cam-enroll">YÜZ KAYDET</button><button class="mini" id="cam-narr">SESLİ ANLAT</button><button class="mini" id="cam-trans">YAZIYI ÇEVİR</button></div>
+    <div id="cam-info" class="note"></div>
+    <div class="cam-row">
+      <input id="cam-q" placeholder="Ne sormak istiyorsun? (boş: ne görüyorsun)">
+      <button class="btn-primary" id="cam-look">BAK</button>
+      <button class="mini" id="cam-flip">ÇEVİR</button>
+      <button class="mini" id="cam-close">KAPAT ✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- ayarlar -->
+<div id="settings" class="hidden">
+  <div class="s-card">
+    <div class="s-head"><span>AYARLAR</span><button id="s-close" class="mini">KAPAT ✕</button></div>
+    <div class="s-tabs">
+      <button data-tab="models" class="active">MODELLER</button>
+      <button data-tab="voice">SES</button>
+      <button data-tab="memory">HAFIZA</button>
+      <button data-tab="links">BAĞLANTILAR</button>
+      <button data-tab="tasks">GÖREVLER</button>
+      <button data-tab="vault">KASA</button>
+      <button data-tab="files">DOSYALAR</button>
+      <button data-tab="platforms">PLATFORMLAR</button>
+    </div>
+    <section data-tab="models">
+      <p class="note">Ücretsiz anahtar al, buraya yapıştır, kaydet. Anahtarlar sadece bu bilgisayardaki <code>.env</code> dosyasına yazılır, GitHub'a gitmez. Bir model kotaya takılırsa beyin otomatik sıradakine geçer.</p>
+      <div id="prov-list"></div>
+      <h4>KİŞİLİK → MODEL</h4>
+      <div id="persona-models"></div>
+    </section>
+    <section data-tab="voice" hidden>
+      <label class="row">Ses dili <select id="v-lang"><option value="auto">Otomatik</option><option value="tr">Türkçe</option><option value="en">İngilizce (film aksanı)</option></select></label>
+      <label class="row">Film efektleri (yankı, metalik) <input type="checkbox" id="v-fx"></label>
+      <label class="row">Tanıma dili <select id="v-stt"><option value="tr-TR">Türkçe</option><option value="en-US">English</option></select></label>
+      <div id="voice-sliders"></div>
+      <h4>SES KİMLİĞİ</h4>
+      <p class="note">JARVIS seni sesinden tanır; ailedeki diğer kişileri de ayrı ayrı tanıtabilirsin. Ses kaydı saklanmaz, sadece ses parmak izi tutulur.</p>
+      <label class="row">Konuşanı sesinden tanı <input type="checkbox" id="vid-on"></label>
+      <label class="row">Sadece tanıdığı seslere cevap ver (ses kilidi) <input type="checkbox" id="vid-lock"></label>
+      <div class="row"><input id="vid-name" placeholder="Adın (örn. Murat)"><label style="white-space:nowrap"><input type="checkbox" id="vid-owner" checked> sahibi</label><button class="btn-primary" id="vid-enroll">SESİMİ TANIT</button></div>
+      <div class="note" id="vid-prompt"></div>
+      <ul id="vid-list" class="plain"></ul>
+      <p class="note" id="tts-note"></p>
+    </section>
+    <section data-tab="memory" hidden>
+      <form id="fact-form" class="row"><input id="fact-in" placeholder="Hatırlamasını istediğin bir bilgi…"><button class="btn-primary">EKLE</button></form>
+      <ul id="facts"></ul>
+      <h4>HATIRLATICILAR</h4><ul id="reminders"></ul>
+      <h4>SON İŞLEMLER</h4><ul id="actions"></ul>
+    </section>
+    <section data-tab="links" hidden>
+      <h4>GMAIL + GOOGLE TAKVİM</h4>
+      <div id="google-box"></div>
+      <h4>AKILLI EV (HOME ASSISTANT)</h4>
+      <p class="note">Hue, Xiaomi, Tuya/Smart Life, Sonoff, TP-Link, klima, TV... hepsi Home Assistant üzerinden tek yerden yönetilir.</p>
+      <div class="prov"><b>HA_URL</b><input data-env="HA_URL" placeholder="http://homeassistant.local:8123"><span></span></div>
+      <div class="prov"><b>HA_TOKEN</b><input data-env="HA_TOKEN" type="password" placeholder="Profil → Uzun ömürlü erişim jetonu"><span></span></div>
+      <h4>3D YAZICI (OCTOPRINT)</h4>
+      <div class="prov"><b>OCTOPRINT_URL</b><input data-env="OCTOPRINT_URL" placeholder="http://octopi.local"><span></span></div>
+      <div class="prov"><b>OCTOPRINT_KEY</b><input data-env="OCTOPRINT_KEY" type="password"><span></span></div>
+      <button class="btn-primary" id="links-save">KAYDET</button>
+      <h4>DAVRANIŞ</h4>
+      <label class="row">Ekran/fare/klavye işlemlerinde onay isteme (tam otonom) <input type="checkbox" id="o-auto"></label>
+      <label class="row">Önemli yeni e-postaları sesli bildir <input type="checkbox" id="o-mail"></label>
+      <label class="row">Toplantıdan 10 dk önce hatırlat <input type="checkbox" id="o-meet"></label>
+      <label class="row">Şehir (hava/brifing) <input id="o-city" placeholder="Istanbul"></label>
+      <label class="row">Misafir modu (kişisel veri ve kritik işlem kapalı) <input type="checkbox" id="o-guest"></label>
+      <label class="row">Telefondan/Telegram'dan kamera görüntüsüne izin ver <input type="checkbox" id="o-rcam"></label>
+      <label class="row">Ağdaki diğer JARVIS bilgisayarlarından gelen komutlara izin ver <input type="checkbox" id="o-rcmd"></label>
+      <h4>ROBOT KOL</h4>
+      <div class="row"><input id="o-rport" placeholder="Seri port (örn. COM3)"><input id="o-rurl" placeholder="veya ESP32 adresi http://…"><button class="btn-primary" id="o-rsave">KAYDET</button></div>
+      <p class="note">Arduino kodu: <code>arduino/jarvis_robot_arm.ino</code>. El kontrolünde ROBOT modunu seç.</p>
+    </section>
+    <section data-tab="tasks" hidden>
+      <p class="note">Görev eklemek için JARVIS'e söylemen yeterli: <i>"Her akşam 22:00'de Belgeler klasörünü yedekle"</i>, <i>"Her sabah 8:30'da brifing ver"</i>, <i>"Yarın 15:00'e kadar raporu bitir diye yapılacaklara ekle"</i>.</p>
+      <h4>ZAMANLANMIŞ GÖREVLER</h4><ul id="task-list" class="plain"></ul>
+      <h4>YAPILACAKLAR</h4><ul id="todo-list" class="plain"></ul>
+    </section>
+    <section data-tab="vault" hidden>
+      <p class="note">Şifreler Windows hesabınla şifrelenir ve <b>yapay zekâ modeline asla gönderilmez</b>. JARVIS'e "Netflix şifremi kopyala" ya da "GitHub'a giriş yap" dediğinde şifreyi senin onayınla panoya kopyalar veya alana yazar.</p>
+      <div class="vault-form">
+        <input id="vf-name" placeholder="Ad (örn. Gmail)"><input id="vf-user" placeholder="Kullanıcı adı / e-posta">
+        <input id="vf-secret" type="password" placeholder="Şifre"><input id="vf-url" placeholder="Site (isteğe bağlı)">
+        <button class="btn-primary" id="vf-save">KASAYA EKLE</button>
+      </div>
+      <ul id="vault-list" class="plain"></ul>
+    </section>
+    <section data-tab="files" hidden>
+      <div class="row"><span id="fb-path" class="note"></span><span><button class="mini" id="fb-up">⬆ ÜST</button> <label class="mini" style="cursor:pointer">YÜKLE<input type="file" id="fb-file" hidden></label></span></div>
+      <div id="fb-short" class="hp-btns"></div>
+      <ul id="fb-list" class="plain"></ul>
+    </section>
+    <section data-tab="platforms" hidden>
+      <div id="platform-info"></div>
+    </section>
+  </div>
+</div>
+
+<script src="/static/vendor/three.min.js"></script>
+<script src="/static/audio.js"></script>
+<script src="/static/voiceid.js"></script>
+<script src="/static/vendor/OrbitControls.js"></script>
+<script src="/static/vendor/STLLoader.js"></script>
+<script src="/static/vendor/OBJLoader.js"></script>
+<script src="/static/vendor/GLTFLoader.js"></script>
+<script src="/static/vendor/STLExporter.js"></script>
+<script src="/static/visual.js"></script>
+<script src="/static/worlds.js"></script>
+<script src="/static/lab.js"></script>
+<script src="/static/science.js"></script>
+<script src="/static/space.js"></script>
+<script src="/static/city.js"></script>
+<script src="/static/twin.js"></script>
+<script src="/static/gesture-core.js"></script>
+<script src="/static/app.js"></script>
+<script src="/static/gesture.js"></script>
+<script src="/static/camlive.js"></script>
+<script src="/static/translator.js"></script>
+<script src="/static/studio.js"></script>
+<script src="/static/command.js"></script>
+<script src="/static/knowledge.js"></script>
+<script src="/static/finlab.js"></script>
+<script src="/static/music.js"></script>
+<script src="/static/ambient.js"></script>
+<script src="/static/update.js"></script>
+</body>
+</html>

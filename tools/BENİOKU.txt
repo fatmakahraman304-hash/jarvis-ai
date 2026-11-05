@@ -1,0 +1,3 @@
+FPS ölçümü için Intel PresentMon (ücretsiz) buraya:
+https://github.com/GameTechDev/PresentMon/releases
+PresentMon-...-x64.exe dosyasını bu klasöre koy.
