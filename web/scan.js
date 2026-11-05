@@ -31,7 +31,7 @@
     st = document.createElement("div"); st.id = "scanstage"; st.className = "hidden";
     st.innerHTML = `<video id="sc-v" muted playsinline autoplay></video><canvas id="sc-c"></canvas>
       <div class="sc-top"><b>TARAMA</b>
-        <span class="sc-tabs">${[["room", "🏠 ODA"], ["find", "🔍 BUL"], ["doc", "📄 BELGE"], ["qr", "▦ QR"], ["color", "🎨 RENK"]].map(([m, t]) => `<button class="mini" data-m="${m}">${t}</button>`).join("")}</span>
+        <span class="sc-tabs">${[["room", "🏠 ODA"], ["find", "🔍 BUL"], ["doc", "📄 BELGE"], ["qr", "▦ QR"], ["color", "🎨 RENK"], ["plant", "🌱 BİTKİ"]].map(([m, t]) => `<button class="mini" data-m="${m}">${t}</button>`).join("")}</span>
         <select id="sc-src"><option value="local">Bu cihazın kamerası</option></select>
         <input id="sc-loc" placeholder="oda adı (salon…)"><button class="mini" id="sc-go">⟳ TARA</button><button class="mini" id="sc-x">✕</button></div>
       <div id="sc-side" class="hidden"></div><div id="sc-msg"></div>`;
@@ -95,6 +95,7 @@
     if (m === "doc") docPanel(opt.doc || "text");
     if (m === "qr") { msg("QR kodu ya da barkodu kameraya göster", 4000); loadQR(); }
     if (m === "color") msg("Görüntüde bir yere tıkla: rengini söyleyeyim", 4000);
+    if (m === "plant") plantPanel();
   }
   function clsFor(t) { const k = (t || "").toLowerCase(); for (const [tr, en] of Object.entries(TR2EN)) if (k.includes(tr)) return en; return ""; }
 
@@ -129,6 +130,12 @@
       const r = toScr(it.box, f), on = i === hover, k = Math.min(1, age / 300);
       brackets(r, on ? "rgba(255,200,80,1)" : `rgba(80,230,255,${0.5 + 0.4 * k})`, on ? 18 : 12, on ? 3 : 2);
       if (on) { ctx.fillStyle = "rgba(255,200,80,0.08)"; ctx.fillRect(r.x, r.y, r.w, r.h); }
+      if (it.notlar && it.notlar.length) { // nesneye bırakılmış yapışkan not: sallanan sarı hologram etiket
+        const nx = r.x + r.w + 8, ny = r.y + 6 + Math.sin(now / 500 + i) * 3, txt = it.notlar.map((n) => "📌 " + n.t).join("  ");
+        ctx.font = "13px Rajdhani, sans-serif"; const nw = Math.min(260, ctx.measureText(txt).width + 16);
+        ctx.fillStyle = "rgba(255,215,90,0.88)"; ctx.shadowColor = "#fc4"; ctx.shadowBlur = 14; ctx.fillRect(nx, ny, nw, 26); ctx.shadowBlur = 0;
+        ctx.fillStyle = "#2a1d00"; ctx.fillText(txt.slice(0, 40), nx + 8, ny + 17);
+      }
       const label = it.ad.toUpperCase(); ctx.font = "12px Share Tech Mono, monospace"; const tw = ctx.measureText(label).width;
       ctx.fillStyle = "rgba(0,12,20,0.8)"; ctx.fillRect(r.x, r.y - 20, tw + 12, 18); ctx.fillStyle = on ? "#ffd28a" : "#9ff"; ctx.fillText(label, r.x + 6, r.y - 7);
     });
@@ -157,6 +164,8 @@
     const t0 = performance.now();
     items = list.map((it, i) => ({ ...it, shown: t0 + i * 90 }));
     if (!items.length) { msg(res && res.error ? "Tarama yapılamadı: " + res.error : "Belirgin nesne bulunamadı.", 6000); return; }
+    const noted = items.filter((x) => x.notlar && x.notlar.length);
+    if (noted.length) setTimeout(() => say(`Not hatırlatması: ${noted.map((x) => x.ad + " üzerinde: " + x.notlar.map((n) => n.t).join(", ")).join(". ")}`), 4500);
     const t = `${items.length} nesne buldum: ${items.slice(0, 6).map((x) => x.ad).join(", ")}${items.length > 6 ? " ve diğerleri" : ""}. Birine tıklarsanız yakından gösteririm.`;
     msg(t, 6000); say(t);
   }
@@ -193,6 +202,7 @@
     holo.innerHTML = `<div class="h3-scene"><div class="h3-obj">${[0, 1, 2, 3].map((i) => `<img src="${url}" style="transform:translateZ(${i * -14}px);opacity:${1 - i * 0.22}">`).join("")}</div>
         <div class="h3-base"><i></i><i></i><i></i></div><div class="h3-beam"></div></div>
       <div class="h3-card"><h3>${esc(it.ad.toUpperCase())}</h3><div class="h3-sub">${esc(it.tür || "")}${it.not ? " · " + esc(it.not) : ""}</div>
+        ${(it.notlar || []).map((n) => `<div class="h3-note">📌 ${esc(n.t)}</div>`).join("")}
         <div id="h3-info" class="h3-load">analiz ediliyor…</div>
         <div class="h3-btns"><button class="mini" id="h3-say">🗣 ANLAT</button><button class="mini" id="h3-buy">🛒 NEREDE SATILIR</button><button class="mini" id="h3-mem">📍 YERİNİ HATIRLA</button><button class="mini" id="h3-x">✕ BIRAK</button></div>
         <form id="h3-ask"><input placeholder="Bu nesneye dair sor… (örn. nasıl temizlenir?)"><button class="mini">SOR</button></form></div>`;
@@ -277,6 +287,27 @@
     try { const r = await post(`/api/scene/doc?mode=${m}&lang=${encodeURIComponent($("#sc-lang", st).value)}`, await blob(c, "image/jpeg", 0.92)); out.textContent = r.metin || r.error || ""; if (m !== "text") say((r.metin || "").slice(0, 800)); }
     catch (e) { out.textContent = "Hata: " + e.message; }
     setTimeout(() => (snap = null), 1500);
+  }
+
+  // ---------------- BİTKİ DOKTORU ----------------
+  function plantPanel() {
+    const s = $("#sc-side", st); s.classList.remove("hidden");
+    s.innerHTML = `<h4>🌱 BİTKİ DOKTORU</h4><p class="note">Bitkiyi (yapraklarıyla) kameraya göster.</p><button class="btn-primary" id="pl-go">ANALİZ ET</button><div id="pl-out"></div>`;
+    $("#pl-go", s).onclick = runPlant; setTimeout(runPlant, 1800);
+  }
+  async function runPlant() {
+    const c = grab(1400), out = $("#pl-out", st); if (!c) return; snap = c; out.innerHTML = "<p class='h3-load'>inceleniyor…</p>";
+    let r = {}; try { r = await post("/api/life/plant", await blob(c)); } catch (e) { r = { hata: e.message }; }
+    setTimeout(() => (snap = null), 1500);
+    if (!r.bitki) { out.innerHTML = `<p>${esc(r.hata || r.error || "Görüntüde bitki göremedim.")}</p>`; return; }
+    const hc = { iyi: "#3cff8a", dikkat: "#ffcf5a", sorunlu: "#ff6b6b" }[r.sağlık] || "#9fe";
+    out.innerHTML = `<h3>${esc(r.bitki)}${r.emin ? "" : " <small>(emin değilim)</small>"}</h3><p>Sağlık: <b style="color:${hc}">${esc((r.sağlık || "").toUpperCase())}</b></p>
+      ${(r.sorunlar || []).length ? `<p><b>Görülen:</b> ${esc(r.sorunlar.join(", "))}</p><p><b>Olası neden:</b> ${esc(r.neden || "")}</p>` : ""}
+      ${(r.yapılacaklar || []).length ? `<ul>${r.yapılacaklar.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
+      <p>💧 ${r.sulama_gün ? r.sulama_gün + " günde bir" : "-"} · ☀ ${esc(r.ışık || "-")}</p><p class="note">${esc(r.ipucu || "")}</p>
+      <button class="mini" id="pl-rem">💧 ${r.sulama_gün || 7} günde bir hatırlat</button>`;
+    $("#pl-rem", out).onclick = async () => { const x = await post("/api/life/plant_reminder", JSON.stringify({ name: (r.bitki || "bitki").split("(")[0].trim(), every: r.sulama_gün || 7 }), "application/json"); msg(x.r || "Kaydedildi", 5000); say(x.r || ""); };
+    say(`${r.bitki}. Sağlık durumu ${r.sağlık || "belirsiz"}. ${(r.yapılacaklar || [])[0] || ""}`);
   }
 
   // ---------------- QR ----------------

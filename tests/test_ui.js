@@ -184,6 +184,42 @@ const check = (name, cond, extra = "") => { console.log((cond ? "  ✓ " : "  �
     check("✋ sabit avuç → HUD (saat/hava/etkinlik)", ax.palm === true, JSON.stringify(ax));
     check("✏ havaya çizim + ✌ 'ne çizdim?'", ax.strokes >= 1 && ax.msg.includes("kalp"), JSON.stringify(ax));
     check("🛡 kask HUD'u", ax.mask === true);
+    console.log("TOPLANTI + ODAK + GÜNDEM + BİTKİ + OYUNLAR");
+    await p.route("**/api/life/meeting_chunk", (r) => r.fulfill({ json: { text: "Ahmet cuma günü teklifi hazırlayacak." } }));
+    await p.route("**/api/life/meeting_finish", (r) => r.fulfill({ json: { başlık: "Bütçe", özet: "Bütçe konuşuldu.", kararlar: ["Reklam artacak"], yapılacaklar: [{ iş: "Teklif", kim: "Ahmet" }], eklenen_iş: 1, dosya: "C:/Belgeler/x.md" } }));
+    await p.route("**/api/life/plant", (r) => r.fulfill({ json: { bitki: "Monstera deliciosa", emin: true, sağlık: "dikkat", sorunlar: ["sararma"], neden: "fazla su", yapılacaklar: ["Sulamayı azalt"], sulama_gün: 7, ışık: "dolaylı", ipucu: "" } }));
+    const lf = await p.evaluate(async () => {
+      const out = {};
+      await JV.meeting.start("Bütçe"); await new Promise((r) => setTimeout(r, 1500)); out.meetOn = JV.meeting.active;
+      await JV.meeting.finish(); out.meetSum = document.querySelector("#mt-sum").textContent; document.querySelector("#mt-x").click();
+      JV.focus.start(1, "rapor"); out.focusRing = !document.querySelector("#focusring").classList.contains("hidden") && JV.quiet === true;
+      JV.focus._finishNow(); await new Promise((r) => setTimeout(r, 800)); out.focusPhase = JV.focus.phase; out.quietAfter = JV.quiet; JV.focus.stop(true);
+      const st = await JV.api("/api/life/focus_stats"); out.focusMin = st.bugün_dk;
+      JV.uiCommand("news_show", {}, JSON.stringify({ ui: "newsshow", giriş: "Gündem.", sahneler: [{ başlık: "Faiz", anlatım: "Faiz sabit.", büyük: "%45", etiket: "ekonomi", kaynaklar: ["AA"] }, { başlık: "Maç", anlatım: "Galibiyet.", büyük: "3-1", etiket: "spor", kaynaklar: ["TRT"] }], kapanış: "" }));
+      await new Promise((r) => setTimeout(r, 400)); JV.newsshow.go(0); await new Promise((r) => setTimeout(r, 900));
+      out.newsBig = (document.querySelector(".ns-card.on .ns-big") || {}).textContent; JV.newsshow.go(1); await new Promise((r) => setTimeout(r, 900));
+      out.newsBig2 = (document.querySelector(".ns-card.on .ns-big") || {}).textContent; JV.newsshow.close();
+      await JV.scan.open("plant"); for (let i = 0; i < 30 && !((document.querySelector("#pl-out") || {}).textContent || "").includes("Monstera"); i++) await new Promise((r) => setTimeout(r, 300)); out.plant = (document.querySelector("#pl-out") || {}).textContent || ""; JV.scan.close();
+      const H = JV.handfx; H.show(null); const run = async (n, mk) => { for (let i = 0; i < n; i++) { H.frame(mk(i), null); await new Promise((r) => setTimeout(r, 30)); } };
+      H._startGame("rps"); const t0 = performance.now();
+      while (performance.now() - t0 < 5200 && !(H._game() && H._game().phase === "result")) await run(1, () => [{ lm: H._synth(0.5, 0.55, 0.5, "fist"), handed: "Right" }]);
+      out.rps = H._game();
+      H._startGame("balloons", 60000); let popped = 0;
+      for (let i = 0; i < 200 && !popped; i++) {
+        const g = H._game(); const b = g.balloons && g.balloons.find((x) => x.y < innerHeight - 40);
+        let hand = [];
+        if (b) { const probe = H._synth(0.5, 0.5, 0.5, "point"), dx = probe[8].x - 0.5, dy = probe[8].y - 0.5, l = H._toLm(b.x, b.y); hand = [{ lm: H._synth(l.x - dx, l.y - dy, 0.5, "point"), handed: "Right" }]; }
+        await run(1, () => hand); popped = H._game().score;
+      }
+      out.popped = popped; H.stop();
+      return out;
+    });
+    check("🎙 toplantı: kayıt → canlı döküm → özet/kararlar/yapılacaklar", lf.meetOn && lf.meetSum.includes("Reklam artacak") && lf.meetSum.includes("Teklif"), JSON.stringify(lf));
+    check("⏳ odak: halka + sessiz mod → bitince mola, istatistik", lf.focusRing && lf.focusPhase === "mola" && lf.quietAfter === false && lf.focusMin >= 1, JSON.stringify(lf));
+    check("📰 gündem sahneleri (büyük sayı, geçiş)", lf.newsBig === "%45" && lf.newsBig2 === "3-1", JSON.stringify(lf));
+    check("🌱 bitki doktoru kartı", lf.plant.includes("Monstera") && lf.plant.includes("7 günde bir"), lf.plant);
+    check("✊✋✌ taş-kağıt-makas: elin okunur, tur sonuçlanır", lf.rps && lf.rps.phase === "result" && lf.rps.pick === "taş" && ["KAZANDIN", "KAYBETTİN", "BERABERE"].includes(lf.rps.res), JSON.stringify(lf.rps));
+    check("🎈 balon patlatma: parmakla patlar", lf.popped >= 1, JSON.stringify(lf));
     console.log("GOOGLE SİHİRBAZI");
     await p.click("text=AYARLAR"); await wait(500); await p.click('[data-tab="links"]'); await wait(900);
     check("adım 1 görünüyor", (await p.textContent(".gw-body")).includes("JARVIS") && (await p.$$(".gw-dots span")).length === 5);

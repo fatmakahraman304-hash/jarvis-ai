@@ -22,6 +22,7 @@
     return { blob: new Blob([buf], { type: "audio/wav" }), peak };
   }
 
+  JV.wav = wav;
   JV.stt = {
     available() {
       const eng = (JV.settings && JV.settings.stt_engine) || "auto";

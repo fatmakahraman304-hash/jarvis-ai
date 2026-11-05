@@ -459,6 +459,9 @@
   $("#o-camrole").onclick = () => JV.cams && JV.cams.makeThisCamera();
   $("#o-camview").onclick = () => { $("#settings").classList.add("hidden"); JV.cams && JV.cams.open(); };
   document.getElementById("t-cams").onclick = () => JV.cams && JV.cams.open();
+  document.getElementById("t-meet").onclick = () => JV.meeting && (JV.meeting.active ? JV.meeting.finish() : JV.meeting.start());
+  document.getElementById("t-focus").onclick = () => JV.focus && (JV.focus.phase ? JV.focus.stop(true) : JV.focus.start(25));
+  document.getElementById("t-news").onclick = () => send("Aydınlat beni: bugünün gündemini sahne sahne anlat");
   document.getElementById("t-scan").onclick = () => JV.scan && JV.scan.open("room");
   document.getElementById("t-body").onclick = () => { if (!JV.body) return; if (JV.body.kind) return JV.body.stop(); const m = document.createElement("div"); m.className = "body-pick"; m.innerHTML = [["posture", "🪑 Duruş + göz molası"], ["squat", "🏋 Squat say"], ["pushup", "💪 Şınav say"], ["jumping", "🤸 Zıplama say"], ["mood", "😊 Ruh hali"]].map(([k, t]) => `<button class="mini" data-k="${k}">${t}</button>`).join(""); document.body.append(m); m.onclick = (e) => { const k = e.target.dataset.k; m.remove(); if (k) JV.body.start(k); }; setTimeout(() => m.remove(), 8000); };
   $("#sl-now").onclick = () => { $("#settings").classList.add("hidden"); JV.sleep && JV.sleep.enter(); };

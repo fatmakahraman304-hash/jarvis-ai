@@ -1,14 +1,15 @@
 {
-  "version": "4.0.0",
+  "version": "4.1.0",
   "date": "2026-11-05",
   "notes": [
+    "🎙 Toplantı asistanı: canlı döküm; bitince özet, kararlar, yapılacaklar (listene eklenir) ve Belgeler'e kayıt",
+    "⏳ Odak modu (pomodoro): hologram halka sayaç, bildirimler susar, mola hatırlatması, günlük/haftalık odak istatistiği",
+    "📰 'Aydınlat beni': güncel haberler ekranda sahne sahne, büyük sayılar ve kaynaklarla, sesli",
+    "🌱 Bitki doktoru (TARA > BİTKİ): tür, sağlık, bakım; sulama hatırlatıcısı ('monsterayı suladım')",
+    "📌 Nesnelere hologram not: 'buzdolabına not bırak: süt al' → taramada buzdolabının yanında çıkar",
+    "📔 Günlük: 'günlüğüme yaz', 'bu hafta nasıldım'",
+    "🎮 AR oyunları: taş-kağıt-makas (elini okur) ve balon patlatma (rekor tutulur)",
     "🔎 ODAYI TARA: nesneler kutulanır, birine TIKLA → hologram olarak öne gelir (döner, sürükle-çevir, yakınlaş) + bilgi kartı: ne, marka, boyut, ipucu, nerede satılır, yerini hatırla, soru sor",
-    "📍 Nesne hafızası: 'kumandayı nerede bıraktım?' · 🔍 Canlı bulucu: 'kumandayı bul' (bulunca işaretler ve söyler)",
-    "📄 Belge tarayıcı: yazıyı çıkar / özetle / çevir / soruyu çöz, kopyala, kaydet · ▦ QR ve barkod okuyucu (Wi-Fi şifresi dahil) · 🎨 renk seçici",
-    "✋ AR: sabit tuttuğun avucunda saat/hava/etkinlik/sistem HUD'u · ✏ havaya çizim + '✌ ne çizdim?' · 🛡 Iron Man kask HUD'u ('kask modunu aç')",
-    "🧍 VÜCUT: duruş/ekran mesafesi uyarısı + 20-20-20 göz molası · squat, şınav, zıplama sayacı (sesli sayar) · ruh hali algılama",
-    "📱 JARVIS'in gözü: eski telefonu kamera yap (Ayarlar > PLATFORMLAR > 'Bu cihazı kamera yap'); sol altta canlı izle; 'mutfakta ne var?' de, JARVIS o kameraya baksın",
-    "🛡 Güvenlik modu ('güvenlik modunu aç'): kamerada hareket olunca bildirim + Telegram'a fotoğraf (hareket telefonda algılanır, kareler diske yazılmaz)",
-    "📖 Kitaplık: kitapların, okuma durumu, sayfa, notlar, alıntılar; raf fotoğrafından ya da kameradan tarayarak ekle; JARVIS her kitaba defter yazar (uydurmaz)"
+    "📍 Nesne hafızası: 'kumandayı nerede bıraktım?' · 🔍 Canlı bulucu: 'kumandayı bul' (bulunca işaretler ve söyler)"
   ]
 }

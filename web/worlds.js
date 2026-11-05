@@ -102,6 +102,9 @@
     if (ui === "finlab") return JV.finlab && JV.finlab.open(r);
     if (ui === "ambient") return JV.ambient && (r.on === false ? JV.ambient.stop() : JV.ambient.start());
     if (ui === "xr") { if (r.view) JV.setView(r.view); return xrPrompt(r.mode === "ar" ? "immersive-ar" : "immersive-vr"); }
+    if (ui === "meeting") return JV.meeting && JV.meeting.cmd(r);
+    if (ui === "focus") return JV.focus && JV.focus.cmd(r);
+    if (ui === "newsshow") return JV.newsshow && JV.newsshow.open(r);
     if (ui === "scan") return JV.scan && JV.scan.cmd(r);
     if (ui === "body") return JV.body && JV.body.cmd(r);
     if (ui === "video") return JV.video && JV.video.open(r);

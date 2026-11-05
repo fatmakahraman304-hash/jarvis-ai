@@ -130,6 +130,8 @@ async def scene_api(request):
             return JSONResponse(scene.where_is(q.get("thing", "")))
         if what == "palm":
             return JSONResponse(await asyncio.to_thread(scene.palm_info))
+        if what == "notes":
+            return JSONResponse(scene._notes())
         if what == "remember":
             b = await request.json()
             await asyncio.to_thread(scene.remember_scene, b.get("items", []), b.get("location", ""))
@@ -145,6 +147,36 @@ async def scene_api(request):
             return JSONResponse(await asyncio.to_thread(scene.analyze_doc, img, q.get("mode", "text"), q.get("lang", "tr")))
         if what == "drawing":
             return JSONResponse(await asyncio.to_thread(scene.analyze_drawing, img))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:300]}, status_code=500)
+    return JSONResponse({"error": "bilinmeyen"}, status_code=404)
+
+
+async def life_api(request):
+    from .skills import life
+    what = request.path_params.get("what", "")
+    try:
+        if what == "meeting_chunk":
+            data = await request.body()
+            if len(data) < 4000:
+                return JSONResponse({"text": ""})
+            return JSONResponse({"text": await asyncio.to_thread(life.meeting_chunk, data)})
+        if what == "meeting_finish":
+            b = await request.json()
+            return JSONResponse(await asyncio.to_thread(life.meeting_finish, b.get("transcript", ""), b.get("title", ""), b.get("todos", True)))
+        if what == "focus_log":
+            b = await request.json()
+            return JSONResponse(life.focus_log(b.get("minutes", 0), b.get("task", ""), b.get("done", True)))
+        if what == "focus_stats":
+            return JSONResponse(life.focus_stats())
+        if what == "plant":
+            return JSONResponse(await asyncio.to_thread(life.plant_analyze, await request.body()))
+        if what == "plant_reminder":
+            b = await request.json()
+            return JSONResponse({"r": life.plant_reminder(b.get("name", ""), b.get("every", 7))})
+        if what == "game_score":
+            b = await request.json()
+            return JSONResponse(life.game_score(b.get("game", ""), int(b.get("score", 0))))
     except Exception as e:
         return JSONResponse({"error": str(e)[:300]}, status_code=500)
     return JSONResponse({"error": "bilinmeyen"}, status_code=404)
@@ -865,6 +897,8 @@ def _scheduler():
             habits.tick()
             semantic.index_tick()
             daily.alarm_tick(_notify)
+            from .skills import life
+            life.tick(_notify)
             if n % 6 == 3:      # ~30 sn
                 control.connectivity_tick(_notify)
             if n % 12 == 5:     # ~1 dk
@@ -962,6 +996,7 @@ routes = [
     Route("/api/cams", cams_api, methods=["GET", "POST"]),
     Route("/api/library", library_api),
     Route("/api/scene/{what}", scene_api, methods=["GET", "POST"]),
+    Route("/api/life/{what}", life_api, methods=["GET", "POST"]),
     Route("/api/library/{what}", library_api, methods=["POST"]),
     Route("/api/cams/{cid}", cams_api),
     Route("/api/vision", vision_api, methods=["POST"]),

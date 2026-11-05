@@ -276,6 +276,71 @@
     face.others = boxes.slice(1); face.seen = performance.now();
   }
 
+  // ---------------- AR OYUNLARI ----------------
+  let game = null;
+  const RPS = { fist: "taş", open: "kağıt", peace: "makas" }, RPS_ICON = { taş: "✊", kağıt: "✋", makas: "✌" };
+  const beats = (a, b) => (a === "taş" && b === "makas") || (a === "kağıt" && b === "taş") || (a === "makas" && b === "kağıt");
+  const sayG = (t) => JV.say && JV.say(t, JV.currentPersona && JV.currentPersona());
+  function startGame(kind) {
+    parts = []; planets = []; trail = [];
+    if (kind === "balloons") { game = { kind, t0: performance.now(), dur: 30000, balloons: [], score: 0, last: 0 }; msg("🎈 30 saniye! İşaret parmağınla patlat", 2500); sayG("Balon patlatma başlıyor. Otuz saniye!"); }
+    else { game = { kind: "rps", phase: "count", t0: performance.now() + 1200, round: 1, you: 0, me: 0, pick: null, mine: null }; sayG("Taş kağıt makas! Beş tur. Sayınca elini göster."); }
+  }
+  async function endGame(score, text) {
+    const g = game; game = null;
+    let r = {}; try { r = await (await fetch("/api/life/game_score", { method: "POST", headers: { "x-token": JV.token || "", "Content-Type": "application/json" }, body: JSON.stringify({ game: g.kind, score }) })).json(); } catch (e) {}
+    const t = text + (r.yeni_rekor ? " Yeni rekor!" : r.rekor != null ? ` Rekorun ${r.rekor}.` : "");
+    msg(t, 5000); sayG(t);
+  }
+  function bigText(t, y, size, col) { ctx.font = `${size}px Orbitron, Share Tech Mono, monospace`; ctx.textAlign = "center"; ctx.fillStyle = col; ctx.shadowColor = col; ctx.shadowBlur = 18; ctx.fillText(t, W / 2, y); ctx.shadowBlur = 0; ctx.textAlign = "left"; }
+  function gameStep(H2, now) {
+    const g = game;
+    if (g.kind === "balloons") {
+      const left = Math.max(0, g.dur - (now - g.t0));
+      if (now - g.last > 650 && left > 0) { g.last = now; const r = 28 + Math.random() * 22; g.balloons.push({ x: r + Math.random() * (W - 2 * r), y: H + r, r, vy: -(1.4 + Math.random() * 1.8), ph: Math.random() * 6, c: [[255, 80, 90], [80, 200, 255], [255, 210, 70], [120, 255, 140], [220, 120, 255]][Math.floor(Math.random() * 5)] }); }
+      const tips = H2.filter((h) => h.pointing || h.pose === "open").map((h) => h.P[8]);
+      for (let i = g.balloons.length - 1; i >= 0; i--) {
+        const b = g.balloons[i]; b.y += b.vy; b.x += Math.sin(now / 400 + b.ph) * 0.8;
+        if (tips.some((t) => Math.hypot(t.x - b.x, t.y - b.y) < b.r)) { g.score++; g.balloons.splice(i, 1); snd("pop"); for (let k = 0; k < 40; k++) { const a = Math.random() * TAU, v = 2 + Math.random() * 5; emit(b.x, b.y, { vx: Math.cos(a) * v, vy: Math.sin(a) * v, max: 30, size: 3, c: b.c, g: 0.08 }); } continue; }
+        if (b.y < -b.r * 2) { g.balloons.splice(i, 1); continue; }
+        ctx.fillStyle = `rgba(${b.c[0]},${b.c[1]},${b.c[2]},0.85)`; ctx.beginPath(); ctx.ellipse(b.x, b.y, b.r * 0.85, b.r, 0, 0, TAU); ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,0.5)"; ctx.beginPath(); ctx.ellipse(b.x - b.r * 0.3, b.y - b.r * 0.35, b.r * 0.18, b.r * 0.28, -0.5, 0, TAU); ctx.fill();
+        ctx.strokeStyle = "rgba(255,255,255,0.5)"; ctx.beginPath(); ctx.moveTo(b.x, b.y + b.r); ctx.quadraticCurveTo(b.x + 8, b.y + b.r * 1.6, b.x, b.y + b.r * 2.2); ctx.stroke();
+      }
+      tips.forEach((t) => { ctx.strokeStyle = "#fff"; ctx.beginPath(); ctx.arc(t.x, t.y, 10, 0, TAU); ctx.stroke(); });
+      bigText(`🎈 ${g.score}   ⏱ ${Math.ceil(left / 1000)}`, 70, 30, "#bff");
+      if (left <= 0 && !g.ending) { g.ending = true; endGame(g.score, `Süre doldu! ${g.score} balon patlattınız.`); }
+      return;
+    }
+    // taş-kağıt-makas
+    const t = now - g.t0, beat = 650;
+    if (g.phase === "count") {
+      if (t < 0) { bigText(`TUR ${g.round} / 5`, H / 2, 42, "#bff"); }
+      else if (t < beat * 3) { const w = ["TAŞ", "KAĞIT", "MAKAS"][Math.floor(t / beat)]; bigText(w + "…", H / 2, 64, "#ffcf8a"); if (Math.floor(t / beat) !== g.lastBeat) { g.lastBeat = Math.floor(t / beat); snd("tick"); } }
+      else if (t < beat * 3 + 700) { bigText("ÇEK!", H / 2, 80, "#5aff9c"); const h = H2[0]; if (h && RPS[h.pose] && !g.pick) g.pick = RPS[h.pose]; }
+      else {
+        g.mine = ["taş", "kağıt", "makas"][Math.floor(Math.random() * 3)];
+        if (!g.pick) { const h = H2[0]; g.pick = h && RPS[h.pose] ? RPS[h.pose] : null; }
+        g.res = !g.pick ? "?" : g.pick === g.mine ? "BERABERE" : beats(g.pick, g.mine) ? "KAZANDIN" : "KAYBETTİN";
+        if (g.res === "KAZANDIN") g.you++; else if (g.res === "KAYBETTİN") g.me++;
+        g.phase = "result"; g.rt = now; snd(g.res === "KAZANDIN" ? "lock" : "pop");
+        sayG(!g.pick ? "Elini göremedim, bu turu tekrar edelim." : `${g.pick} ile ${g.mine}. ${g.res === "BERABERE" ? "Berabere" : g.res === "KAZANDIN" ? "Bu tur sizin" : "Bu tur benim"}.`);
+        if (!g.pick) g.round--;
+      }
+    } else if (g.phase === "result") {
+      ctx.font = "120px serif"; ctx.textAlign = "center";
+      ctx.fillText(g.pick ? RPS_ICON[g.pick] : "❔", W * 0.3, H / 2); ctx.fillText(RPS_ICON[g.mine], W * 0.7, H / 2); ctx.textAlign = "left";
+      bigText("SEN", H / 2 + 70, 20, "#bff"); ctx.save(); ctx.translate(W * 0.4, 0); ctx.restore();
+      ctx.font = "18px Share Tech Mono, monospace"; ctx.fillStyle = "#bff"; ctx.textAlign = "center"; ctx.fillText("SEN", W * 0.3, H / 2 + 70); ctx.fillText("JARVIS", W * 0.7, H / 2 + 70); ctx.textAlign = "left";
+      bigText(g.res, H / 2 - 120, 46, g.res === "KAZANDIN" ? "#5aff9c" : g.res === "KAYBETTİN" ? "#ff6b6b" : "#ffcf8a");
+      if (now - g.rt > 2600) {
+        if (g.round >= 5 || g.you >= 3 || g.me >= 3) { endGame(g.you, g.you > g.me ? `Oyunu ${g.you}-${g.me} kazandınız, tebrikler!` : g.you < g.me ? `Oyunu ${g.me}-${g.you} ben kazandım. Rövanş?` : `Oyun ${g.you}-${g.me} berabere bitti.`); return; }
+        Object.assign(g, { phase: "count", t0: now + 900, round: g.round + 1, pick: null, mine: null, lastBeat: -1 });
+      }
+    }
+    bigText(`SEN ${g.you}  —  ${g.me} JARVIS`, 70, 24, "#bff");
+  }
+
   // ---------------- AVUÇTA HUD ----------------
   let palmData = { t: 0, d: {} };
   function palmInfo() {
@@ -356,14 +421,15 @@
       const pp = { x: (P[4].x + P[8].x) / 2, y: (P[4].y + P[8].y) / 2 };
       if (st.last) { st.vel = [(pp.x - st.last.x) * 0.6 + st.vel[0] * 0.4, (pp.y - st.last.y) * 0.6 + st.vel[1] * 0.4]; }
       st.last = pp;
-      if (pose !== st.pose) { if (st.pose === "fist" && pose === "open" && now - st.since < 900 && opts.blast) explode(P[9].x, P[9].y, sc); st.pose = pose; st.since = now; st.fired = false; }
+      if (pose !== st.pose) { if (st.pose === "fist" && pose === "open" && now - st.since < 900 && opts.blast && !game && !(JV.library && JV.library.open)) explode(P[9].x, P[9].y, sc); st.pose = pose; st.since = now; st.fired = false; }
       return { ...h, P, sc, pose, pinch, pointing, st, pp };
     });
     Object.keys(hs).forEach((k) => { if (!seen[k]) { const st = hs[k]; if (st.planet) { st.planet.held = false; st.planet.vx = st.vel[0]; st.planet.vy = st.vel[1]; st.planet = null; } delete hs[k]; } });
 
     // kitaplık (raf haritası varsa): seçim, çekme, açık kitap — açıkken diğer efektler susar
     const L = (JV.library && opts.library !== false) ? JV.library.arFrame(ctx, H2, M, now) : { busy: false };
-    const calm = L.busy || L.inShelf;
+    const calm = L.busy || L.inShelf || !!game;
+    if (game) gameStep(H2, now);
     const holds = L.holds || null;
     // iki elle çimdik → gezegeni büyüt
     const both = !calm && H2.length === 2 && H2[0].pinch && H2[1].pinch && opts.planet;
@@ -404,7 +470,7 @@
       if (h.pointing && opts.trail && !calm && !opts.draw && H2.filter((x) => x.pointing).length === 1) trail.push({ x: P[8].x, y: P[8].y, t: now });
       // basılı tutma kontrolleri (kitap açıkken: ✊ rafa koy, 👍 özeti oku)
       const HD = holds || (opts.draw ? { peace: [900, "NE ÇİZDİM?", askDrawing], fist: [1200, "SİL", clearDrawing], thumbs_up: [1000, "ÇİZİMİ BİTİR", () => { opts.draw = false; saveOpts(); msg("Çizim modu kapandı"); }] } : HOLDS);
-      if ((opts.controls || holds) && HD[pose] && !h.pinch) {
+      if ((opts.controls || holds) && HD[pose] && !h.pinch && !game) {
         const [ms, label, fn] = HD[pose], k = (now - st.since) / ms;
         if (!st.fired && k > 0.15) holdRing(P[9].x, P[9].y - sc * 1.2, Math.min(1, k), label);
         if (!st.fired && k >= 1) { st.fired = true; fn ? (fn(), snd("lock")) : control(pose, h); }
@@ -464,11 +530,15 @@
     _synth: (cx, cy, s, kind) => synthHand(cx, cy, s, kind, 0),
     demo() { build(); size(); on = true; demo = true; demoT = performance.now(); stage.classList.remove("hidden"); demoLoop(); },
     _setFaces: (f) => (lastFaces = f),
+    _startGame: (k, dur) => { startGame(k); if (dur && game) game.dur = dur; },
+    _game: () => game && { kind: game.kind, phase: game.phase, score: game.score, you: game.you, me: game.me, round: game.round, pick: game.pick, res: game.res, balloons: game.balloons && game.balloons.map((b) => ({ x: b.x, y: b.y, r: b.r })) },
+    _toLm: (xs, ys) => { const vw = (vid && vid.videoWidth) || 640, vh = (vid && vid.videoHeight) || 480, sc = Math.max(W / vw, H / vh), dw = vw * sc, dh = vh * sc; return { x: 1 - (xs - (W - dw) / 2) / dw, y: (ys - (H - dh) / 2) / dh }; },
     stats: () => ({ strokes: strokes.length, palm: !!palmData.t, trail: trail.length, parts: parts.length, planets: planets.map((p) => p.type), bolts: bolts.length, face: !!face.box, locked: face.locked }),
     planet(type) { forcePlanet = type || ""; if (planets[0] && type) morph(planets[0], type); else if (type) msg("Sonraki çimdik: " + NAMES[type]); },
     cmd(r) {
       if (r.action === "close") return api.stop();
       if (r.action === "face") { opts.face = !opts.face; saveOpts(); return; }
+      if (r.action === "game") { if (!on && JV.gesture) JV.gesture.start("efekt"); setTimeout(() => startGame(r.game || "rps"), on ? 0 : 2500); return; }
       if (r.action === "extra") {
         if (r.extra === "draw") { opts.draw = true; strokes = []; msg("✏ Havaya çiz: ☝ çiz · ✌ ne çizdim? · ✊ sil · 👍 bitir", 4000); }
         if (r.extra === "mask") { opts.mask = !opts.mask; msg(opts.mask ? "🛡 Kask HUD'u açık" : "Kask HUD'u kapalı"); }

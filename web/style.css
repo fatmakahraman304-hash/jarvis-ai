@@ -535,3 +535,30 @@ body.ar-on #holobook.open{background:rgba(0,8,14,.35)}
 .bh-cam{position:relative;margin:6px 0}.bh-cam video,.bh-cam canvas{width:100%;display:block;transform:scaleX(-1)}.bh-cam canvas{position:absolute;inset:0;transform:none}
 #bh-big{font-size:30px;text-align:center;color:#3cff8a;font-family:Orbitron,var(--mono)}#bh-sub{font-size:11px;text-align:center;opacity:.8;min-height:1em}
 .body-pick{position:fixed;left:50%;bottom:120px;transform:translateX(-50%);display:flex;gap:6px;flex-wrap:wrap;z-index:66;background:rgba(4,12,20,.95);border:1px solid rgba(0,229,255,.35);padding:10px}
+/* ---- toplantı ---- */
+#meetpanel{position:fixed;left:50%;top:8vh;transform:translateX(-50%);width:min(760px,94vw);max-height:80vh;display:flex;flex-direction:column;z-index:82;background:rgba(5,11,17,.96);border:1px solid rgba(255,107,107,.45);box-shadow:0 0 30px rgba(255,80,80,.15)}
+#meetpanel.hidden{display:none}
+.mt-top{display:flex;gap:8px;align-items:center;padding:8px 10px;font-family:var(--mono);font-size:12px;color:#fcc;flex-wrap:wrap}.mt-top b{letter-spacing:3px}
+#mt-rec{color:#ff6b6b;animation:slb 1.4s infinite}#mt-title{flex:1;background:#071017;color:#cff;border:1px solid rgba(0,229,255,.3);padding:5px}
+#mt-live{flex:1;overflow:auto;padding:6px 14px;font-size:15px;line-height:1.5;color:#dff;min-height:120px}#mt-live i{opacity:.5;font-size:11px;margin-right:6px}#mt-live .dim{opacity:.6}
+#mt-sum{border-top:1px solid rgba(0,229,255,.25);padding:10px 14px;overflow:auto;max-height:45vh;color:#dff}#mt-sum.hidden{display:none}#mt-sum h5{font-family:var(--mono);letter-spacing:3px;color:#ffcf8a;margin:10px 0 4px}
+/* ---- odak ---- */
+#focusring{position:fixed;right:18px;top:90px;width:150px;z-index:64;text-align:center;font-family:var(--mono);color:#bff}
+#focusring.hidden{display:none}#focusring svg{width:150px;height:150px;transform:rotate(-90deg);filter:drop-shadow(0 0 10px rgba(0,229,255,.6))}
+.fr-bg{fill:none;stroke:rgba(0,229,255,.12);stroke-width:6}.fr-fg{fill:none;stroke:var(--c);stroke-width:6;stroke-linecap:round;stroke-dasharray:327;stroke-dashoffset:327;transition:stroke-dashoffset .5s}
+#focusring.break .fr-fg{stroke:#5aff9c}
+.fr-in{position:absolute;top:0;left:0;width:150px;height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center}.fr-in b{font-family:Orbitron,var(--mono);font-size:26px}.fr-in span{font-size:10px;letter-spacing:3px;opacity:.7}
+#fr-task{font-size:11px;opacity:.8;margin:2px 0}.fr-btns{display:flex;gap:4px;justify-content:center}
+/* ---- gündem sahneleri ---- */
+#newsshow{position:fixed;inset:0;z-index:93;background:radial-gradient(ellipse at center,rgba(0,30,45,.92),rgba(0,4,8,.98))}
+#newsshow.hidden{display:none}
+.ns-top{position:absolute;top:12px;left:16px;right:16px;display:flex;gap:8px;align-items:center;font-family:var(--mono);color:#9ff;font-size:12px}.ns-top b{letter-spacing:4px;flex:1}
+.ns-stage{position:absolute;inset:60px 6vw 60px;display:flex;align-items:center;justify-content:center;perspective:1200px}
+.ns-card{position:absolute;max-width:900px;width:100%;padding:34px 40px;border:1px solid var(--nc,#5ae8ff);background:linear-gradient(160deg,rgba(0,40,60,.5),rgba(0,15,25,.7));box-shadow:0 0 40px color-mix(in srgb,var(--nc,#5ae8ff) 30%,transparent),inset 0 0 40px rgba(0,229,255,.08);color:#e6ffff;opacity:0;transform:translateX(60px) rotateY(-12deg);transition:all .7s cubic-bezier(.2,.8,.2,1)}
+.ns-card.on{opacity:1;transform:none}.ns-card.out{opacity:0;transform:translateX(-80px) rotateY(12deg)}
+.ns-tag{font-family:var(--mono);letter-spacing:4px;font-size:12px;color:var(--nc,#9ff)}
+.ns-big{font-family:Orbitron,var(--mono);font-size:min(12vw,96px);color:var(--nc,#9ff);text-shadow:0 0 30px var(--nc,#5ae8ff);margin:8px 0}
+.ns-card h1{font-family:Orbitron,var(--mono);letter-spacing:6px;font-size:48px;margin:10px 0}.ns-card h2{font-size:30px;margin:8px 0}.ns-card p{font-size:20px;line-height:1.5;opacity:.92}
+.ns-src{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}.ns-src span{font-family:var(--mono);font-size:11px;border:1px solid rgba(160,255,255,.4);padding:2px 8px;opacity:.8}
+.ns-bar{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(0,229,255,.1)}.ns-bar i{display:block;height:100%;width:0;background:var(--c);transition:width .6s}
+.h3-note{background:rgba(255,215,90,.9);color:#2a1d00;padding:5px 8px;margin:6px 0;font-weight:600;box-shadow:0 0 14px rgba(255,200,60,.5)}

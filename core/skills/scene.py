@@ -46,7 +46,56 @@ def analyze_room(img, location=""):
             continue
         items.append({"ad": str(it["ad"])[:40], "tür": str(it.get("tür", "diğer"))[:20], "box": b, "not": str(it.get("not", ""))[:80]})
     remember_scene(items, location)
+    notes = _notes()
+    for it in items:  # nesneye bırakılmış yapışkan notlar (hologram etiket olarak görünür)
+        n = _match_notes(notes, it["ad"])
+        if n:
+            it["notlar"] = n
     return {"nesneler": items, "konum": location}
+
+
+# ---------------- nesnelere yapışkan not ----------------
+NOTES = DATA / "nesne_notlari.json"
+
+
+def _notes():
+    try:
+        return json.loads(NOTES.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _stem(w):
+    w = (w or "").lower().strip()
+    for suf in ("ının", "inin", "unun", "ünün", "ına", "ine", "una", "üne", "nın", "nin", "ya", "ye", "na", "ne", "yı", "yi", "yu", "yü", "a", "e", "ı", "i", "u", "ü"):
+        if len(w) > len(suf) + 3 and w.endswith(suf):
+            return w[: -len(suf)]
+    return w
+
+
+def _match_notes(notes, name):
+    k = _stem(name)
+    return [n for key, lst in notes.items() for n in lst if k and (key in k or k in key)]
+
+
+def object_note(thing, text="", action="add"):
+    """Nesneye sanal yapışkan not bırakır: 'buzdolabına not bırak: süt al'. Tarama/kamerada nesne görünce not hologram olarak çıkar."""
+    key = _stem(thing)
+    with _lock:
+        notes = _notes()
+        if action in ("sil", "delete", "clear", "temizle"):
+            notes.pop(key, None); msg = f"{thing} üzerindeki notlar silindi."
+        elif action in ("list", "liste", "oku"):
+            return _match_notes(notes, thing) or f"{thing} üzerinde not yok."
+        else:
+            notes.setdefault(key, []).append({"t": text.strip(), "ts": time.time()}); msg = f"📌 Not {thing} üzerine bırakıldı: '{text.strip()}'. Kamera onu görünce göstereceğim."
+        NOTES.parent.mkdir(parents=True, exist_ok=True)
+        NOTES.write_text(json.dumps(notes, ensure_ascii=False, indent=1), encoding="utf-8")
+    return msg
+
+
+def object_notes_all():
+    return {k: [n["t"] for n in v] for k, v in _notes().items()} or "Hiçbir nesnede not yok."
 
 
 def remember_scene(items, location=""):
@@ -205,6 +254,9 @@ TOOLS = {
     "find_object": (find_object, _schema("Nesne bul: 'kumandayı bul', 'gözlüğüm nerede' — hafızadaki son konum + kamerada canlı arama.", {"thing": S("nesne")}, ["thing"]), False),
     "where_is": (where_is, _schema("Nesne hafızası: bir nesnenin en son görüldüğü yer ve zaman ('X'i nerede bıraktım').", {"thing": S("nesne")}, ["thing"]), False),
     "doc_scan": (doc_scan, _schema("Belge tarayıcı: kameradaki belgenin yazısını çıkarır / özetler / çevirir / sorusunu çözer.", {"mode": S("text | summary | translate | math")}), False),
+    "object_note": (object_note, _schema("Nesneye sanal yapışkan not bırakır/okur/siler ('buzdolabına not bırak: süt al'); kamera nesneyi görünce not hologram olarak çıkar.",
+                                         {"thing": S("nesne"), "text": S("not"), "action": S("add | list | delete")}, ["thing"]), False),
+    "object_notes_all": (object_notes_all, _schema("Hangi nesnelerde not var."), False),
     "qr_scan": (qr_scan, _schema("QR kod / barkod okuyucu açar."), False),
     "color_pick": (color_pick, _schema("Kameradan renk seçici (renk adı ve kodu)."), False),
     "body_mode": (body_mode, _schema("Vücut: duruş/göz molası takibi, egzersiz sayacı (squat, şınav, zıplama), ruh hali HUD'u ya da kapat.",

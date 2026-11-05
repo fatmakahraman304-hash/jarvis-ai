@@ -84,6 +84,13 @@ Beyin konuya göre ilgili araçları kendisi seçer; sen sadece ne istediğini s
 | **Nesne hafızası / bulucu** | "kumandayı nerede bıraktım?" (son taramalardan), "kumandayı bul" (kamerada canlı arar, bulunca söyler) |
 | **Belge / QR / renk** | "bu belgeyi tara": yazıyı çıkar, özetle, çevir, soruyu çöz, kaydet · QR/barkod (Wi-Fi şifresi dahil) · tıkla → renk adı ve kodu |
 | **AR ekstralar** | ✋ sabit avuç → avucunda saat/hava/etkinlik/sistem HUD'u · ✏ havaya çizim (✌ "ne çizdim?", ✊ sil) · 🛡 Iron Man kask HUD'u |
+| **Toplantı asistanı** | 🎙 TOPLANTI ya da "toplantıyı kaydet": canlı döküm; bitince özet, kararlar, yapılacaklar (listene eklenir), Belgeler/JARVIS toplantıları'na .md |
+| **Odak modu** | ⏳ ODAK ya da "50 dakika odak modu": hologram halka sayaç, bildirimler susar, sonra mola; "bugün kaç dakika odaklandım" |
+| **Aydınlat beni** | 📰 GÜNDEM: güncel haberler sahne sahne, büyük sayılar ve kaynaklarla ekranda; her sahne sesli |
+| **Bitki doktoru** | TARA > 🌱 BİTKİ ya da "bitkime bak": tür, sağlık, sorun ve bakım; "7 günde bir sulamayı hatırlat", "monsterayı suladım" |
+| **Nesneye not** | "Buzdolabına not bırak: süt al" → odayı tarayınca buzdolabının yanında sarı hologram not çıkar ve okunur |
+| **Günlük** | "Günlüğüme yaz: …", "bu hafta nasıldım" (yalnızca bu bilgisayarda) |
+| **AR oyunları** | "Taş kağıt makas oynayalım" (5 tur, elini okur) · "balon patlatma" (30 sn, işaret parmağıyla; rekor tutulur) |
 | **Vücut** | 🧍 VÜCUT: duruş + ekrana mesafe uyarısı ve 20-20-20 göz molası · squat/şınav/zıplama sayacı (sesli sayar) · ruh hali (mutlu/şaşkın/düşünceli/yorgun) |
 | **JARVIS'in gözü** | Eski telefonu kamera yap (Ayarlar > PLATFORMLAR > 'Bu cihazı kamera yap' ya da `?rol=kamera`): canlı izle (sol alttaki ● CAM rozeti / 📹 KAMERALAR), "mutfakta ne var?" deyince JARVIS o kameraya bakar. Hareket telefonda algılanır; "güvenlik modunu aç" → hareket olunca bildirim + Telegram'a fotoğraf. Kareler diske yazılmaz |
 | **Kitaplık** | 📖 KİTAPLIK: kitaplar, durum, sayfa, not, alıntı; raf fotoğrafından ekle; "kitaplığımı tara" (kameradan); JARVIS kitap defteri yazar (özet, ana fikirler, temalar, rafından benzerler — tanımadığı kitapta uydurmaz). AR'de ☝ ile sırtı seç, 🤏 ile çek → holografik kitap açılır, ✋ savur = sayfa, 👍 = özeti oku, ✊ = rafa koy. Sesle: "X'i bitirdim", "Y'de 120. sayfadayım", "Z'ye not ekle: …", "raftan kitap öner" |
