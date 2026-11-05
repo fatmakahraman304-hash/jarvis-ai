@@ -84,6 +84,7 @@ Beyin konuya göre ilgili araçları kendisi seçer; sen sadece ne istediğini s
 | **Nesne hafızası / bulucu** | "kumandayı nerede bıraktım?" (son taramalardan), "kumandayı bul" (kamerada canlı arar, bulunca söyler) |
 | **Belge / QR / renk** | "bu belgeyi tara": yazıyı çıkar, özetle, çevir, soruyu çöz, kaydet · QR/barkod (Wi-Fi şifresi dahil) · tıkla → renk adı ve kodu |
 | **AR ekstralar** | ✋ sabit avuç → avucunda saat/hava/etkinlik/sistem HUD'u · ✏ havaya çizim (✌ "ne çizdim?", ✊ sil) · 🛡 Iron Man kask HUD'u |
+| **Yeni arayüz** | Sade alt şerit + ⊞ UYGULAMALAR (kategorili hologram başlatıcı) · **Ctrl+K / "/"** komut paleti (her özelliği yazarak bul) · üstte tarih ve mini hava · HUD bildirimleri · diyalogda saat, kopyala, "yazıyor" animasyonu · günün saatine göre öneri çipleri · uyku ekranında büyük saat |
 | **Hava paneli** | "Hava durumunu göster": büyük HUD paneli — anlık derece, yüksek/düşük, yağmur, UV, gün doğumu/batımı, 24 saatlik eğri, 7 günlük kartlar (Open-Meteo, ücretsiz) |
 | **AR masaüstü** | EL > ✨ EFEKT > 🖥 MASAÜSTÜ ya da "AR masaüstünü aç": avucunu açıp sabit tut → dairesel menü; alttaki dock (Saat, Sistem, Hava, Haberler, İşler, Müzik, Dünya, Kılavuz); paneli çimdikle tut-taşı, iki elle büyüt, ✕ ile kapat. Kask modunda yüzüne Iron Man kaskı oturur |
 | **Toplantı asistanı** | 🎙 TOPLANTI ya da "toplantıyı kaydet": canlı döküm; bitince özet, kararlar, yapılacaklar (listene eklenir), Belgeler/JARVIS toplantıları'na .md |

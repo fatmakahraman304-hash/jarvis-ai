@@ -1,14 +1,14 @@
 {
-  "version": "4.2.0",
+  "version": "4.3.0",
   "date": "2026-11-05",
   "notes": [
+    "🎨 Yeni arayüz: alt şerit sadeleşti; tüm özellikler ⊞ UYGULAMALAR'da kategorili hologram başlatıcıda (arama kutulu)",
+    "⌨ Komut paleti: Ctrl+K ya da '/' — her özelliği ve sık komutu yazarak bul, Enter ile çalıştır; bulunamazsa JARVIS'e sorar",
+    "🕒 Üst barda tarih + mini hava (tıkla → büyük panel) · 🔔 bildirimler HUD kartı (renkli, süre çizgili)",
+    "💬 Diyalog: saat damgası, kopyala düğmesi, 'yazıyor' animasyonu, araç adları Türkçe · günün saatine göre öneri çipleri",
+    "😴 Uyku ekranında büyük saat, tarih ve hava · arka planda ince tarama çizgisi ve HUD süpürmesi",
     "⛅ Büyük hava paneli ('hava durumunu göster'): anlık derece, yüksek/düşük, yağmur, UV, gün doğumu/batımı, 24 saatlik eğri, 7 günlük kartlar — Open-Meteo (ücretsiz)",
     "🖥 AR masaüstü (EL > EFEKT > MASAÜSTÜ ya da 'AR masaüstünü aç'): avucunu sabit tut → dairesel menü; alttaki dock; paneller (saat, sistem halkaları CPU/RAM/GPU/DİSK, hava, haberler, işler, müzik kumandası)",
-    "🤏 Panelleri elinle yönet: çimdikle tut-taşı, iki elle büyüt, parmakla ✕ — fareyle de sürüklenir",
-    "🌍 Dock'taki Dünya: 3D dünyayı el hareketleriyle döndür/yakınlaştır",
-    "🛡 Kask modunda yüzüne oturan Iron Man kaskı (kırmızı kabuk, altın yüz plakası, parlayan gözler)",
-    "🎙 Toplantı asistanı: canlı döküm; bitince özet, kararlar, yapılacaklar (listene eklenir) ve Belgeler'e kayıt",
-    "⏳ Odak modu (pomodoro): hologram halka sayaç, bildirimler susar, mola hatırlatması, günlük/haftalık odak istatistiği",
-    "📰 'Aydınlat beni': güncel haberler ekranda sahne sahne, büyük sayılar ve kaynaklarla, sesli"
+    "🤏 Panelleri elinle yönet: çimdikle tut-taşı, iki elle büyüt, parmakla ✕ — fareyle de sürüklenir"
   ]
 }

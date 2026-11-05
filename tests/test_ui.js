@@ -56,9 +56,9 @@ const check = (name, cond, extra = "") => { console.log((cond ? "  ✓ " : "  �
       await p.evaluate(() => ["#quiz", "#translator", "#finlab"].forEach((s) => { const e = document.querySelector(s); if (e) e.classList.add("hidden"); }));
     }
     console.log("PANELLER");
-    await p.click("#t-library"); await wait(800); check("bilgi merkezi açıldı", await p.evaluate(() => !document.querySelector("#library").classList.contains("hidden")));
+    await p.click("#t-apps"); await wait(300); await p.click(".ln-tile:has-text('Bilgi Merkezi')"); await wait(800); check("bilgi merkezi açıldı", await p.evaluate(() => !document.querySelector("#library").classList.contains("hidden")));
     await p.click("#kb-close");
-    await p.click("#t-music"); await wait(2500); check("müzik besteledi ve çalıyor", (await p.textContent("#mu-play")).includes("DUR"));
+    await p.click("#t-apps"); await wait(300); await p.click(".ln-tile:has-text('Müzik')"); await wait(2500); check("müzik besteledi ve çalıyor", (await p.textContent("#mu-play")).includes("DUR"));
     await p.click("#mu-x");
     const xr = await p.evaluate(() => JV.xr.enter("immersive-vr").then(() => "girdi", (e) => e.message));
     check("VR cihaz yokken anlaşılır hata", /VR|güvenli|WebXR/.test(xr), xr);
@@ -252,6 +252,20 @@ const check = (name, cond, extra = "") => { console.log((cond ? "  ✓ " : "  �
     check("dock'tan panel + sistem halkaları", hd.p2.includes("music") && hd.rings === 4, JSON.stringify(hd));
     check("🤏 paneli çimdikle tut-taşı", hd.moved > 100, JSON.stringify(hd));
     check("☝ ✕ ile panel kapanır", !hd.p3.includes("music"), JSON.stringify(hd));
+    console.log("ARAYÜZ KABUĞU");
+    const sh = await p.evaluate(() => ({ core: [...document.querySelectorAll("#bottom .ctrl-row .tog")].filter((b) => getComputedStyle(b).display !== "none").map((b) => b.id), tiles: document.querySelectorAll(".ln-tile").length, chips: document.querySelectorAll("#chips .chip").length, date: (document.querySelector("#hdr-date") || {}).textContent || "" }));
+    check("alt şerit sade (temel düğmeler + UYGULAMALAR)", sh.core.length <= 9 && sh.core.includes("t-apps") && sh.core.includes("t-estop"), JSON.stringify(sh));
+    check("başlatıcıda tüm uygulamalar", sh.tiles >= 20, sh.tiles);
+    check("üst barda tarih + öneri çipleri", sh.date.length > 5 && sh.chips >= 4, JSON.stringify(sh));
+    await p.keyboard.press("Control+k"); await wait(300);
+    await p.fill("#pl-q", "hava"); await wait(200);
+    const pl = await p.evaluate(() => [...document.querySelectorAll("#pl-list li b")].map((x) => x.textContent));
+    check("Ctrl+K komut paleti arar", pl.some((t) => t.includes("Hava")), JSON.stringify(pl));
+    await p.press("#pl-q", "Enter"); await wait(1200);
+    check("Enter → özellik çalışır (hava paneli)", await p.evaluate(() => !document.querySelector("#wxpanel").classList.contains("hidden")));
+    await p.keyboard.press("Escape"); await wait(300);
+    const tt = await p.evaluate(async () => { JV.toast("Kaydedildi ✓", 2000); await new Promise((r) => setTimeout(r, 100)); const t = [...document.querySelectorAll(".toast")].pop(); return { ok: t.classList.contains("t-ok"), bar: !!t.querySelector(".t-bar") }; });
+    check("HUD bildirimi (renk + süre çizgisi)", tt.ok && tt.bar, JSON.stringify(tt));
     console.log("GOOGLE SİHİRBAZI");
     await p.click("text=AYARLAR"); await wait(500); await p.click('[data-tab="links"]'); await wait(900);
     check("adım 1 görünüyor", (await p.textContent(".gw-body")).includes("JARVIS") && (await p.$$(".gw-dots span")).length === 5);
@@ -265,7 +279,7 @@ const check = (name, cond, extra = "") => { console.log((cond ? "  ✓ " : "  �
     check("doğru biçim onaylanır", await p.waitForFunction(() => document.querySelector(".gwiz .gtest").textContent.includes("biçim doğru"), null, { timeout: 6000 }).then(() => true, () => false));
     await p.click(".gw-nav button:last-child"); await wait(400);
     check("adım 5: bağlan düğmesi (anahtarsız kapalı)", await p.$eval(".gw-body .btn-primary", (b) => b.textContent.includes("BAĞLAN") && b.disabled));
-    await p.click(".gw-dots span:first-child"); await wait(300);
+    await p.click(".gw-dots span:first-child", { force: true }); await p.waitForFunction(() => (document.querySelector(".gw-nav .note") || {}).textContent.includes("1 / 5"), null, { timeout: 4000 }).catch(() => {});
     check("adım çiplerine tıklayınca o adıma gider", (await p.textContent(".gw-nav .note")).includes("1 / 5"));
     await p.keyboard.press("Escape");
     check("sayfa hatası yok", errs.length === 0, errs.slice(0, 3).join(" | "));

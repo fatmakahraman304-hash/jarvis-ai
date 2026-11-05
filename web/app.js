@@ -45,7 +45,7 @@
     else if (/görev|task/.test(n)) { openSettings(); setTimeout(() => document.querySelector('.s-tabs button[data-tab=tasks]').click(), 300); }
     else if (/dosya|files/.test(n)) { openSettings(); setTimeout(() => document.querySelector('.s-tabs button[data-tab=files]') && document.querySelector('.s-tabs button[data-tab=files]').click(), 300); }
   };
-  function toast(t, ms = 5000) { const d = el("div", "toast", t); $("#toasts").append(d); setTimeout(() => d.remove(), ms); }
+  function toast(t, ms = 5000) { const d = el("div", "toast", t); d.style.setProperty("--tms", ms + "ms"); $("#toasts").append(d); setTimeout(() => d.remove(), ms); }
   function P(id) { return JV.state.personas.find((p) => p.id === id) || { id, name: id.toUpperCase(), color: "#38d6ff", color2: "#0a6cff", full: "" }; }
   function scrollLog() { const l = $("#log"); l.scrollTop = l.scrollHeight; }
   function addMsg(role, text, pid, who) {
