@@ -559,7 +559,8 @@ def route(order, messages, tools, model_override="", light=False):
             continue
         use_tools = tools
         used = []
-        for attempt in range(5):
+        busy_retried = set()
+        for attempt in range(7):
             emitted = False
             try:
                 yield ("provider", {"provider": pid, "model": model, "label": PROVIDERS[pid]["label"]})
@@ -583,7 +584,15 @@ def route(order, messages, tools, model_override="", light=False):
                     list_models(pid, refresh=True)  # model adı eskimiş olabilir: listeyi yenile
                 if e.status == 429:
                     mark_exhausted(pid, model, e.body)
-                if e.status in (403, 404, 429) and len(used) < 3:
+                if e.status in (500, 502, 503, 504):
+                    # Google'da model geçici yoğun (UNAVAILABLE/overloaded): bir kez kısa bekleyip aynı modeli dene,
+                    # yine olmazsa bu modeli 2 dk kenara al ve aynı sağlayıcının sıradaki modeline geç
+                    if not getattr(e, "_retried", False) and model not in busy_retried:
+                        busy_retried.add(model)
+                        time.sleep(1.5)
+                        continue
+                    _cooldown[(pid, model)] = time.time() + 120
+                if e.status in (403, 404, 429, 500, 502, 503, 504) and len(used) < 3:
                     # bu model kotada/erişilemez: aynı sağlayıcının bir sonraki en iyi modeline geç (ör. 3.8 → 3.6)
                     nm = next_model(pid, model, used)
                     if nm:
@@ -597,6 +606,8 @@ def route(order, messages, tools, model_override="", light=False):
         elif any(":" in t and t.endswith("429") for t in tried):
             yield ("error", "Gemini'nin bugünkü ücretsiz hakkı doldu (tüm Gemini modelleri). Hak her gün saat 10:00 civarı yenilenir. "
                             "Beklemeden devam etmek istersen Ayarlar > MODELLER'de 'Sadece Gemini' seçeneğini kapat.")
+        elif any(t.endswith(("500", "502", "503", "504")) for t in tried):
+            yield ("error", "Google'ın Gemini sunucuları şu an çok yoğun (tüm Gemini modelleri denendi). Bir dakika sonra tekrar dener misin?")
         else:
             yield ("error", "Gemini şu an cevap vermedi (" + ", ".join(tried) + "). Birazdan tekrar dene.")
         return

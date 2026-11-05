@@ -1,13 +1,11 @@
 {
-  "version": "3.7.0",
+  "version": "3.7.1",
   "date": "2026-11-05",
   "notes": [
+    "Gemini 3.8 'yoğun' (503) derse JARVIS artık pes etmez: bir kez tekrar dener, olmazsa anında Gemini 3.6 ile cevap verir; yoğun model 2 dk kenara alınır",
     "Yeni 'AQ.' Gemini anahtarları artık çalışıyor: JARVIS Gemini'ye Google'ın kendi resmi yolundan bağlanıyor ('API key not valid' hatası bundandı)",
     "Ses tanıma yenilendi: konuşmanı Gemini yazıya döker (yedek: Whisper); ortam gürültüsüne kendini ayarlar, kısık mikrofonu yükseltir, dinlerken ses seviyesi çubuğu görünür",
     "Ayarlar > SES: mikrofon seçimi ve 🎙 MİKROFON TESTİ (ses geliyor mu, ne duyuldu, seviye)",
-    "Ses duyulmazsa artık sessizce kalmaz: nedenini söyler (mikrofondan ses yok / çok kısık / anlaşılmadı)",
-    "Tek beyin: artık yalnızca Google Gemini kullanılıyor (Groq/OpenRouter vb. devre dışı; anahtarları silinmedi, Ayarlar > MODELLER'deki 'Sadece Gemini' kutusuyla geri açılabilir)",
-    "Gemini kendi içinde yedekli: 3.8 Flash → 3.6 Flash → Flash-Lite; ücretsiz hak dolarsa açıkça söyler",
-    "Cevapsız kalma sorunu düzeltildi: araç çalışıp model cevap yazmazsa JARVIS araç sonuçlarıyla mutlaka cevap verir"
+    "Ses duyulmazsa artık sessizce kalmaz: nedenini söyler (mikrofondan ses yok / çok kısık / anlaşılmadı)"
   ]
 }

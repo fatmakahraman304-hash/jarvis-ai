@@ -90,6 +90,24 @@ check("Groq arka plan işi = GPT-OSS 20B", llm.light_model("groq") == "openai/gp
 f = llm.ThinkFilter()
 check("Qwen'in <think> iç düşüncesi cevaba karışmaz", "".join(f.feed(x) for x in ["<thi", "nk>plan…</thi", "nk>\n\nTamam efendim."]) + f.flush() == "Tamam efendim.")
 
+seen.clear(); llm._cooldown.clear()
+
+
+def busy(pid, model, messages, tools=None, temperature=0.7, timeout=90):
+    seen.append(model)
+    if model == "gemini-3.8-flash":
+        raise llm.ProviderError(pid, 503, '{"error":{"code":503,"message":"The model is overloaded.","status":"UNAVAILABLE"}}')
+    yield ("text", "3.6 cevabı")
+    yield ("final", {"content": "3.6 cevabı", "tool_calls": []})
+
+
+llm.stream_chat = busy
+evs = list(llm.route(["gemini"], [{"role": "user", "content": "x"}], None))
+check("503 (yoğun): bir kez tekrar dener, sonra 3.6 cevap verir", seen == ["gemini-3.8-flash", "gemini-3.8-flash", "gemini-3.6-flash"] and ("text", "3.6 cevabı") in evs, seen)
+seen.clear(); list(llm.route(["gemini"], [{"role": "user", "content": "y"}], None))
+check("yoğun 3.8 iki dakika kenarda: sonraki mesaj doğrudan 3.6", seen == ["gemini-3.6-flash"], seen)
+llm._cooldown.clear()
+
 print("ANAHTAR SAĞLIĞI")
 check("tırnak/boşluk/önek temizlenir", llm.clean_key(' "GEMINI_API_KEY=AIzaSyA1234567890abcdefghijklmnopqrstu " ') == "AIzaSyA1234567890abcdefghijklmnopqrstu")
 os.environ["GEMINI_API_KEY"] = "AIzaYANLIS"
