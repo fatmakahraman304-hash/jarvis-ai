@@ -1,14 +1,14 @@
 {
-  "version": "3.9.0",
+  "version": "4.0.0",
   "date": "2026-11-05",
   "notes": [
+    "🔎 ODAYI TARA: nesneler kutulanır, birine TIKLA → hologram olarak öne gelir (döner, sürükle-çevir, yakınlaş) + bilgi kartı: ne, marka, boyut, ipucu, nerede satılır, yerini hatırla, soru sor",
+    "📍 Nesne hafızası: 'kumandayı nerede bıraktım?' · 🔍 Canlı bulucu: 'kumandayı bul' (bulunca işaretler ve söyler)",
+    "📄 Belge tarayıcı: yazıyı çıkar / özetle / çevir / soruyu çöz, kopyala, kaydet · ▦ QR ve barkod okuyucu (Wi-Fi şifresi dahil) · 🎨 renk seçici",
+    "✋ AR: sabit tuttuğun avucunda saat/hava/etkinlik/sistem HUD'u · ✏ havaya çizim + '✌ ne çizdim?' · 🛡 Iron Man kask HUD'u ('kask modunu aç')",
+    "🧍 VÜCUT: duruş/ekran mesafesi uyarısı + 20-20-20 göz molası · squat, şınav, zıplama sayacı (sesli sayar) · ruh hali algılama",
     "📱 JARVIS'in gözü: eski telefonu kamera yap (Ayarlar > PLATFORMLAR > 'Bu cihazı kamera yap'); sol altta canlı izle; 'mutfakta ne var?' de, JARVIS o kameraya baksın",
     "🛡 Güvenlik modu ('güvenlik modunu aç'): kamerada hareket olunca bildirim + Telegram'a fotoğraf (hareket telefonda algılanır, kareler diske yazılmaz)",
-    "📖 Kitaplık: kitapların, okuma durumu, sayfa, notlar, alıntılar; raf fotoğrafından ya da kameradan tarayarak ekle; JARVIS her kitaba defter yazar (uydurmaz)",
-    "AR'de raftan kitap çek: ☝ sırtı seç, 🤏 çek → holografik kitap; ✋ savur = sayfa, 👍 = özeti oku, ✊ = rafa koy",
-    "▶ YouTube artık JARVIS'in içinde: 'Fenerbahçe maç özetini aç' en yeni özeti bulup oynatır",
-    "Düzeltme: AR'de yumruk artık yanlışlıkla 'çimdik' sayılmıyor",
-    "✨ AR EFEKT (EL > EFEKT ya da 'el efektlerini aç'): kamerada ✋ ateş, ✋✋ dönen mühür halkaları, 🤏 avuçta parçacık gezegen (Satürn/Dünya/Mars/Jüpiter/Ay/Güneş — taşı, fırlat, iki elle büyüt; 'Mars yap'), ✊→✋ patlama + sarsıntı, ☝☝ şimşek, ☝ ışık izi",
-    "AR'de basılı tutma kontrolleri (halka dolar): 👍 1 sn komut, ✌ mikrofon, ✊ 2 sn sus · Yüz kilidi HUD'u: kilitlenince karşılar (Ayarlar > SES > Adın)"
+    "📖 Kitaplık: kitapların, okuma durumu, sayfa, notlar, alıntılar; raf fotoğrafından ya da kameradan tarayarak ekle; JARVIS her kitaba defter yazar (uydurmaz)"
   ]
 }

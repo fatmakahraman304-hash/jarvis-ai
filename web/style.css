@@ -496,3 +496,42 @@ body.camrole > *:not(#camnode):not(#toast):not(script){display:none!important}
 #holobook.open .hb-nav{opacity:1}
 #holobook.open,#holobook.flying{background:radial-gradient(ellipse at center,rgba(0,20,30,.55),rgba(0,4,8,.82))}
 body.ar-on #holobook.open{background:rgba(0,8,14,.35)}
+/* ---- tarama sahnesi ---- */
+#scanstage{position:fixed;inset:0;z-index:92;background:#000}#scanstage.hidden{display:none}
+#sc-v{display:none}#sc-c{position:absolute;inset:0;width:100%;height:100%}
+.sc-top{position:absolute;top:10px;left:12px;right:12px;display:flex;gap:8px;align-items:center;font-family:var(--mono);font-size:12px;color:#9ff;flex-wrap:wrap;z-index:2}
+.sc-top b{letter-spacing:3px;color:var(--c)}.sc-tabs{display:flex;gap:4px}.sc-tabs .on{background:var(--c);color:#000}
+.sc-top select,.sc-top input{background:rgba(0,15,25,.8);color:#cff;border:1px solid rgba(0,229,255,.35);padding:4px 6px;font-family:inherit}
+#sc-side{position:absolute;right:14px;top:56px;width:min(380px,90vw);max-height:78vh;overflow:auto;background:rgba(4,12,20,.92);border:1px solid rgba(0,229,255,.35);padding:12px;color:#dff;z-index:2}
+#sc-side.hidden{display:none}#sc-side h4{margin:0 0 8px;font-family:var(--mono);letter-spacing:2px;color:var(--c)}
+#sc-side pre{white-space:pre-wrap;font-size:13px;max-height:44vh;overflow:auto;background:rgba(0,0,0,.35);padding:8px}
+.sc-btns{display:flex;gap:4px;flex-wrap:wrap;margin:6px 0}.sc-btns .on{background:var(--c);color:#000}
+.sc-sw{height:70px;border:1px solid rgba(255,255,255,.4);margin-bottom:8px}
+#sc-side input{background:#071017;color:#cff;border:1px solid rgba(0,229,255,.3);padding:6px;width:70%}
+#sc-msg{position:absolute;left:50%;bottom:6%;transform:translateX(-50%);font-family:var(--mono);color:#bff;font-size:15px;background:rgba(0,10,18,.7);padding:6px 14px;opacity:0;transition:opacity .3s;max-width:90vw;text-align:center;z-index:2}
+#sc-msg.on{opacity:1}
+/* ---- hologram ---- */
+#holo3d{position:fixed;inset:0;z-index:97;display:flex;align-items:center;justify-content:center;gap:4vw;background:radial-gradient(ellipse at 40% 50%,rgba(0,40,60,.55),rgba(0,4,8,.88));opacity:0;transition:opacity .45s;flex-wrap:wrap}
+#holo3d.on{opacity:1}#holo3d.off{opacity:0}
+.h3-scene{position:relative;width:min(46vw,460px);height:min(70vh,520px);perspective:900px;display:flex;align-items:center;justify-content:center;cursor:grab;touch-action:none}
+.h3-obj{position:relative;transform-style:preserve-3d;transition:transform .05s;animation:h3in .8s cubic-bezier(.2,.8,.2,1)}
+.h3-obj img{display:block;max-width:min(40vw,400px);max-height:min(52vh,400px);filter:drop-shadow(0 0 14px rgba(0,229,255,.8));animation:h3flick 3s infinite}
+.h3-obj img+img{position:absolute;inset:0;mix-blend-mode:screen}
+.h3-base{position:absolute;bottom:4%;left:15%;width:70%;height:22%;transform:rotateX(75deg)}
+.h3-base i{position:absolute;inset:0;border:2px solid rgba(0,229,255,.6);border-radius:50%;box-shadow:0 0 20px rgba(0,229,255,.5),inset 0 0 20px rgba(0,229,255,.3);animation:h3spin 6s linear infinite}
+.h3-base i:nth-child(2){inset:14%;border-style:dashed;animation-duration:9s;animation-direction:reverse}.h3-base i:nth-child(3){inset:30%;animation-duration:4s}
+.h3-beam{position:absolute;bottom:12%;left:25%;width:50%;height:70%;background:linear-gradient(0deg,rgba(0,229,255,.22),rgba(0,229,255,0));clip-path:polygon(20% 100%,80% 100%,100% 0,0 0);pointer-events:none}
+.h3-card{width:min(420px,90vw);background:rgba(0,25,38,.6);border:1px solid rgba(100,230,255,.55);box-shadow:0 0 30px rgba(0,229,255,.25),inset 0 0 30px rgba(0,229,255,.1);padding:18px;color:#dff;backdrop-filter:blur(4px);animation:h3card .6s .2s both}
+.h3-card h3{margin:0;font-family:var(--mono);letter-spacing:4px;color:#9ff}.h3-sub{opacity:.7;font-size:13px;margin-bottom:10px}
+.h3-load{font-family:var(--mono);color:#7cf;animation:slb 1.2s infinite}.h3-card p{margin:6px 0;font-size:14px;line-height:1.45}.h3-card .dim{opacity:.6}
+.h3-btns{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}#h3-ask{display:flex;gap:6px}#h3-ask input{flex:1;background:#071017;color:#cff;border:1px solid rgba(0,229,255,.35);padding:6px}
+@keyframes h3in{from{transform:translateZ(-600px) translateY(120px) scale(.3);opacity:0}to{opacity:1}}
+@keyframes h3card{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:none}}
+@keyframes h3spin{to{transform:rotate(360deg)}}
+@keyframes h3flick{0%,100%{opacity:1}47%{opacity:1}48%{opacity:.6}49%{opacity:1}82%{opacity:.85}}
+/* ---- vücut HUD ---- */
+#bodyhud{position:fixed;right:14px;bottom:90px;width:220px;z-index:65;background:rgba(4,12,20,.9);border:1px solid rgba(0,229,255,.35);font-family:var(--mono);color:#bff;padding:8px}
+#bodyhud.hidden{display:none}.bh-top{display:flex;justify-content:space-between;align-items:center;font-size:11px;letter-spacing:2px}
+.bh-cam{position:relative;margin:6px 0}.bh-cam video,.bh-cam canvas{width:100%;display:block;transform:scaleX(-1)}.bh-cam canvas{position:absolute;inset:0;transform:none}
+#bh-big{font-size:30px;text-align:center;color:#3cff8a;font-family:Orbitron,var(--mono)}#bh-sub{font-size:11px;text-align:center;opacity:.8;min-height:1em}
+.body-pick{position:fixed;left:50%;bottom:120px;transform:translateX(-50%);display:flex;gap:6px;flex-wrap:wrap;z-index:66;background:rgba(4,12,20,.95);border:1px solid rgba(0,229,255,.35);padding:10px}

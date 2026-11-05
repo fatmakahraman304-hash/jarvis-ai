@@ -68,7 +68,7 @@ const check = (name, cond, extra = "") => { console.log((cond ? "  ✓ " : "  �
     const ar = await p.evaluate(async () => {
       const H = JV.handfx, C = JV.GestureCore, out = {}; H.show(null);
       const run = async (n, mk) => { for (let i = 0; i < n; i++) { H.frame(mk(i), null); await new Promise((r) => setTimeout(r, 16)); } };
-      await run(8, () => [{ lm: H._synth(0.5, 0.5, 0.5, "open"), handed: "Right" }]); out.fire = H.stats().parts;
+      await run(8, (i) => [{ lm: H._synth(0.4 + i * 0.03, 0.5, 0.5, "open"), handed: "Right" }]); out.fire = H.stats().parts;
       await run(20, (i) => [{ lm: H._synth(0.3 + i * 0.02, 0.5, 0.5, "point"), handed: "Right" }]); out.trail = H.stats().trail;
       await run(10, () => [{ lm: H._synth(0.5, 0.5, 0.5, "pinch"), handed: "Right" }]); out.planet = H.stats().planets.length;
       await run(1, () => [{ lm: H._synth(0.5, 0.5, 0.5, "fist"), handed: "Right" }]); await run(2, () => [{ lm: H._synth(0.5, 0.5, 0.5, "open"), handed: "Right" }]); out.blast = H.stats().planets.length;
@@ -139,10 +139,56 @@ const check = (name, cond, extra = "") => { console.log((cond ? "  ✓ " : "  �
     check("telefon kamera sayfası (sade, diğer arayüz gizli)", role.node, JSON.stringify(role));
     check("kamera sayfası kare gönderiyor", camList.cams.some((c) => c.name === "CAM-02" && c.loc === "Salon" && c.online), JSON.stringify(camList));
     await cp.close();
+    console.log("ODA TARAMA + HOLOGRAM + VÜCUT + AR EKSTRA");
+    await p.route("**/api/scene/room*", (r) => r.fulfill({ json: { nesneler: [{ ad: "Kahve fincanı", tür: "mutfak", box: [0.15, 0.3, 0.38, 0.7], not: "beyaz" }, { ad: "Kumanda", tür: "elektronik", box: [0.55, 0.6, 0.7, 0.8] }] } }));
+    await p.route("**/api/scene/object*", (r) => r.fulfill({ json: { ad: "Kahve fincanı", ne: "Porselen fincan.", ipucu: "Elde yıka.", arama: "porselen fincan" } }));
+    await p.route("**/api/scene/drawing", (r) => r.fulfill({ json: { cevap: "Bir kalp çizmişsiniz!" } }));
+    await p.evaluate(() => JV.uiCommand("room_scan", {}, JSON.stringify({ ui: "scan", mode: "room", location: "salon" })));
+    for (let i = 0; i < 20 && (await p.evaluate(() => JV.scan._state().items)) < 2; i++) await wait(400);
+    check("'odayı tara' → nesneler kutulanır", (await p.evaluate(() => JV.scan._state().items)) === 2);
+    await p.evaluate(() => JV.scan._openHolo(0)); await wait(1500);
+    const hol = await p.evaluate(() => ({ on: !!document.querySelector("#holo3d.on"), info: (document.querySelector("#h3-info") || {}).textContent || "", layers: document.querySelectorAll(".h3-obj img").length }));
+    check("nesneye tıkla → hologram + bilgi kartı", hol.on && hol.layers === 4 && hol.info.includes("Porselen"), JSON.stringify(hol));
+    await p.keyboard.press("Escape"); await wait(600); await p.keyboard.press("Escape"); await wait(300);
+    check("Esc: hologram, sonra tarama kapanır", !(await p.evaluate(() => JV.scan.active)));
+    const bd = await p.evaluate(async () => {
+      await JV.body.start("squat", 0);
+      const mk = (bent) => { const P = []; for (let i = 0; i < 33; i++) P.push({ x: 0.5, y: 0.5, visibility: 1 }); P[23] = { x: 0.45, y: 0.5, visibility: 1 }; P[24] = { x: 0.55, y: 0.5, visibility: 1 }; P[25] = { x: bent ? 0.25 : 0.45, y: 0.7, visibility: 1 }; P[26] = { x: bent ? 0.75 : 0.55, y: 0.7, visibility: 1 }; P[27] = { x: 0.45, y: 0.9, visibility: 1 }; P[28] = { x: 0.55, y: 0.9, visibility: 1 }; return P; };
+      const n = performance.now(); for (let i = 0; i < 3; i++) { JV.body._feedPose(mk(true), n); JV.body._feedPose(mk(false), n); }
+      const squats = JV.body._state().reps;
+      await JV.body.start("mood");
+      const bs = (o) => ({ categories: Object.entries(o).map(([categoryName, score]) => ({ categoryName, score })) });
+      JV.body._feedMood(bs({ mouthSmileLeft: 0.8, mouthSmileRight: 0.8 }), performance.now()); const happy = document.querySelector("#bh-big").textContent;
+      JV.body._feedMood(bs({ eyeBlinkLeft: 0.7, eyeBlinkRight: 0.7 }), performance.now()); const tired = document.querySelector("#bh-big").textContent;
+      JV.body.stop();
+      return { squats, happy, tired };
+    });
+    check("squat sayacı (diz açısı)", bd.squats === 3, JSON.stringify(bd));
+    check("ruh hali: mutlu / yorgun", bd.happy.includes("MUTLU") && bd.tired.includes("YORGUN"), JSON.stringify(bd));
+    const ax = await p.evaluate(async () => {
+      const H = JV.handfx; H.show(null); const out = {};
+      const run = async (n, mk) => { for (let i = 0; i < n; i++) { H.frame(mk(i), null); await new Promise((r) => setTimeout(r, 30)); } };
+      await run(50, () => [{ lm: H._synth(0.5, 0.55, 0.5, "open"), handed: "Right" }]); out.palm = H.stats().palm;
+      JV.uiCommand("ar_extra", {}, JSON.stringify({ ui: "handfx", action: "extra", extra: "draw" }));
+      await run(20, (i) => [{ lm: H._synth(0.35 + i * 0.012, 0.5 + Math.sin(i / 3) * 0.05, 0.5, "point"), handed: "Right" }]); out.strokes = H.stats().strokes;
+      const peace = () => { const l = H._synth(0.5, 0.5, 0.5, "point"); const m = H._synth(0.5, 0.5, 0.5, "open"); [9, 10, 11, 12].forEach((k) => (l[k] = m[k])); return l; };
+      out.peacePose = JV.GestureCore.pose(peace());
+      await run(45, () => [{ lm: peace(), handed: "Right" }]); await new Promise((r) => setTimeout(r, 800));
+      out.msg = document.querySelector("#ar-msg").textContent;
+      JV.uiCommand("ar_extra", {}, JSON.stringify({ ui: "handfx", action: "extra", extra: "mask" }));
+      const face = []; for (let i = 0; i < 478; i++) face.push({ x: 0.4 + (i % 20) * 0.01, y: 0.3 + Math.floor(i / 20) * 0.01 });
+      H._setFaces([face]); await run(3, () => []); out.mask = H.opts.mask;
+      H.opts.draw = false; H.opts.mask = false; H.stop();
+      return out;
+    });
+    check("✋ sabit avuç → HUD (saat/hava/etkinlik)", ax.palm === true, JSON.stringify(ax));
+    check("✏ havaya çizim + ✌ 'ne çizdim?'", ax.strokes >= 1 && ax.msg.includes("kalp"), JSON.stringify(ax));
+    check("🛡 kask HUD'u", ax.mask === true);
     console.log("GOOGLE SİHİRBAZI");
     await p.click("text=AYARLAR"); await wait(500); await p.click('[data-tab="links"]'); await wait(900);
     check("adım 1 görünüyor", (await p.textContent(".gw-body")).includes("JARVIS") && (await p.$$(".gw-dots span")).length === 5);
-    for (let i = 0; i < 3; i++) { await p.click(".gw-nav button:last-child"); await wait(400); }
+    for (let i = 0; i < 3; i++) { const before = await p.textContent(".gw-nav .note"); await p.click(".gw-nav button:last-child"); await p.waitForFunction((b) => document.querySelector(".gw-nav .note").textContent !== b, before, { timeout: 5000 }).catch(() => {}); }
+    await p.waitForSelector(".gw-body input", { timeout: 5000 }).catch(() => {});
     check("adım 4: anahtar alanları", (await p.$$(".gw-body input")).length === 2);
     const ins = await p.$$(".gw-body input");
     await ins[0].fill("GOCSPX-yanlis-kutuya"); await ins[1].fill("123-abc.apps.googleusercontent.com");

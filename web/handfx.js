@@ -11,7 +11,7 @@
   const G = () => JV.GestureCore;
   const TAU = Math.PI * 2;
   const OPT_KEY = "jv_handfx_opts";
-  const DEF = { library: true, fire: true, seal: true, planet: true, blast: true, lightning: true, trail: true, controls: true, face: true, sound: true, skeleton: false };
+  const DEF = { palm: true, draw: false, mask: false, library: true, fire: true, seal: true, planet: true, blast: true, lightning: true, trail: true, controls: true, face: true, sound: true, skeleton: false };
   let opts = { ...DEF };
   try { Object.assign(opts, JSON.parse(localStorage.getItem(OPT_KEY) || "{}")); } catch (e) {}
   const saveOpts = () => { try { localStorage.setItem(OPT_KEY, JSON.stringify(opts)); } catch (e) {} };
@@ -58,7 +58,7 @@
     cv = stage.querySelector("#ar-canvas"); ctx = cv.getContext("2d"); vid = stage.querySelector("#ar-video");
     stage.querySelector("#ar-close").onclick = () => api.stop();
     stage.querySelector("#ar-opts-b").onclick = () => stage.querySelector("#ar-opts").classList.toggle("hidden");
-    const LBL = { library: "Kitaplık (raftan kitap çek)", fire: "Ateş", seal: "Mühür halkası", planet: "Gezegen", blast: "Patlatma", lightning: "Şimşek", trail: "Işık izi", controls: "JARVIS kontrolleri (👍 ✌ ✊)", face: "Yüz kilidi", sound: "Efekt sesleri", skeleton: "El iskeleti" };
+    const LBL = { palm: "Avuçta HUD (saat/hava/etkinlik)", draw: "Havaya çizim", mask: "Iron Man kask HUD'u", library: "Kitaplık (raftan kitap çek)", fire: "Ateş", seal: "Mühür halkası", planet: "Gezegen", blast: "Patlatma", lightning: "Şimşek", trail: "Işık izi", controls: "JARVIS kontrolleri (👍 ✌ ✊)", face: "Yüz kilidi", sound: "Efekt sesleri", skeleton: "El iskeleti" };
     const box = stage.querySelector("#ar-opts");
     Object.keys(DEF).forEach((k) => { const l = document.createElement("label"); const c = document.createElement("input"); c.type = "checkbox"; c.checked = !!opts[k]; c.onchange = () => { opts[k] = c.checked; saveOpts(); }; l.append(c, " " + LBL[k]); box.append(l); });
     const pl = document.createElement("div"); pl.className = "ar-planets";
@@ -276,6 +276,67 @@
     face.others = boxes.slice(1); face.seen = performance.now();
   }
 
+  // ---------------- AVUÇTA HUD ----------------
+  let palmData = { t: 0, d: {} };
+  function palmInfo() {
+    if (performance.now() - palmData.t > 60000) { palmData.t = performance.now(); fetch("/api/scene/palm", { headers: { "x-token": JV.token || "" } }).then((r) => r.json()).then((d) => (palmData.d = d)).catch(() => {}); }
+    return palmData.d;
+  }
+  function palmHud(P, sc, k) {
+    const d = palmInfo(), c = P[9], now = new Date(), lines = [now.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }), now.toLocaleDateString("tr-TR", { weekday: "long", day: "numeric", month: "long" }), d.hava, d.etkinlik && "📅 " + d.etkinlik, d.sistem].filter(Boolean);
+    const w = sc * 2.4, h = sc * (0.75 + lines.length * 0.27), x = c.x - w / 2, y = P[12].y - h - sc * 0.4;
+    ctx.save(); ctx.globalAlpha = Math.min(1, k);
+    ctx.fillStyle = "rgba(0,30,45,0.45)"; ctx.strokeStyle = "rgba(90,230,255,0.9)"; ctx.shadowColor = "#4df"; ctx.shadowBlur = 16; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(x + 12, y); ctx.lineTo(x + w, y); ctx.lineTo(x + w, y + h - 12); ctx.lineTo(x + w - 12, y + h); ctx.lineTo(x, y + h); ctx.lineTo(x, y + 12); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.shadowBlur = 0;
+    ctx.beginPath(); ctx.moveTo(c.x, y + h); ctx.lineTo(c.x, P[12].y - sc * 0.1); ctx.setLineDash([3, 4]); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = "#bff"; ctx.textAlign = "left";
+    lines.forEach((t, i) => { ctx.font = i === 0 ? `${Math.max(16, sc * 0.42)}px Orbitron, Share Tech Mono, monospace` : `${Math.max(10, sc * 0.17)}px Share Tech Mono, monospace`; ctx.fillText(String(t).slice(0, 34), x + 12, y + (i === 0 ? sc * 0.5 : sc * 0.55 + i * sc * 0.25)); });
+    ctx.restore();
+  }
+
+  // ---------------- HAVAYA ÇİZİM ----------------
+  let strokes = [], curStroke = null;
+  function drawStrokes() {
+    ctx.save(); ctx.globalCompositeOperation = "lighter"; ctx.lineCap = ctx.lineJoin = "round";
+    for (const s of strokes) { if (s.length < 2) continue; [[12, "rgba(255,120,220,0.18)"], [5, "rgba(255,170,240,0.6)"], [2, "rgba(255,235,255,0.95)"]].forEach(([lw, c]) => { ctx.strokeStyle = c; ctx.lineWidth = lw; ctx.beginPath(); s.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y))); ctx.stroke(); }); }
+    ctx.restore();
+  }
+  async function askDrawing() {
+    const pts = strokes.flat(); if (pts.length < 5) { msg("Önce işaret parmağınla bir şey çiz"); return; }
+    const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y), x0 = Math.min(...xs) - 20, y0 = Math.min(...ys) - 20, w = Math.max(...xs) - x0 + 20, h = Math.max(...ys) - y0 + 20;
+    const c = document.createElement("canvas"), k = 512 / Math.max(w, h); c.width = w * k; c.height = h * k; const g = c.getContext("2d");
+    g.fillStyle = "#000"; g.fillRect(0, 0, c.width, c.height); g.strokeStyle = "#fff"; g.lineWidth = 8; g.lineCap = g.lineJoin = "round";
+    strokes.forEach((s) => { g.beginPath(); s.forEach((p, i) => (i ? g.lineTo((p.x - x0) * k, (p.y - y0) * k) : g.moveTo((p.x - x0) * k, (p.y - y0) * k))); g.stroke(); });
+    msg("🤔 Bakıyorum…", 4000);
+    try { const b = await new Promise((r) => c.toBlob(r, "image/png")); const r = await (await fetch("/api/scene/drawing", { method: "POST", headers: { "x-token": JV.token || "", "Content-Type": "image/png" }, body: b })).json(); const t = r.cevap || r.error || "Anlayamadım."; msg(t, 6000); JV.say && JV.say(t, JV.currentPersona && JV.currentPersona()); }
+    catch (e) { msg("Hata: " + e.message); }
+  }
+  function clearDrawing() { strokes = []; curStroke = null; msg("Çizim silindi"); }
+
+  // ---------------- IRON MAN KASK HUD ----------------
+  let lastFaces = null;
+  function maskHud(now, M) {
+    if (!lastFaces || !lastFaces[0]) return;
+    const F = lastFaces[0].map(M), L = F[33], R = F[263], nose = F[1], chin = F[152], top = F[10], ew = Math.hypot(R.x - L.x, R.y - L.y);
+    const roll = Math.atan2(R.y - L.y, R.x - L.x);
+    ctx.save(); ctx.strokeStyle = "rgba(255,90,60,0.9)"; ctx.fillStyle = "rgba(255,200,120,0.95)"; ctx.shadowColor = "#f53"; ctx.shadowBlur = 12; ctx.lineWidth = 1.5;
+    [F[468] || L, F[473] || R].forEach((e, i) => { // göz nişangâhları (dönen halkalar)
+      ctx.save(); ctx.translate(e.x, e.y); ctx.rotate(now / 700 * (i ? -1 : 1));
+      ctx.beginPath(); ctx.arc(0, 0, ew * 0.28, 0, 4.4); ctx.stroke(); ctx.beginPath(); ctx.arc(0, 0, ew * 0.18, 1, 5.6); ctx.stroke();
+      for (let k = 0; k < 4; k++) { ctx.rotate(Math.PI / 2); ctx.beginPath(); ctx.moveTo(ew * 0.31, 0); ctx.lineTo(ew * 0.38, 0); ctx.stroke(); }
+      ctx.restore();
+    });
+    ctx.save(); ctx.translate(top.x, top.y); ctx.rotate(roll); // alın yayı + yazılar
+    ctx.beginPath(); ctx.arc(0, ew * 0.9, ew * 1.25, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke();
+    ctx.font = `${Math.max(9, ew * 0.11)}px Share Tech Mono, monospace`; ctx.textAlign = "center";
+    ctx.fillText(`MARK LXXXV · GÜÇ %${97 + Math.round(Math.sin(now / 2000) * 2)} · ${new Date().toLocaleTimeString("tr-TR")}`, 0, -ew * 0.12);
+    ctx.restore();
+    ctx.beginPath(); ctx.moveTo(L.x - ew * 0.5, L.y + ew * 0.55); ctx.lineTo(nose.x, chin.y - ew * 0.15); ctx.lineTo(R.x + ew * 0.5, R.y + ew * 0.55); ctx.stroke(); // çene hattı
+    ctx.font = `${Math.max(9, ew * 0.1)}px Share Tech Mono, monospace`; ctx.textAlign = "left";
+    ["SİSTEMLER ÇEVRİMİÇİ", "HEDEF: YOK", `İRTİFA ${(120 + Math.sin(now / 900) * 3).toFixed(1)} m`].forEach((t, i) => ctx.fillText(t, R.x + ew * 0.75, R.y - ew * 0.2 + i * ew * 0.16));
+    ctx.restore();
+  }
+
   // ---------------- kare işleme ----------------
   function frame(hands, faces) {
     if (!on) return;
@@ -283,7 +344,7 @@
     fpsN++; if (now - fpsT > 1000) { fps = fpsN; fpsN = 0; fpsT = now; const f = stage.querySelector("#ar-fps"); if (f) f.textContent = `${fps} FPS · ${hands.length} el`; }
     ctx.clearRect(0, 0, W, H);
     if (now < shakeUntil) stage.style.transform = `translate(${(Math.random() - 0.5) * 18}px,${(Math.random() - 0.5) * 18}px)`; else stage.style.transform = "";
-    if (faces) onFaces(faces, M);
+    if (faces) { onFaces(faces, M); lastFaces = faces; }
     const core = G();
     const seen = {};
     const H2 = hands.map((h) => {
@@ -331,10 +392,18 @@
         }
         if (!h.pinch && H2.length === 2 && H2[0].st.planet === H2[1].st.planet && st.planet) st.planet = null;
       }
-      if (pose === "open" && opts.fire && !calm) fire(P, sc);
-      if (h.pointing && opts.trail && !calm && H2.filter((x) => x.pointing).length === 1) trail.push({ x: P[8].x, y: P[8].y, t: now });
+      const still = Math.hypot(st.vel[0], st.vel[1]) < 3.5, upright = h.lm[12].y < h.lm[0].y - 0.08;
+      if (pose === "open" && still && upright) { st.stillSince = st.stillSince || now; } else st.stillSince = 0;
+      const palmOn = opts.palm && !calm && pose === "open" && st.stillSince && now - st.stillSince > 1000 && H2.length === 1;
+      if (palmOn) palmHud(P, sc, (now - st.stillSince - 1000) / 300);
+      if (opts.draw && !calm) {
+        if (h.pointing) { if (!curStroke) { curStroke = []; strokes.push(curStroke); } const lp = curStroke[curStroke.length - 1]; if (!lp || Math.hypot(lp.x - P[8].x, lp.y - P[8].y) > 3) curStroke.push({ x: P[8].x, y: P[8].y }); }
+        else curStroke = null;
+      }
+      if (pose === "open" && opts.fire && !calm && !palmOn && !opts.draw) fire(P, sc);
+      if (h.pointing && opts.trail && !calm && !opts.draw && H2.filter((x) => x.pointing).length === 1) trail.push({ x: P[8].x, y: P[8].y, t: now });
       // basılı tutma kontrolleri (kitap açıkken: ✊ rafa koy, 👍 özeti oku)
-      const HD = holds || HOLDS;
+      const HD = holds || (opts.draw ? { peace: [900, "NE ÇİZDİM?", askDrawing], fist: [1200, "SİL", clearDrawing], thumbs_up: [1000, "ÇİZİMİ BİTİR", () => { opts.draw = false; saveOpts(); msg("Çizim modu kapandı"); }] } : HOLDS);
       if ((opts.controls || holds) && HD[pose] && !h.pinch) {
         const [ms, label, fn] = HD[pose], k = (now - st.since) / ms;
         if (!st.fired && k > 0.15) holdRing(P[9].x, P[9].y - sc * 1.2, Math.min(1, k), label);
@@ -345,7 +414,8 @@
     if (opts.seal && !calm && H2.length === 2 && H2.every((h) => h.pose === "open")) H2.forEach((h, i) => seal(h.P, h.sc, now, i));
     if (opts.lightning && !calm && H2.length === 2 && H2.every((h) => h.pointing)) { const a = H2[0].P[8], b = H2[1].P[8], d = Math.hypot(a.x - b.x, a.y - b.y); bolt(a, b, d * 0.35, 3); if (Math.random() < 0.3) bolt(a, b, d * 0.5, 2, [200, 160, 255], 0.6); if (Math.random() < 0.15) snd("zap"); }
     stepPlanets(now); stepParts(); stepWaves(); stepBolts(); if (opts.trail) drawTrail(now);
-    faceHud(now);
+    if (strokes.length) drawStrokes();
+    if (opts.mask) maskHud(now, M); else faceHud(now);
   }
 
   // ---------------- kamerasız deneme (sentetik eller) ----------------
@@ -393,11 +463,18 @@
     },
     _synth: (cx, cy, s, kind) => synthHand(cx, cy, s, kind, 0),
     demo() { build(); size(); on = true; demo = true; demoT = performance.now(); stage.classList.remove("hidden"); demoLoop(); },
-    stats: () => ({ trail: trail.length, parts: parts.length, planets: planets.map((p) => p.type), bolts: bolts.length, face: !!face.box, locked: face.locked }),
+    _setFaces: (f) => (lastFaces = f),
+    stats: () => ({ strokes: strokes.length, palm: !!palmData.t, trail: trail.length, parts: parts.length, planets: planets.map((p) => p.type), bolts: bolts.length, face: !!face.box, locked: face.locked }),
     planet(type) { forcePlanet = type || ""; if (planets[0] && type) morph(planets[0], type); else if (type) msg("Sonraki çimdik: " + NAMES[type]); },
     cmd(r) {
       if (r.action === "close") return api.stop();
       if (r.action === "face") { opts.face = !opts.face; saveOpts(); return; }
+      if (r.action === "extra") {
+        if (r.extra === "draw") { opts.draw = true; strokes = []; msg("✏ Havaya çiz: ☝ çiz · ✌ ne çizdim? · ✊ sil · 👍 bitir", 4000); }
+        if (r.extra === "mask") { opts.mask = !opts.mask; msg(opts.mask ? "🛡 Kask HUD'u açık" : "Kask HUD'u kapalı"); }
+        if (r.extra === "palm") { opts.palm = true; msg("✋ Avucunu kameraya aç ve sabit tut", 3000); }
+        saveOpts();
+      }
       if (!on && JV.gesture) JV.gesture.start("efekt");
       if (r.planet) api.planet(r.planet);
     },

@@ -13,6 +13,7 @@
   let vision = null, fileset = null;
   const cache = {};
   JV.mp = {
+    _cache: (k) => cache[k],
     async load(kind, opts = {}) {
       if (cache[kind]) return cache[kind];
       if (!vision) { vision = await import(`${MP}/vision_bundle.mjs`); fileset = await vision.FilesetResolver.forVisionTasks(`${MP}/wasm`); }
@@ -109,7 +110,7 @@
     if (face) return headMode(face, ts);
     if (mode === "efekt" && JV.handfx && JV.handfx.active) {
       let faces = null;
-      if (cache.face && JV.handfx.opts.face && ts - (loop.faceT || 0) > 140) { loop.faceT = ts; try { faces = cache.face.detectForVideo(video, ts + 0.5).faceLandmarks; } catch (e) {} }
+      if (cache.face && (JV.handfx.opts.face || JV.handfx.opts.mask) && ts - (loop.faceT || 0) > 140) { loop.faceT = ts; try { faces = cache.face.detectForVideo(video, ts + 0.5).faceLandmarks; } catch (e) {} }
       const hs2 = (res.landmarks || []).map((lm, i) => ({ lm, handed: (((res.handedness || res.handednesses || [])[i] || [{}])[0].categoryName === "Left") ? "Right" : "Left" }));
       JV.handfx.frame(hs2, faces);
       return;

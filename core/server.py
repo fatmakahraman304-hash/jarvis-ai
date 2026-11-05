@@ -115,6 +115,41 @@ async def google_check(request):
     return JSONResponse({"error": "bilinmeyen"}, status_code=404)
 
 
+async def scene_api(request):
+    """Sahne: room (oda taraması) · object (tıklanan nesne) · doc (belge) · drawing (çizim) · save (metni kaydet) · where (hafıza)."""
+    from .skills import scene
+    what = request.path_params.get("what", "")
+    q = request.query_params
+    try:
+        if what == "save":
+            b = await request.json()
+            if not _is_local(request):
+                return JSONResponse({"error": "yalnızca bilgisayardan"}, status_code=403)
+            return JSONResponse({"dosya": await asyncio.to_thread(scene.save_text, b.get("text", ""), b.get("name", ""))})
+        if what == "where":
+            return JSONResponse(scene.where_is(q.get("thing", "")))
+        if what == "palm":
+            return JSONResponse(await asyncio.to_thread(scene.palm_info))
+        if what == "remember":
+            b = await request.json()
+            await asyncio.to_thread(scene.remember_scene, b.get("items", []), b.get("location", ""))
+            return JSONResponse({"ok": True})
+        img = await request.body()
+        if len(img) > 8_000_000:
+            return JSONResponse({"error": "görüntü çok büyük"}, status_code=413)
+        if what == "room":
+            return JSONResponse(await asyncio.to_thread(scene.analyze_room, img, q.get("location", "")))
+        if what == "object":
+            return JSONResponse(await asyncio.to_thread(scene.describe_object, img, q.get("name", ""), q.get("question", "")))
+        if what == "doc":
+            return JSONResponse(await asyncio.to_thread(scene.analyze_doc, img, q.get("mode", "text"), q.get("lang", "tr")))
+        if what == "drawing":
+            return JSONResponse(await asyncio.to_thread(scene.analyze_drawing, img))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:300]}, status_code=500)
+    return JSONResponse({"error": "bilinmeyen"}, status_code=404)
+
+
 async def library_api(request):
     from .skills import library
     what = request.path_params.get("what", "")
@@ -926,6 +961,7 @@ routes = [
     Route("/api/google/check/{what}", google_check, methods=["GET", "POST"]),
     Route("/api/cams", cams_api, methods=["GET", "POST"]),
     Route("/api/library", library_api),
+    Route("/api/scene/{what}", scene_api, methods=["GET", "POST"]),
     Route("/api/library/{what}", library_api, methods=["POST"]),
     Route("/api/cams/{cid}", cams_api),
     Route("/api/vision", vision_api, methods=["POST"]),
