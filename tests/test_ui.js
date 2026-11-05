@@ -253,7 +253,9 @@ const check = (name, cond, extra = "") => { console.log((cond ? "  ✓ " : "  �
     check("🤏 paneli çimdikle tut-taşı", hd.moved > 100, JSON.stringify(hd));
     check("☝ ✕ ile panel kapanır", !hd.p3.includes("music"), JSON.stringify(hd));
     console.log("ARAYÜZ KABUĞU");
-    const sh = await p.evaluate(() => ({ core: [...document.querySelectorAll("#bottom .ctrl-row .tog")].filter((b) => getComputedStyle(b).display !== "none").map((b) => b.id), tiles: document.querySelectorAll(".ln-tile").length, chips: document.querySelectorAll("#chips .chip").length, date: (document.querySelector("#hdr-date") || {}).textContent || "" }));
+    const sh = await p.evaluate(() => ({ core: [...document.querySelectorAll(".ctrl-row .tog")].filter((b) => getComputedStyle(b).display !== "none").map((b) => b.id), tiles: document.querySelectorAll(".ln-tile").length, chips: document.querySelectorAll("#chips .chip").length, date: (document.querySelector("#hdr-date") || {}).textContent || "" }));
+    const cc = await p.evaluate(() => ({ cc: document.body.classList.contains("cc"), log: !!document.querySelector("#right #log"), ask: !!document.querySelector("#right .cc-cmd #ask"), gauges: !!document.querySelector("#left .cc-box .gauge[data-k=cpu]"), stage: !!document.querySelector("#cc-stage"), foot: (document.querySelector("#cc-f-model") || {}).textContent || "", views: !!document.querySelector("#top #views") }));
+    check("komuta düzeni: sütunlar, sahne, alt şerit", cc.cc && cc.log && cc.ask && cc.gauges && cc.stage && cc.views && cc.foot !== "", JSON.stringify(cc));
     check("alt şerit sade (temel düğmeler + UYGULAMALAR)", sh.core.length <= 9 && sh.core.includes("t-apps") && sh.core.includes("t-estop"), JSON.stringify(sh));
     check("başlatıcıda tüm uygulamalar", sh.tiles >= 20, sh.tiles);
     check("üst barda tarih + öneri çipleri", sh.date.length > 5 && sh.chips >= 4, JSON.stringify(sh));
