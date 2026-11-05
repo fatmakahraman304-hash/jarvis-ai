@@ -1,13 +1,14 @@
 {
-  "version": "3.8.0",
+  "version": "3.9.0",
   "date": "2026-11-05",
   "notes": [
+    "📱 JARVIS'in gözü: eski telefonu kamera yap (Ayarlar > PLATFORMLAR > 'Bu cihazı kamera yap'); sol altta canlı izle; 'mutfakta ne var?' de, JARVIS o kameraya baksın",
+    "🛡 Güvenlik modu ('güvenlik modunu aç'): kamerada hareket olunca bildirim + Telegram'a fotoğraf (hareket telefonda algılanır, kareler diske yazılmaz)",
+    "📖 Kitaplık: kitapların, okuma durumu, sayfa, notlar, alıntılar; raf fotoğrafından ya da kameradan tarayarak ekle; JARVIS her kitaba defter yazar (uydurmaz)",
+    "AR'de raftan kitap çek: ☝ sırtı seç, 🤏 çek → holografik kitap; ✋ savur = sayfa, 👍 = özeti oku, ✊ = rafa koy",
+    "▶ YouTube artık JARVIS'in içinde: 'Fenerbahçe maç özetini aç' en yeni özeti bulup oynatır",
+    "Düzeltme: AR'de yumruk artık yanlışlıkla 'çimdik' sayılmıyor",
     "✨ AR EFEKT (EL > EFEKT ya da 'el efektlerini aç'): kamerada ✋ ateş, ✋✋ dönen mühür halkaları, 🤏 avuçta parçacık gezegen (Satürn/Dünya/Mars/Jüpiter/Ay/Güneş — taşı, fırlat, iki elle büyüt; 'Mars yap'), ✊→✋ patlama + sarsıntı, ☝☝ şimşek, ☝ ışık izi",
-    "AR'de basılı tutma kontrolleri (halka dolar): 👍 1 sn komut, ✌ mikrofon, ✊ 2 sn sus · Yüz kilidi HUD'u: kilitlenince karşılar (Ayarlar > SES > Adın)",
-    "😴 Uyku modu + iki alkışla uyanma ('uyu' de ya da boşta kalınca); Ayarlar > SES'ten süre ve alkış hassasiyeti",
-    "☕ Kahve falı: 'falıma bak' — fincanı kameraya göster (eğlence, bilim değil)",
-    "'İŞLENİYOR'da takılı kalma düzeltildi: Gemini'ye akışlı değil tek parça istek (bazı bilgisayarlarda antivirüs/ağ taraması akışı bekletiyordu); 45 sn'de cevap gelmezse sıradaki Gemini modeli",
-    "Bir cevap için en fazla ~100 sn: süre dolarsa JARVIS eldeki bilgiyle mutlaka cevap verir; aynı aracı tekrar tekrar çağırma döngüsü kırılır",
-    "Ekranda ne yaptığı görünür: 'DÜŞÜNÜYOR · gemini-3.8-flash', 'İNTERNETTE ARIYOR'… Siyah pencerede her adımın süresi yazar"
+    "AR'de basılı tutma kontrolleri (halka dolar): 👍 1 sn komut, ✌ mikrofon, ✊ 2 sn sus · Yüz kilidi HUD'u: kilitlenince karşılar (Ayarlar > SES > Adın)"
   ]
 }

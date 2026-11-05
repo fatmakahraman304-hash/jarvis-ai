@@ -479,8 +479,10 @@ VISION_DEFAULTS = {"groq": "meta-llama/llama-4-scout-17b-16e-instruct", "mistral
                    "openrouter": "google/gemma-3-27b-it:free", "ollama": "llava"}
 
 
-def vision(prompt, image_bytes, mime="image/png", system=""):
-    """Görüntüyü görebilen ilk modele sorar. Metin cevabı döner."""
+def vision(prompt, image_bytes, mime="image/png", system="", light=False):
+    """Görüntüyü görebilen ilk modele sorar. Metin cevabı döner.
+    light=True: çok karelik işler (raf taraması gibi) için hafif model → 3.8'in günlük hakkı yenmez.
+    Gemini'de model yoğun/kotada ise aynı sağlayıcının sıradaki modeli denenir."""
     import base64
     url = f"data:{mime};base64," + base64.b64encode(image_bytes).decode()
     msgs = []
@@ -490,21 +492,32 @@ def vision(prompt, image_bytes, mime="image/png", system=""):
                                              {"type": "image_url", "image_url": {"url": url}}]})
     errors = []
     for pid in VISION_ORDER:
-        if not configured(pid) or not allowed(pid):
+        if not configured(pid) or not allowed(pid) or key_bad(pid):
             continue
-        model = env(f"{pid.upper()}_VISION_MODEL") or (pick_model(pid) if pid in ("gemini", "xai", "custom") else VISION_DEFAULTS.get(pid, ""))
-        if not model:
-            continue
-        try:
-            text = ""
-            for kind, data in stream_chat(pid, model, msgs, None, temperature=0.2):
-                if kind == "text":
-                    text += data
-            if text.strip():
-                return text.strip()
-        except ProviderError as e:
-            errors.append(f"{pid}: {e.status}")
-    raise RuntimeError("Görüntü analizi yapabilen model yok (Gemini önerilir). " + ", ".join(errors))
+        model = env(f"{pid.upper()}_VISION_MODEL") or ((light and light_model(pid)) or (pick_model(pid) if pid in ("gemini", "xai", "custom") else VISION_DEFAULTS.get(pid, "")))
+        tried = []
+        while model and len(tried) < 3:
+            tried.append(model)
+            try:
+                text = ""
+                for kind, data in stream_chat(pid, model, msgs, None, temperature=0.2):
+                    if kind == "text":
+                        text += data
+                if text.strip():
+                    return text.strip()
+                break
+            except ProviderError as e:
+                errors.append(f"{pid}/{model}: {e.status}")
+                if report_bad_key(pid, e.status, e.body):
+                    break
+                if e.status == 429:
+                    mark_exhausted(pid, model, e.body)
+                elif e.status in (500, 502, 503, 504):
+                    _cooldown[(pid, model)] = time.time() + 120
+                if e.status not in (404, 429, 500, 502, 503, 504) or not PROVIDERS[pid].get("prefer"):
+                    break
+                model = next_model(pid, model, tried)
+    raise RuntimeError("Görüntü analizi yapılamadı. " + ", ".join(errors))
 
 
 def _tools_unsupported(err):

@@ -24,16 +24,46 @@ def _open(uri):
         webbrowser.open(uri)
 
 
-def youtube_play(query):
-    page = _http_get("https://www.youtube.com/results?" + urllib.parse.urlencode({"search_query": query}))
-    m = re.search(r'"videoId":"([\w-]{11})"', page)
-    if not m:
+def youtube_search(query, recent=False, n=5):
+    params = {"search_query": query}
+    if recent:
+        params["sp"] = "CAI="  # yükleme tarihine göre (en yeni önce)
+    page = _http_get("https://www.youtube.com/results?" + urllib.parse.urlencode(params))
+    out = []
+    for m in re.finditer(r'"videoRenderer":\{"videoId":"([\w-]{11})"(.*?)"title":\{"runs":\[\{"text":"(.*?)"\}', page):
+        vid, title = m.group(1), m.group(3)
+        tail = page[m.end():m.end() + 3000]
+        ch = re.search(r'"ownerText":\{"runs":\[\{"text":"(.*?)"', tail)
+        ago = re.search(r'"publishedTimeText":\{"simpleText":"(.*?)"', tail)
+        if any(o["id"] == vid for o in out):
+            continue
+        out.append({"id": vid, "title": json.loads(f'"{title}"') if "\\" in title else title, "channel": ch.group(1) if ch else "", "when": ago.group(1) if ago else ""})
+        if len(out) >= n:
+            break
+    if not out:  # sayfa biçimi değiştiyse kaba yedek
+        out = [{"id": v, "title": "", "channel": "", "when": ""} for v in dict.fromkeys(re.findall(r'"videoId":"([\w-]{11})"', page))][:n]
+    return out
+
+
+def youtube_play(query, in_app=True):
+    """YouTube'da arar; videoyu JARVIS'in içinde (panelde) açar. Maç özeti/haber gibi sorularda en yeni videoyu seçer."""
+    recent = bool(re.search(r"özet|ozet|highlights|maç|mac |gol|son video|son bölüm|haber", query, re.I))
+    try:
+        res = youtube_search(query, recent=recent)
+    except Exception as e:
+        res = []
+        err = str(e)
+    if not res:
         webbrowser.open("https://www.youtube.com/results?" + urllib.parse.urlencode({"search_query": query}))
         return "Video bulunamadı, arama sonuçları açıldı."
-    url = f"https://www.youtube.com/watch?v={m.group(1)}"
-    webbrowser.open(url)
-    t = re.search(r'"title":\{"runs":\[\{"text":"(.*?)"\}', page)
-    return f"Oynatılıyor: {t.group(1) if t else url}"
+    v = res[0]
+    url = f"https://www.youtube.com/watch?v={v['id']}"
+    if not in_app:
+        webbrowser.open(url)
+        return f"Oynatılıyor: {v['title'] or url}"
+    return {"ui": "video", "id": v["id"], "title": v["title"], "channel": v["channel"], "when": v["when"], "url": url,
+            "diğerleri": [{"başlık": x["title"], "kanal": x["channel"], "ne zaman": x["when"]} for x in res[1:4]],
+            "not": "Video JARVIS içinde açıldı. Kısaca hangi videoyu açtığını (başlık, kanal, ne zaman) söyle."}
 
 
 def spotify_play(query):
@@ -240,7 +270,7 @@ def ambient_listen(on=True):
 TOOLS = {
     "ambient_listen": (ambient_listen, _schema("Ortam sesi tanıma: mikrofonla sürekli dinleyip alarm, cam kırılması, bebek ağlaması, kapı zili, köpek gibi sesleri algılar ve uyarır.",
                                                {"on": {"type": "boolean"}}), False),
-    "youtube_play": (youtube_play, _schema("YouTube'da arayıp ilk videoyu oynatır (şarkı, film fragmanı, video).", {"query": S("ne")}, ["query"]), False),
+    "youtube_play": (youtube_play, _schema("YouTube'da arayıp videoyu JARVIS içinde oynatır (şarkı, fragman, MAÇ ÖZETİ, haber videosu; özet/maç aramalarında en yenisi seçilir).", {"query": S("ne")}, ["query"]), False),
     "spotify_play": (spotify_play, _schema("Spotify'da şarkı/sanatçı/çalma listesi açar ve çalar.", {"query": S("ne")}, ["query"]), False),
     "whatsapp_message": (whatsapp_message, _schema("WhatsApp masaüstünden mesaj gönderir (onay gerekir).",
                                                    {"phone": S("telefon (05xx... veya 90...)"), "text": S("mesaj"), "send": {"type": "boolean"}},

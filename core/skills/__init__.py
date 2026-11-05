@@ -8,7 +8,7 @@ import traceback
 
 from ..config import ROOT
 
-MODULES = ["google", "computer", "windows", "office", "finance", "automation", "smarthome", "media", "voiceid", "vault", "habits", "games", "selfdev", "semantic", "geo", "holo", "control", "daily", "space", "worldwatch", "team", "translate", "studio", "command", "world", "knowledge", "nodes", "twin", "financelab", "music", "browser", "arfx"]
+MODULES = ["google", "computer", "windows", "office", "finance", "automation", "smarthome", "media", "voiceid", "vault", "habits", "games", "selfdev", "semantic", "geo", "holo", "control", "daily", "space", "worldwatch", "team", "translate", "studio", "command", "world", "knowledge", "nodes", "twin", "financelab", "music", "browser", "arfx", "cams", "library"]
 LOAD_ERRORS = {}
 
 
@@ -19,6 +19,10 @@ def load_all():
         try:
             mod = importlib.import_module(f"{__name__}.{name}")
             t = getattr(mod, "TOOLS", {})
+            for k in t:
+                if k in tools:  # aynı adlı iki araç: sessizce ezilmesin
+                    print(f"[yetenek] UYARI: '{k}' aracı {name} modülünde tekrar tanımlanmış (öncekinin üzerine yazıldı)")
+                    LOAD_ERRORS[f"dup:{k}"] = name
             tools.update(t)
             groups.update({k: getattr(mod, "GROUP", name) for k in t})  # modül GROUP ile başka grubun parçası olabilir
         except Exception:

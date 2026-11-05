@@ -90,6 +90,55 @@ const check = (name, cond, extra = "") => { console.log((cond ? "  ✓ " : "  �
     check("sesle gezegen seçimi (Jüpiter)", ar.jup === "jupiter");
     check("yüz kilidi kilitlenir", ar.locked === true);
     check("uyku modu + yavaş alkış uyandırmaz + iki alkış uyandırır", ar.asleep && ar.slowClap && ar.woke);
+    console.log("KİTAPLIK (AR) + KAMERA + VİDEO");
+    const lib = await p.evaluate(async () => {
+      const H = JV.handfx, out = {};
+      const probe = H._synth(0.5, 0.5, 0.5, "point"), tx = probe[8].x, ty = probe[8].y;
+      await JV.api("/api/library/book", { body: { title: "Mülksüzler", author: "Ursula K. Le Guin", box: [tx - 0.03, ty - 0.2, tx + 0.03, ty + 0.2], notes: [{ t: "Anarres", d: "2026-11-05" }] } });
+      await JV.api("/api/library/book", { body: { title: "Davranış", author: "Sapolsky", box: [tx + 0.08, ty - 0.2, tx + 0.14, ty + 0.2] } });
+      await fetch("/api/library/scan", { method: "POST", body: "x" }).catch(() => {});
+      await JV.library.load();
+      const d = JV.library._data(); d.shelf = { region: [tx - 0.1, ty - 0.3, tx + 0.2, ty + 0.3] };
+      H.show(null);
+      const run = async (n, mk) => { for (let i = 0; i < n; i++) { H.frame(mk(i), null); await new Promise((r) => setTimeout(r, 30)); } };
+      await run(15, () => [{ lm: H._synth(0.5, 0.5, 0.5, "point"), handed: "Right" }]);
+      // seçim etiketi tuvalde çizildi mi: sahnede seçili kitap
+      await run(4, () => [{ lm: H._synth(0.5, 0.5, 0.5, "pinch"), handed: "Right" }]);
+      await run(6, () => [{ lm: H._synth(0.5, 0.5, 0.75, "pinch"), handed: "Right" }]); // çek: el kameraya yaklaşır
+      await new Promise((r) => setTimeout(r, 1200));
+      out.open = JV.library.open; out.page = document.querySelector("#hb-pn") && document.querySelector("#hb-pn").textContent;
+      out.title = document.querySelector(".hb-l h3") && document.querySelector(".hb-l h3").textContent;
+      JV.library.flip(1); out.page2 = document.querySelector("#hb-pn").textContent;
+      out.planetsWhileOpen = H.stats().planets.length;
+      await run(45, () => [{ lm: H._synth(0.5, 0.6, 0.5, "fist"), handed: "Right" }]); // ✊ basılı → rafa koy
+      await new Promise((r) => setTimeout(r, 300)); out.closed = !JV.library.open;
+      H.stop();
+      await JV.library.openPanel(); out.rows = document.querySelectorAll("#lp-list .lp-row").length; document.querySelector("#lp-x").click();
+      // kamera izleyici
+      await fetch("/api/cams?id=t1&name=CAM-01&loc=Mutfak", { method: "POST", headers: { "Content-Type": "image/jpeg" }, body: new Uint8Array([255, 216, 255, 217]) });
+      await new Promise((r) => setTimeout(r, 5600));
+      out.badge = (document.querySelector(".cam-badge") || {}).textContent || "";
+      JV.cams.open("t1"); await new Promise((r) => setTimeout(r, 600)); out.camImg = document.querySelector("#cp-img").src.includes("/api/cams/t1.jpg"); JV.cams.close();
+      JV.uiCommand("youtube_play", {}, JSON.stringify({ ui: "video", id: "abcDEF12345", title: "Maç Özeti", url: "https://www.youtube.com/watch?v=abcDEF12345" }));
+      out.video = document.querySelector("#vp-if").src.includes("youtube-nocookie.com/embed/abcDEF12345"); JV.video.close();
+      return out;
+    });
+    check("☝ işaret + 🤏 çimdikle çek → kitap holografik açılır", lib.open === true && lib.title === "Mülksüzler", JSON.stringify(lib));
+    check("sayfa çevrilir; kitap açıkken gezegen oluşmaz", lib.page === "1 / 4" && lib.page2 === "2 / 4" && lib.planetsWhileOpen === 0, JSON.stringify(lib));
+    check("✊ basılı tut → kitap rafa döner", lib.closed === true);
+    check("kitaplık paneli listeler", lib.rows >= 2);
+    check("kamera rozeti + canlı izleme", lib.badge.includes("CAM-01") && lib.badge.includes("MUTFAK") && lib.camImg, JSON.stringify(lib));
+    check("YouTube videosu JARVIS içinde", lib.video);
+    const cp = await b.newPage({ viewport: { width: 400, height: 800 } });
+    await cp.route(/cdn\.jsdelivr|unpkg|tile\.|arcgis|openstreetmap|fonts\.g|rainviewer|nasa\.gov/, (r) => r.abort());
+    await cp.goto(`http://127.0.0.1:${sp}/?rol=kamera`); await wait(2500);
+    const role = await cp.evaluate(() => ({ node: !!document.querySelector("#camnode"), hidden: getComputedStyle(document.querySelector("#settings") || document.body).display === "none" }));
+    await cp.evaluate(() => { document.querySelector("#cn-name").value = "CAM-02"; document.querySelector("#cn-loc").value = "Salon"; document.querySelector("#cn-start").click(); });
+    let camList = { cams: [] };
+    for (let i = 0; i < 20; i++) { await wait(500); camList = await (await fetch(`http://127.0.0.1:${sp}/api/cams`)).json(); if (camList.cams.some((c) => c.name === "CAM-02" && c.online)) break; }
+    check("telefon kamera sayfası (sade, diğer arayüz gizli)", role.node, JSON.stringify(role));
+    check("kamera sayfası kare gönderiyor", camList.cams.some((c) => c.name === "CAM-02" && c.loc === "Salon" && c.online), JSON.stringify(camList));
+    await cp.close();
     console.log("GOOGLE SİHİRBAZI");
     await p.click("text=AYARLAR"); await wait(500); await p.click('[data-tab="links"]'); await wait(900);
     check("adım 1 görünüyor", (await p.textContent(".gw-body")).includes("JARVIS") && (await p.$$(".gw-dots span")).length === 5);

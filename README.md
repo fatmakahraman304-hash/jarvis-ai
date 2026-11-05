@@ -80,6 +80,9 @@ Beyin konuya göre ilgili araçları kendisi seçer; sen sadece ne istediğini s
 | **Proje merkezi** | Kod projesi oluşturma, testleri çalıştırma, GitHub (gh CLI) |
 | **AR efektler** | EL > ✨ EFEKT (ya da "el efektlerini aç"): kamera görüntüsünde ✋ ateş, ✋✋ dönen mühür halkaları, 🤏 avuçta parçacık gezegen (Satürn, Dünya, Mars, Jüpiter, Ay, Güneş — taşı, fırlat, iki elle büyüt; "Mars yap"), ✊→✋ patlama, ☝☝ şimşek, ☝ ışık izi; 👍 basılı tut = komut, ✌ = mikrofon, ✊ = sus; yüz kilidi HUD'u. Görüntü bilgisayardan çıkmaz |
 | **Uyku / alkış** | "uyu" ya da boşta kalınca uyku modu; iki kez alkışlayınca uyanır ve karşılar |
+| **JARVIS'in gözü** | Eski telefonu kamera yap (Ayarlar > PLATFORMLAR > 'Bu cihazı kamera yap' ya da `?rol=kamera`): canlı izle (sol alttaki ● CAM rozeti / 📹 KAMERALAR), "mutfakta ne var?" deyince JARVIS o kameraya bakar. Hareket telefonda algılanır; "güvenlik modunu aç" → hareket olunca bildirim + Telegram'a fotoğraf. Kareler diske yazılmaz |
+| **Kitaplık** | 📖 KİTAPLIK: kitaplar, durum, sayfa, not, alıntı; raf fotoğrafından ekle; "kitaplığımı tara" (kameradan); JARVIS kitap defteri yazar (özet, ana fikirler, temalar, rafından benzerler — tanımadığı kitapta uydurmaz). AR'de ☝ ile sırtı seç, 🤏 ile çek → holografik kitap açılır, ✋ savur = sayfa, 👍 = özeti oku, ✊ = rafa koy. Sesle: "X'i bitirdim", "Y'de 120. sayfadayım", "Z'ye not ekle: …", "raftan kitap öner" |
+| **YouTube içinde** | "Fenerbahçe maç özetini aç": en yeni özeti bulur, JARVIS'in içinde oynatır |
 | **Kahve falı** | "falıma bak": fincanı kameraya göster, telvedeki şekillerden eğlencesine fal (bilim değil) |
 | **Telefon** | Dosya gezgini (indir/yükle), Telegram'dan sesli mesaj ve sesli cevap, `/panel` düğmeli uzaktan kumanda (kilitle, uyut — onaylı, ekran, durum, ses, brifing, acil dur), `/ekran` ekran görüntüsü, dosya alma/gönderme, kamera fotoğrafı (izinliyse) |
 | **Uzman ajanlar** | Büyük işi parçalara bölüp aynı anda birden fazla ajana yaptırır |

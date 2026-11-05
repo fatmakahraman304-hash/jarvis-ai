@@ -11,7 +11,7 @@
   const G = () => JV.GestureCore;
   const TAU = Math.PI * 2;
   const OPT_KEY = "jv_handfx_opts";
-  const DEF = { fire: true, seal: true, planet: true, blast: true, lightning: true, trail: true, controls: true, face: true, sound: true, skeleton: false };
+  const DEF = { library: true, fire: true, seal: true, planet: true, blast: true, lightning: true, trail: true, controls: true, face: true, sound: true, skeleton: false };
   let opts = { ...DEF };
   try { Object.assign(opts, JSON.parse(localStorage.getItem(OPT_KEY) || "{}")); } catch (e) {}
   const saveOpts = () => { try { localStorage.setItem(OPT_KEY, JSON.stringify(opts)); } catch (e) {} };
@@ -58,12 +58,15 @@
     cv = stage.querySelector("#ar-canvas"); ctx = cv.getContext("2d"); vid = stage.querySelector("#ar-video");
     stage.querySelector("#ar-close").onclick = () => api.stop();
     stage.querySelector("#ar-opts-b").onclick = () => stage.querySelector("#ar-opts").classList.toggle("hidden");
-    const LBL = { fire: "Ateş", seal: "Mühür halkası", planet: "Gezegen", blast: "Patlatma", lightning: "Şimşek", trail: "Işık izi", controls: "JARVIS kontrolleri (👍 ✌ ✊)", face: "Yüz kilidi", sound: "Efekt sesleri", skeleton: "El iskeleti" };
+    const LBL = { library: "Kitaplık (raftan kitap çek)", fire: "Ateş", seal: "Mühür halkası", planet: "Gezegen", blast: "Patlatma", lightning: "Şimşek", trail: "Işık izi", controls: "JARVIS kontrolleri (👍 ✌ ✊)", face: "Yüz kilidi", sound: "Efekt sesleri", skeleton: "El iskeleti" };
     const box = stage.querySelector("#ar-opts");
     Object.keys(DEF).forEach((k) => { const l = document.createElement("label"); const c = document.createElement("input"); c.type = "checkbox"; c.checked = !!opts[k]; c.onchange = () => { opts[k] = c.checked; saveOpts(); }; l.append(c, " " + LBL[k]); box.append(l); });
     const pl = document.createElement("div"); pl.className = "ar-planets";
     ["sıradaki", ...ORDER].forEach((p) => { const b = document.createElement("button"); b.className = "mini"; b.textContent = p === "sıradaki" ? "↻ sıradaki" : NAMES[p]; b.onclick = () => { forcePlanet = p === "sıradaki" ? "" : p; if (planets[0] && forcePlanet) morph(planets[0], forcePlanet); }; pl.append(b); });
     box.append(pl);
+    const lb = document.createElement("div"); lb.className = "ar-planets";
+    [["📚 Kitaplığı tara (K)", () => JV.library && JV.library.scan()], ["📖 Kitaplık paneli (B)", () => JV.library && JV.library.openPanel()]].forEach(([t, fn]) => { const b = document.createElement("button"); b.className = "mini"; b.textContent = t; b.onclick = fn; lb.append(b); });
+    box.append(lb);
     addEventListener("resize", size);
     addEventListener("keydown", (e) => {
       if (!on || e.target.tagName === "INPUT") return;
@@ -72,6 +75,8 @@
       if (e.key === "f" || e.key === "F") { opts.face = !opts.face; saveOpts(); }
       if (e.key === "d" || e.key === "D") { opts.skeleton = !opts.skeleton; saveOpts(); }
       if (e.key === "m" || e.key === "M") { opts.sound = !opts.sound; saveOpts(); }
+      if ((e.key === "k" || e.key === "K") && JV.library) JV.library.scan();
+      if ((e.key === "b" || e.key === "B") && JV.library) JV.library.openPanel();
       if (e.key === "p" || e.key === "P") { const p = ORDER[(ORDER.indexOf((planets[0] || {}).type) + 1) % ORDER.length]; if (planets[0]) morph(planets[0], p); else forcePlanet = p; }
     });
   }
@@ -283,7 +288,7 @@
     const seen = {};
     const H2 = hands.map((h) => {
       const P = h.lm.map(M), sc = Math.hypot(P[0].x - P[9].x, P[0].y - P[9].y) || 60;
-      const pose = core.pose(h.lm), pinch = core.pinchRatio(h.lm) < 0.33, f = core.fingers(h.lm);
+      const pose = core.pose(h.lm), f = core.fingers(h.lm), pinch = core.pinchRatio(h.lm) < 0.33 && pose !== "fist"; // yumrukta başparmak işarete değer: çimdik sayılmasın
       const pointing = f[1] && !f[2] && !f[3] && !f[4];
       const st = hs[h.handed] || (hs[h.handed] = { pose: "", since: now, fired: false, fistAt: 0, pinch: false, planet: null, last: null, vel: [0, 0] });
       seen[h.handed] = true;
@@ -295,8 +300,12 @@
     });
     Object.keys(hs).forEach((k) => { if (!seen[k]) { const st = hs[k]; if (st.planet) { st.planet.held = false; st.planet.vx = st.vel[0]; st.planet.vy = st.vel[1]; st.planet = null; } delete hs[k]; } });
 
+    // kitaplık (raf haritası varsa): seçim, çekme, açık kitap — açıkken diğer efektler susar
+    const L = (JV.library && opts.library !== false) ? JV.library.arFrame(ctx, H2, M, now) : { busy: false };
+    const calm = L.busy || L.inShelf;
+    const holds = L.holds || null;
     // iki elle çimdik → gezegeni büyüt
-    const both = H2.length === 2 && H2[0].pinch && H2[1].pinch && opts.planet;
+    const both = !calm && H2.length === 2 && H2[0].pinch && H2[1].pinch && opts.planet;
     if (both) {
       const a = H2[0].pp, b = H2[1].pp, mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, r = Math.max(20, Math.hypot(a.x - b.x, a.y - b.y) / 2 * 0.8);
       let p = H2[0].st.planet || H2[1].st.planet;
@@ -307,7 +316,7 @@
       const { P, sc, pose, st } = h;
       if (opts.skeleton) skeleton(P);
       // çimdik: gezegen
-      if (opts.planet && !both) {
+      if (opts.planet && !both && !calm) {
         if (h.pinch) {
           if (!st.planet) {
             const near = planets.find((p) => !p.held && Math.hypot(p.x - h.pp.x, p.y - h.pp.y) < p.r * 1.3);
@@ -322,18 +331,19 @@
         }
         if (!h.pinch && H2.length === 2 && H2[0].st.planet === H2[1].st.planet && st.planet) st.planet = null;
       }
-      if (pose === "open" && opts.fire) fire(P, sc);
-      if (h.pointing && opts.trail && H2.filter((x) => x.pointing).length === 1) trail.push({ x: P[8].x, y: P[8].y, t: now });
-      // basılı tutma kontrolleri
-      if (opts.controls && HOLDS[pose] && !h.pinch) {
-        const [ms, label] = HOLDS[pose], k = (now - st.since) / ms;
+      if (pose === "open" && opts.fire && !calm) fire(P, sc);
+      if (h.pointing && opts.trail && !calm && H2.filter((x) => x.pointing).length === 1) trail.push({ x: P[8].x, y: P[8].y, t: now });
+      // basılı tutma kontrolleri (kitap açıkken: ✊ rafa koy, 👍 özeti oku)
+      const HD = holds || HOLDS;
+      if ((opts.controls || holds) && HD[pose] && !h.pinch) {
+        const [ms, label, fn] = HD[pose], k = (now - st.since) / ms;
         if (!st.fired && k > 0.15) holdRing(P[9].x, P[9].y - sc * 1.2, Math.min(1, k), label);
-        if (!st.fired && k >= 1) { st.fired = true; control(pose, h); }
+        if (!st.fired && k >= 1) { st.fired = true; fn ? (fn(), snd("lock")) : control(pose, h); }
       }
     }
     // iki açık el → mühür; iki işaret → şimşek
-    if (opts.seal && H2.length === 2 && H2.every((h) => h.pose === "open")) H2.forEach((h, i) => seal(h.P, h.sc, now, i));
-    if (opts.lightning && H2.length === 2 && H2.every((h) => h.pointing)) { const a = H2[0].P[8], b = H2[1].P[8], d = Math.hypot(a.x - b.x, a.y - b.y); bolt(a, b, d * 0.35, 3); if (Math.random() < 0.3) bolt(a, b, d * 0.5, 2, [200, 160, 255], 0.6); if (Math.random() < 0.15) snd("zap"); }
+    if (opts.seal && !calm && H2.length === 2 && H2.every((h) => h.pose === "open")) H2.forEach((h, i) => seal(h.P, h.sc, now, i));
+    if (opts.lightning && !calm && H2.length === 2 && H2.every((h) => h.pointing)) { const a = H2[0].P[8], b = H2[1].P[8], d = Math.hypot(a.x - b.x, a.y - b.y); bolt(a, b, d * 0.35, 3); if (Math.random() < 0.3) bolt(a, b, d * 0.5, 2, [200, 160, 255], 0.6); if (Math.random() < 0.15) snd("zap"); }
     stepPlanets(now); stepParts(); stepWaves(); stepBolts(); if (opts.trail) drawTrail(now);
     faceHud(now);
   }
@@ -368,6 +378,7 @@
 
   const api = {
     get active() { return on; },
+    video: () => vid,
     opts, frame,
     show(stream) {
       build(); size(); on = true; stage.classList.remove("hidden"); document.body.classList.add("ar-on");

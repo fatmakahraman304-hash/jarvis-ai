@@ -456,6 +456,9 @@
   $("#sl-thr").onchange = (e) => saveSettings({ clap_threshold: +e.target.value });
   $("#ar-cmd").onchange = (e) => saveSettings({ ar_thumb_command: e.target.value.trim() });
   $("#ar-name").onchange = (e) => saveSettings({ user_name: e.target.value.trim() });
+  $("#o-camrole").onclick = () => JV.cams && JV.cams.makeThisCamera();
+  $("#o-camview").onclick = () => { $("#settings").classList.add("hidden"); JV.cams && JV.cams.open(); };
+  document.getElementById("t-cams").onclick = () => JV.cams && JV.cams.open();
   $("#sl-now").onclick = () => { $("#settings").classList.add("hidden"); JV.sleep && JV.sleep.enter(); };
   // mikrofon seçimi + test
   async function loadMics() {

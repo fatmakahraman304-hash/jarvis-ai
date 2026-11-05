@@ -115,6 +115,49 @@ async def google_check(request):
     return JSONResponse({"error": "bilinmeyen"}, status_code=404)
 
 
+async def library_api(request):
+    from .skills import library
+    what = request.path_params.get("what", "")
+    try:
+        if request.method == "GET":
+            return JSONResponse(library.api_get())
+        if what in ("scan", "photo"):
+            data = await request.body()
+            q = request.query_params
+            fn = library.scan_shelf if what == "scan" else library.add_from_photo
+            args = (data, int(q.get("w", 0) or 0), int(q.get("h", 0) or 0)) if what == "scan" else (data,)
+            return JSONResponse(await asyncio.to_thread(fn, *args))
+        if what == "book":
+            return JSONResponse(library.api_save_book(await request.json()))
+        if what == "delete":
+            return JSONResponse(library.api_delete((await request.json()).get("id", "")))
+        if what == "fill":
+            b = await request.json()
+            return JSONResponse({"r": await asyncio.to_thread(library.book_fill, b.get("title", ""), bool(b.get("force")))}, )
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+    return JSONResponse({"error": "bilinmeyen"}, status_code=404)
+
+
+async def cams_api(request):
+    """Telefon kamerası: POST kare (jpeg gövde) · GET liste · GET /api/cams/{id}.jpg son kare."""
+    from .skills import cams
+    cid = request.path_params.get("cid", "")
+    if request.method == "POST":
+        data = await request.body()
+        if len(data) > 4_000_000:
+            return JSONResponse({"error": "kare çok büyük"}, status_code=413)
+        q = request.query_params
+        return JSONResponse(cams.put_frame(q.get("id", "cam")[:40], data, q.get("name", "")[:40], q.get("loc", "")[:40],
+                                           q.get("motion") == "1", int(q.get("w", 0) or 0), int(q.get("h", 0) or 0)))
+    if cid:
+        img = cams.frame(cid.removesuffix(".jpg"), request.query_params.get("viewer", ""))
+        if not img:
+            return JSONResponse({"error": "kamera yok"}, status_code=404)
+        return Response(img, media_type="image/jpeg", headers={"Cache-Control": "no-store"})
+    return JSONResponse({"cams": cams.list_cams(), "security": bool(load_settings().get("cam_security"))})
+
+
 async def vision_api(request):
     """Tarayıcı kamerasından gelen kareyi analiz eder."""
     import base64
@@ -881,6 +924,10 @@ routes = [
     Route("/api/google/connect", google_connect),
     Route("/api/google/disconnect", google_disconnect, methods=["POST"]),
     Route("/api/google/check/{what}", google_check, methods=["GET", "POST"]),
+    Route("/api/cams", cams_api, methods=["GET", "POST"]),
+    Route("/api/library", library_api),
+    Route("/api/library/{what}", library_api, methods=["POST"]),
+    Route("/api/cams/{cid}", cams_api),
     Route("/api/vision", vision_api, methods=["POST"]),
     Route("/api/transcribe", transcribe_api, methods=["POST"]),
     Route("/api/tasks", tasks_api),
