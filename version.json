@@ -1,9 +1,9 @@
 {
-  "version": "3.3.2",
+  "version": "3.3.3",
   "date": "2026-11-05",
   "notes": [
-    "Telegram: sertifikalar artık Windows'un kendi güven deposuyla doğrulanıyor (antivirüsün HTTPS taraması olan bilgisayarlarda bağlantı hatası düzelir)",
-    "Telegram bağlanamazsa sebebini açıkça söylüyor ve hatayı sürekli tekrarlamıyor",
-    "İsteğe bağlı TELEGRAM_PROXY ayarı"
+    "Telegram token'ı reddedilirse (401) sebebini söylüyor: biçim hatası, eksik kopyalama, birden fazla satır ya da iptal edilmiş token",
+    "Token'a kopyalarken bulaşan tırnak/boşluk/'bot' öneki otomatik temizleniyor",
+    "Geçersiz token'da hata sürekli tekrarlanmıyor"
   ]
 }

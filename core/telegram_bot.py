@@ -71,8 +71,39 @@ def _urlopen(req, timeout=40):
     return urllib.request.urlopen(req, timeout=timeout)
 
 
+def _token():
+    """Kopyalarken bulaşan tırnak, boşluk, < > ve 'bot' önekini temizler."""
+    t = env("TELEGRAM_BOT_TOKEN").strip().strip('"\'<>').replace(" ", "")
+    if t.lower().startswith("bot") and ":" in t:
+        t = t[3:]
+    return t
+
+
+def _token_diagnosis():
+    from .config import ROOT
+    t = _token()
+    lines = []
+    try:
+        lines = [ln for ln in (ROOT / ".env").read_text(encoding="utf-8", errors="ignore").splitlines() if ln.strip().startswith("TELEGRAM_BOT_TOKEN")]
+    except Exception:
+        pass
+    probs = []
+    if len(lines) > 1:
+        probs.append(f".env içinde {len(lines)} tane TELEGRAM_BOT_TOKEN satırı var; sadece BİR tane bırak")
+    if not re.fullmatch(r"\d{6,12}:[A-Za-z0-9_-]{30,50}", t):
+        if ":" not in t:
+            probs.append("token'da ':' yok (bot kullanıcı adını ya da t.me linkini kopyalamış olabilirsin)")
+        else:
+            a, b = t.split(":", 1)
+            probs.append(f"biçim hatalı: ':' öncesi {len(a)} karakter (rakam olmalı, 8-10), sonrası {len(b)} karakter (yaklaşık 35 olmalı)")
+    shown = (t[:4] + "…" + t[-3:]) if len(t) > 10 else "(boş/çok kısa)"
+    return (f"Telegram token'ı reddedildi (401). Okunan token: {shown}, uzunluk {len(t)}. "
+            + ("Sorun: " + "; ".join(probs) + ". " if probs else "Biçim doğru görünüyor; bu token iptal edilmiş/yenilenmiş olabilir. ")
+            + "@BotFather > /mybots > botun > API Token'dan güncel token'ı kopyalayıp .env'e yaz ve JARVIS'i yeniden başlat.")
+
+
 def _call(method, params=None, timeout=40):
-    url = API.format(token=env("TELEGRAM_BOT_TOKEN"), method=method)
+    url = API.format(token=_token(), method=method)
     data = json.dumps(params or {}).encode("utf-8")
     req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
     with _urlopen(req, timeout=timeout) as r:
@@ -86,7 +117,7 @@ def _send_file(method, field, chat_id, data, filename, mime, caption=""):
         parts.append(f"--{boundary}\r\nContent-Disposition: form-data; name=\"{k}\"\r\n\r\n{v}\r\n".encode())
     parts.append(f"--{boundary}\r\nContent-Disposition: form-data; name=\"{field}\"; filename=\"{filename}\"\r\nContent-Type: {mime}\r\n\r\n".encode() + data + b"\r\n")
     parts.append(f"--{boundary}--\r\n".encode())
-    req = urllib.request.Request(API.format(token=env("TELEGRAM_BOT_TOKEN"), method=method), data=b"".join(parts),
+    req = urllib.request.Request(API.format(token=_token(), method=method), data=b"".join(parts),
                                  headers={"Content-Type": f"multipart/form-data; boundary={boundary}"})
     _urlopen(req, timeout=120).read()
 
@@ -94,7 +125,7 @@ def _send_file(method, field, chat_id, data, filename, mime, caption=""):
 def _download(file_id):
     info = _call("getFile", {"file_id": file_id})
     path = info["result"]["file_path"]
-    with _urlopen(f"https://api.telegram.org/file/bot{env('TELEGRAM_BOT_TOKEN')}/{path}", timeout=60) as r:
+    with _urlopen(f"https://api.telegram.org/file/bot{_token()}/{path}", timeout=60) as r:
         return r.read(), path
 
 
@@ -106,7 +137,7 @@ def _send_audio(chat_id, audio_bytes, title):
     parts.append(f"--{boundary}\r\nContent-Disposition: form-data; name=\"audio\"; filename=\"cevap.mp3\"\r\n"
                  f"Content-Type: audio/mpeg\r\n\r\n".encode() + audio_bytes + b"\r\n")
     parts.append(f"--{boundary}--\r\n".encode())
-    req = urllib.request.Request(API.format(token=env("TELEGRAM_BOT_TOKEN"), method="sendAudio"),
+    req = urllib.request.Request(API.format(token=_token(), method="sendAudio"),
                                  data=b"".join(parts),
                                  headers={"Content-Type": f"multipart/form-data; boundary={boundary}"})
     _urlopen(req, timeout=60).read()
@@ -223,6 +254,17 @@ def _loop():
         except Exception as e:
             fails = getattr(_loop, "fails", 0) + 1
             _loop.fails = fails
+            if "401" in str(e) and "Unauthorized" in str(e):
+                if fails == 1:
+                    msg = _token_diagnosis()
+                    print("[telegram]", msg)
+                    try:
+                        from . import memory
+                        memory.notify(msg, "error")
+                    except Exception:
+                        pass
+                time.sleep(600)  # geçersiz token: tekrar tekrar deneme
+                continue
             if "CERTIFICATE_VERIFY_FAILED" in str(e):
                 if fails == 1:
                     print("[telegram]", _cert_diagnosis())
