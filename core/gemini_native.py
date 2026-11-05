@@ -133,16 +133,33 @@ def convert(messages):
     return sys_inst, contents
 
 
+def _lines(resp, content):
+    """Akış satırları; okuma zaman aşımı olursa (henüz cevap gelmediyse) 504 olarak bildirir → üst katman diğer modeli dener."""
+    try:
+        for raw in resp:
+            yield raw
+    except (TimeoutError, OSError) as e:
+        if content:
+            return  # cevabın bir kısmı geldi: olanı kullan
+        raise NativeError(504, f"Gemini zamanında cevap vermedi: {e}")
+
+
 class NativeError(Exception):
     def __init__(self, status, body):
         super().__init__(f"HTTP {status}: {body[:300]}")
         self.status, self.body = status, body
 
 
-def stream(key, model, messages, tools=None, temperature=0.7, timeout=90):
+_NO_THINK_CFG = set()  # bu ayarı kabul etmeyen modeller
+
+
+def stream(key, model, messages, tools=None, temperature=0.7, timeout=60):
     """("text", parça) ... ("final", {"content", "tool_calls"}) üretir — llm.stream_chat ile aynı sözleşme."""
     sys_inst, contents = convert(messages)
     body = {"contents": contents, "generationConfig": {"temperature": temperature}}
+    if model.startswith("gemini-3") and model not in _NO_THINK_CFG:
+        # Gemini 3 varsayılan olarak uzun 'düşünür' → yavaş. Sesli asistan için düşük düşünme: çok daha hızlı cevap
+        body["generationConfig"]["thinkingConfig"] = {"thinkingLevel": "low"}
     if sys_inst:
         body["systemInstruction"] = sys_inst
     t = _tools(tools)
@@ -158,10 +175,16 @@ def stream(key, model, messages, tools=None, temperature=0.7, timeout=90):
             txt = e.read().decode("utf-8", "ignore")
         except Exception:
             txt = ""
+        if e.code == 400 and "thinking" in txt.lower() and "thinkingConfig" in body["generationConfig"]:
+            _NO_THINK_CFG.add(model)  # bu model ayarı tanımıyor: ayarsız tekrar dene
+            yield from stream(key, model, messages, tools, temperature, timeout)
+            return
         raise NativeError(e.code, txt)
+    except (TimeoutError, OSError) as e:
+        raise NativeError(504, f"bağlantı/zaman aşımı: {e}")
     content, calls, blocked = [], [], ""
     with resp:
-        for raw in resp:
+        for raw in _lines(resp, content):
             line = raw.decode("utf-8", "ignore").strip()
             if not line.startswith("data:"):
                 continue

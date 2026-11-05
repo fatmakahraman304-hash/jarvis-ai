@@ -396,7 +396,7 @@ def stream_chat(pid, model, messages, tools=None, temperature=0.7, timeout=90):
     if pid == "gemini":
         from . import gemini_native
         try:
-            yield from gemini_native.stream(_key(pid), model, messages, tools, temperature, timeout)
+            yield from gemini_native.stream(_key(pid), model, messages, tools, temperature, min(timeout, 60))
         except gemini_native.NativeError as e:
             raise ProviderError(pid, e.status, e.body)
         return
@@ -564,10 +564,15 @@ def route(order, messages, tools, model_override="", light=False):
             emitted = False
             try:
                 yield ("provider", {"provider": pid, "model": model, "label": PROVIDERS[pid]["label"]})
-                for ev in stream_chat(pid, model, messages, use_tools):
-                    if ev[0] == "text":
-                        emitted = True
-                    yield ev
+                try:
+                    for ev in stream_chat(pid, model, messages, use_tools):
+                        if ev[0] == "text":
+                            emitted = True
+                        yield ev
+                except ProviderError:
+                    raise
+                except (TimeoutError, OSError, ValueError) as ne:  # ağ kopması / zaman aşımı → 'yoğun' gibi davran
+                    raise ProviderError(pid, 504, f"ağ/zaman aşımı: {ne}")
                 return
             except ProviderError as e:
                 tried.append(f"{pid}: {e.status}")
@@ -587,7 +592,7 @@ def route(order, messages, tools, model_override="", light=False):
                 if e.status in (500, 502, 503, 504):
                     # Google'da model geçici yoğun (UNAVAILABLE/overloaded): bir kez kısa bekleyip aynı modeli dene,
                     # yine olmazsa bu modeli 2 dk kenara al ve aynı sağlayıcının sıradaki modeline geç
-                    if not getattr(e, "_retried", False) and model not in busy_retried:
+                    if e.status != 504 and model not in busy_retried:
                         busy_retried.add(model)
                         time.sleep(1.5)
                         continue

@@ -85,6 +85,21 @@ check("Gemini kotası dolunca arama yine çalışır", "canlı_cevap" not in r)
 n = state["ground_calls"]
 tools.web_search("başka bir şey")
 check("kotası dolan model aramada da boşuna denenmez", state["ground_calls"] == n)
+import time as _t  # noqa: E402
+state.update(bing_down=False, ground=True)
+orig_get = tools._http_get
+
+
+def slow_get(url, timeout=12):
+    if "bing.com" in url:
+        _t.sleep(30)
+    return orig_get(url, timeout)
+
+
+tools._http_get = slow_get
+t0 = _t.time(); r = tools.web_search("yavaş kaynak testi")
+check("takılan kaynak beklenmez: arama en fazla ~12 sn", _t.time() - t0 < 13 and ("sonuçlar" in r or "canlı_cevap" in r), round(_t.time() - t0, 1))
+tools._http_get = orig_get
 check("news_search aracı var ve tarihli", tools.TOOLS["news_search"][0]("faiz")[0]["kaynak"] == "AA")
 
 print("ANLAMSAL HAFIZA")

@@ -81,6 +81,7 @@ msgs = [{"role": "system", "content": "Sen JARVIS'sin."}, {"role": "user", "cont
 evs = list(llm.stream_chat("gemini", "gemini-3.8-flash", msgs, tools))
 final = evs[-1][1]
 post = [s for s in SEEN if s[0] == "POST"][-1]
+check("Gemini 3 hızlı mod (düşük düşünme) ile çağrılır", post[3]["generationConfig"].get("thinkingConfig") == {"thinkingLevel": "low"})
 check("sistem talimatı systemInstruction'a gider", post[3]["systemInstruction"]["parts"][0]["text"] == "Sen JARVIS'sin.")
 decl = {d["name"]: d for d in post[3]["tools"][0]["functionDeclarations"]}
 check("şema sadeleşir (desteklenmeyen alanlar/boş nesne atılır)", "parameters" not in decl["get_time"] and decl["web_search"]["parameters"]["properties"]["recent"] == {"type": "boolean"}

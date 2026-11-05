@@ -1,11 +1,13 @@
 {
-  "version": "3.7.1",
+  "version": "3.7.2",
   "date": "2026-11-05",
   "notes": [
+    "Çok daha hızlı: Gemini 3 'hızlı düşünme' modunda; internet araması tüm kaynaklara AYNI ANDA sorar ve en fazla ~12 sn bekler (eskiden sırayla, dakikalar sürebiliyordu)",
+    "JARVIS bilgi aramak için artık tarayıcı açıp siteleri gezmez; tek aramayla cevaplar (tarayıcıyı sadece sen isteyince ya da form/giriş işlerinde kullanır)",
+    "'TimeoutError' hatası düzeltildi: model zamanında cevap vermezse JARVIS takılmaz, sıradaki Gemini modeliyle cevap verir; takılan araçlar süre sınırıyla kesilir",
+    "Siyah pencerede her sesli komutun kaydı görünür ([ses] … → ne duyuldu) — ses sorunlarını görmek için",
     "Gemini 3.8 'yoğun' (503) derse JARVIS artık pes etmez: bir kez tekrar dener, olmazsa anında Gemini 3.6 ile cevap verir; yoğun model 2 dk kenara alınır",
     "Yeni 'AQ.' Gemini anahtarları artık çalışıyor: JARVIS Gemini'ye Google'ın kendi resmi yolundan bağlanıyor ('API key not valid' hatası bundandı)",
-    "Ses tanıma yenilendi: konuşmanı Gemini yazıya döker (yedek: Whisper); ortam gürültüsüne kendini ayarlar, kısık mikrofonu yükseltir, dinlerken ses seviyesi çubuğu görünür",
-    "Ayarlar > SES: mikrofon seçimi ve 🎙 MİKROFON TESTİ (ses geliyor mu, ne duyuldu, seviye)",
-    "Ses duyulmazsa artık sessizce kalmaz: nedenini söyler (mikrofondan ses yok / çok kısık / anlaşılmadı)"
+    "Ses tanıma yenilendi: konuşmanı Gemini yazıya döker (yedek: Whisper); ortam gürültüsüne kendini ayarlar, kısık mikrofonu yükseltir, dinlerken ses seviyesi çubuğu görünür"
   ]
 }

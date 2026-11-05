@@ -464,7 +464,10 @@ def _grounded(query):
     if not llm.configured("gemini") or llm.key_bad("gemini"):
         return None
     tried = []
-    for model in (llm.light_model("gemini"), llm.pick_model("gemini")):
+    avail = set(llm.list_models("gemini"))
+    has_light = any(m in avail for m in llm.PROVIDERS["gemini"]["light"])
+    # hafif model varsa yalnızca onu kullan (kotası dolduysa canlı cevabı atla; sohbetin 3.8 hakkı yenmesin)
+    for model in ((llm.light_model("gemini"),) if has_light else (llm.pick_model("gemini"),)):
         if not model or model in tried or llm.cooling("gemini", model):
             continue
         tried.append(model)
@@ -475,7 +478,7 @@ def _grounded(query):
                                      data=json.dumps(body).encode(), method="POST",
                                      headers={"Content-Type": "application/json", "x-goog-api-key": llm._key("gemini")})
         try:
-            with urllib.request.urlopen(req, timeout=30) as r:
+            with urllib.request.urlopen(req, timeout=15) as r:
                 data = json.loads(r.read())
         except urllib.error.HTTPError as e:
             b = e.read().decode("utf-8", "ignore")
@@ -500,36 +503,48 @@ _NEWSY = re.compile(r"haber|son dakika|bugün|dün|şu an|şimdi|güncel|en son|
 
 
 def web_search(query, max_results=6, recent=False):
-    """Canlı web araması: Gemini+Google (varsa) → Bing → DuckDuckGo → DuckDuckGo Lite; haber/güncel sorularda Google Haberler da eklenir."""
+    """Canlı web araması — tüm kaynaklar AYNI ANDA sorulur, en fazla ~12 sn beklenir:
+    Gemini+Google (canlı cevap), Bing, DuckDuckGo, DuckDuckGo Lite, Google Haberler."""
+    from concurrent.futures import ThreadPoolExecutor, wait
     n = int(max_results)
-    out, errors = {}, []
     want_news = recent or bool(_NEWSY.search(query))
-    g = _grounded(query)
-    if g:
-        out["canlı_cevap"] = g
-    results = []
-    for name, fn in (("bing", _search_bing), ("duckduckgo", _search_ddg), ("duckduckgo-lite", _search_ddg_lite)):
-        try:
-            results = fn(query, n)
-        except Exception as e:
-            errors.append(f"{name}: {str(e)[:60]}")
-            results = []
-        if results:
-            out["motor"] = name
+    jobs = {"canlı": lambda: _grounded(query), "bing": lambda: _search_bing(query, n),
+            "duckduckgo": lambda: _search_ddg(query, n), "duckduckgo-lite": lambda: _search_ddg_lite(query, n),
+            "haberler": lambda: news_search(query, 6)}
+    ex = ThreadPoolExecutor(max_workers=len(jobs))
+    futs = {ex.submit(fn): name for name, fn in jobs.items()}
+    t0 = time.time()
+    done, _ = wait(futs, timeout=6)
+    have_web = lambda: any(futs_name in ("bing", "duckduckgo", "duckduckgo-lite") and f.done() and not f.exception() and f.result()
+                           for f, futs_name in futs.items())
+    # canlı Google cevabı birkaç saniye daha sürebilir; web sonucu yoksa ya da canlı cevap bekleniyorsa biraz daha bekle
+    if time.time() - t0 < 12:
+        pending = [f for f in futs if not f.done() and (futs[f] == "canlı" or not have_web())]
+        if pending:
+            wait(pending, timeout=12 - (time.time() - t0))
+    ex.shutdown(wait=False, cancel_futures=True)
+    res, errors = {}, []
+    for f, name in futs.items():
+        if not f.done():
+            errors.append(f"{name}: zaman aşımı")
+            continue
+        if f.exception():
+            errors.append(f"{name}: {str(f.exception())[:60]}")
+            continue
+        res[name] = f.result()
+    out = {}
+    if res.get("canlı"):
+        out["canlı_cevap"] = res["canlı"]
+    for name in ("bing", "duckduckgo", "duckduckgo-lite"):
+        if res.get(name):
+            out["motor"], out["sonuçlar"] = name, res[name]
             break
-    if results:
-        out["sonuçlar"] = results
-    if want_news or not results:
-        try:
-            nw = news_search(query, 6)
-            if isinstance(nw, list) and nw:
-                out["haberler"] = nw
-        except Exception as e:
-            errors.append(f"haberler: {str(e)[:60]}")
+    if isinstance(res.get("haberler"), list) and res["haberler"] and (want_news or "sonuçlar" not in out):
+        out["haberler"] = res["haberler"]
     if not out:
         return "Arama yapılamadı (" + "; ".join(errors) + "). İnternet bağlantısını kontrol et."
     out["not"] = (f"Bugün {time.strftime('%d.%m.%Y')}. Bu sonuçlar CANLI; kendi eski bilginle çelişirse bunlara güven. "
-                  "Ayrıntı gerekiyorsa read_webpage ile en ilgili linki aç.")
+                  "Cevap için genelde bu yeterli; gerekmedikçe başka arama yapma ya da sayfa açma.")
     return out
 
 
@@ -749,13 +764,39 @@ def is_critical(name, args):
     return crit(args) if callable(crit) else bool(crit)
 
 
+TOOL_TIMEOUT = {"web_search": 25, "news_search": 15, "read_webpage": 20, "weather": 15, "currency": 15,  # ağ araçları: süre sınırlı
+                "browser_open": 45, "browser_read": 30, "browser_look": 45}
+
+
+def _run_limited(fn, args, limit):
+    """Aracı süre sınırıyla çalıştırır: takılan bir araç JARVIS'i dakikalarca bekletmesin."""
+    import threading as _th
+    box = {}
+
+    def run():
+        try:
+            box["r"] = fn(**args)
+        except BaseException as e:  # noqa: BLE001
+            box["e"] = e
+    t = _th.Thread(target=run, daemon=True)
+    t.start()
+    t.join(limit)
+    if t.is_alive():
+        raise TimeoutError()
+    if "e" in box:
+        raise box["e"]
+    return box.get("r")
+
+
 def execute(name, args):
     if name not in TOOLS:
         return f"Bilinmeyen araç: {name}"
     fn = TOOLS[name][0]
     try:
-        result = fn(**(args or {}))
+        result = _run_limited(fn, args or {}, TOOL_TIMEOUT[name]) if name in TOOL_TIMEOUT else fn(**(args or {}))
         ok = True
+    except TimeoutError:
+        result, ok = f"Araç {TOOL_TIMEOUT.get(name)} sn içinde bitmedi; başka bir yol dene.", False
     except TypeError as e:
         result, ok = f"Parametre hatası: {e}", False
     except Exception as e:

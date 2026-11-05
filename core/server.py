@@ -143,12 +143,15 @@ async def transcribe_api(request):
     mime = request.headers.get("content-type", "audio/webm").split(";")[0]
     ext = {"audio/webm": "webm", "audio/ogg": "ogg", "audio/mp4": "m4a", "audio/wav": "wav", "audio/mpeg": "mp3"}.get(mime, "webm")
     if len(data) < 2000:
+        print(f"[ses] kayıt çok kısa/boş ({len(data)} bayt) — mikrofon ses vermiyor olabilir")
         return JSONResponse({"text": "", "engine": ""})
     info = {}
     try:
         text = await run_in_threadpool(transcribe_bytes, data, f"ses.{ext}", mime, request.query_params.get("lang", "tr"), info)
     except Exception as e:
+        print(f"[ses] {len(data) // 1000} KB kayıt → HATA: {str(e)[:150]}")
         return JSONResponse({"error": str(e)}, status_code=502)
+    print(f"[ses] {len(data) // 1000} KB kayıt → {info.get('engine', '?')}: \"{text[:70]}\"")
     # Whisper sessizlikte bazen video altyazısı uydurur: bilinen uydurmaları ele
     junk = ("altyazı m.k", "izlediğiniz için teşekkür", "abone olmayı unutmayın", "altyazı:", "thanks for watching", "subtitles by", "www.", "amara.org")
     if len(text) < 60 and any(j in text.lower() for j in junk):
