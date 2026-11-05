@@ -1,14 +1,13 @@
 {
-  "version": "3.5.5",
+  "version": "3.6.0",
   "date": "2026-11-05",
   "notes": [
+    "Tek beyin: artık yalnızca Google Gemini kullanılıyor (Groq/OpenRouter vb. devre dışı; anahtarları silinmedi, Ayarlar > MODELLER'deki 'Sadece Gemini' kutusuyla geri açılabilir)",
+    "Gemini kendi içinde yedekli: 3.8 Flash → 3.6 Flash → Flash-Lite; ücretsiz hak dolarsa açıkça söyler",
+    "Cevapsız kalma sorunu düzeltildi: araç çalışıp model cevap yazmazsa JARVIS araç sonuçlarıyla mutlaka cevap verir",
     "Anahtar sağlığı: geçersiz API anahtarı artık açıkça söylenir (Ayarlar > MODELLER'de kırmızı 'ANAHTAR GEÇERSİZ' + nedeni), JARVIS onu her mesajda denemeden çalışan sağlayıcıyla cevap verir",
     "Anahtar kaydedilince hemen denenir: 'ÇALIŞIYOR ✓' ya da sorunun ne olduğu yazar",
     "Yapıştırırken bulaşan tırnak, boşluk ve 'GEMINI_API_KEY=' öneki otomatik temizlenir",
-    "Anlamsal hafıza bozuk anahtarda siyah pencereyi hata mesajıyla doldurmaz",
-    "Canlı internet araması yenilendi: Google Arama (Gemini ile, ücretsiz) + Bing + DuckDuckGo + Google Haberler; biri engellenirse diğeri devreye girer",
-    "JARVIS artık güncel olabilecek her şeyi (haber, fiyat, kişi, sürüm, skor) kendi eski bilgisinden değil, aramadan cevaplar ve bilginin tarihini söyler",
-    "Yeni araç: tarihli canlı haber araması",
-    "'[anlamsal hafıza] HTTP Error 400' hatası düzeltildi (Gemini'nin kendi uç noktasına otomatik geçiş, küçük paketler)"
+    "Anlamsal hafıza bozuk anahtarda siyah pencereyi hata mesajıyla doldurmaz"
   ]
 }

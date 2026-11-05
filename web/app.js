@@ -320,7 +320,7 @@
     const ul = $("#prov-mini"); ul.innerHTML = "";
     const g = JV.state.google || {};
     const gl = el("li"); gl.append(el("span", "", "Gmail + Takvim"), el("span", g.connected ? "on" : "off", g.connected ? "● BAĞLI" : "○ yok")); ul.append(gl);
-    JV.state.providers.filter((p) => p.id !== "custom" || p.configured).forEach((p) => {
+    JV.state.providers.filter((p) => (p.id !== "custom" || p.configured) && !p.disabled).forEach((p) => {
       const li = el("li"); li.append(el("span", "", p.label.split(" (")[0]), el("span", p.key_error ? "bad" : p.configured ? "on" : "off", p.key_error ? "✗ ANAHTAR" : p.configured ? "● AKTİF" : "○ yok")); ul.append(li);
     });
   }
@@ -349,7 +349,12 @@
     await refreshState();
     // sağlayıcılar
     const pl = $("#prov-list"); pl.innerHTML = "";
-    JV.state.providers.forEach((p) => {
+    const og = el("label", "row only-g");
+    const ogc = el("input"); ogc.type = "checkbox"; ogc.checked = JV.settings.only_gemini !== false;
+    og.append(el("span", "", "Sadece Gemini kullan (tek beyin; diğer anahtarlar saklanır ama kullanılmaz)"), ogc);
+    ogc.onchange = async () => { await saveSettings({ only_gemini: ogc.checked }); toast(ogc.checked ? "Artık yalnızca Gemini kullanılıyor." : "Tüm bağlı modeller yedek olarak kullanılacak."); openSettings(); };
+    pl.append(og);
+    JV.state.providers.filter((p) => !p.disabled).forEach((p) => {
       const row = el("div", "prov");
       const name = el("div"); name.append(el("b", "", p.label), el("div", "st " + (p.key_error ? "bad" : p.configured ? "on" : "off"), p.key_error ? "✗ ANAHTAR GEÇERSİZ" : p.configured ? "● BAĞLI" : "○ bağlı değil"));
       if (p.key_error) name.append(el("div", "key-err", p.key_error));
@@ -392,7 +397,7 @@
     pl.append(save);
     // kişilik → model
     const pm = $("#persona-models"); pm.innerHTML = "";
-    const confd = JV.state.providers.filter((p) => p.configured);
+    const confd = JV.state.providers.filter((p) => p.configured && !p.disabled);
     JV.state.personas.forEach((per) => {
       const conf = JV.settings.personas[per.id] || { providers: [], model: "" };
       const row = el("div", "pm"); row.style.color = per.color;

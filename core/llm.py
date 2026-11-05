@@ -328,6 +328,7 @@ def status():
             "free": p["free"],
             "key_env": p["key_env"],
             "key_error": key_bad(pid) if configured(pid) else "",
+            "disabled": not allowed(pid),
         })
     return out
 
@@ -461,7 +462,7 @@ def vision(prompt, image_bytes, mime="image/png", system=""):
                                              {"type": "image_url", "image_url": {"url": url}}]})
     errors = []
     for pid in VISION_ORDER:
-        if not configured(pid):
+        if not configured(pid) or not allowed(pid):
             continue
         model = env(f"{pid.upper()}_VISION_MODEL") or (pick_model(pid) if pid in ("gemini", "xai", "custom") else VISION_DEFAULTS.get(pid, ""))
         if not model:
@@ -493,6 +494,19 @@ def light_model(pid):
     return ""
 
 
+def only_gemini():
+    try:
+        from .config import load_settings
+        return bool(load_settings().get("only_gemini", True))
+    except Exception:
+        return False
+
+
+def allowed(pid):
+    """'Sadece Gemini' açıksa diğer sağlayıcılar hiç kullanılmaz (sohbet, görme, hafıza)."""
+    return pid == "gemini" or not only_gemini() or not _key("gemini")  # Gemini anahtarı hiç yoksa kilitleme
+
+
 def route(order, messages, tools, model_override="", light=False):
     """Sağlayıcıları sırayla dener; kota/hata olursa sıradakine geçer (tek beyin, çok model).
 
@@ -500,7 +514,10 @@ def route(order, messages, tools, model_override="", light=False):
     """
     tried = []
     candidates = [p for p in order if p in PROVIDERS] + [p for p in PROVIDERS if p not in order]
-    candidates = [p for p in candidates if configured(p)]
+    candidates = [p for p in candidates if configured(p) and allowed(p)]
+    if not candidates and only_gemini():
+        yield ("error", "Gemini anahtarı girilmemiş. Ayarlar > MODELLER > Google Gemini kutusuna https://aistudio.google.com/apikey adresinden aldığın ücretsiz anahtarı yapıştır.")
+        return
     good = [p for p in candidates if not key_bad(p)]
     candidates = good or candidates  # hepsi bozuksa yine de dene
     if not candidates:
@@ -546,4 +563,13 @@ def route(order, messages, tools, model_override="", light=False):
                         model = nm
                         continue
                 break
+    if only_gemini():
+        if key_bad("gemini"):
+            yield ("error", key_bad("gemini"))
+        elif any(":" in t and t.endswith("429") for t in tried):
+            yield ("error", "Gemini'nin bugünkü ücretsiz hakkı doldu (tüm Gemini modelleri). Hak her gün saat 10:00 civarı yenilenir. "
+                            "Beklemeden devam etmek istersen Ayarlar > MODELLER'de 'Sadece Gemini' seçeneğini kapat.")
+        else:
+            yield ("error", "Gemini şu an cevap vermedi (" + ", ".join(tried) + "). Birazdan tekrar dene.")
+        return
     yield ("error", "Tüm modeller başarısız: " + ", ".join(tried))

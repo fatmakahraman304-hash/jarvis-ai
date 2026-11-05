@@ -93,6 +93,8 @@ check("Qwen'in <think> iç düşüncesi cevaba karışmaz", "".join(f.feed(x) fo
 print("ANAHTAR SAĞLIĞI")
 check("tırnak/boşluk/önek temizlenir", llm.clean_key(' "GEMINI_API_KEY=AIzaSyA1234567890abcdefghijklmnopqrstu " ') == "AIzaSyA1234567890abcdefghijklmnopqrstu")
 os.environ["GEMINI_API_KEY"] = "AIzaYANLIS"
+from core.config import save_settings as _ss0  # noqa: E402
+_ss0({"only_gemini": False})  # bu bölüm: çok sağlayıcılı mod
 seen.clear()
 
 
@@ -114,6 +116,42 @@ seen.clear(); list(llm.route(["gemini", "groq"], [{"role": "user", "content": "y
 check("sonraki mesajda bozuk anahtar hiç denenmez", seen == ["groq"], seen)
 check("Ayarlar'da 'anahtar geçersiz' görünür", any(p["id"] == "gemini" and p["key_error"] for p in llm.status()))
 llm.clear_key_state(); os.environ["GEMINI_API_KEY"] = "test"
+llm.configured = lambda pid: pid == "gemini"
+
+print("SADECE GEMİNİ")
+from core.config import save_settings as _ss  # noqa: E402
+llm.configured = lambda pid: pid in ("gemini", "groq")
+seen.clear()
+
+
+def ok_any(pid, model, messages, tools=None, temperature=0.7, timeout=90):
+    seen.append(pid)
+    yield ("text", pid)
+    yield ("final", {"content": pid, "tool_calls": []})
+
+
+llm.stream_chat = ok_any
+_ss({"only_gemini": True})
+list(llm.route(["groq", "gemini"], [{"role": "user", "content": "x"}], None))
+check("açıkken kişilik Groq'u öne koysa bile yalnızca Gemini kullanılır", seen == ["gemini"], seen)
+check("Groq ayarlarda gizlenir", [p["id"] for p in llm.status() if p["disabled"]] == [p for p in llm.PROVIDERS if p != "gemini"])
+
+
+def all429(pid, model, messages, tools=None, temperature=0.7, timeout=90):
+    seen.append(pid)
+    raise llm.ProviderError(pid, 429, "quota")
+    yield
+
+
+llm.stream_chat = all429; seen.clear()
+evs = list(llm.route(["gemini"], [{"role": "user", "content": "x"}], None))
+check("Gemini hakkı bitince Groq'a GİTMEZ, açıkça söyler", "groq" not in seen and any(k == "error" and "ücretsiz hakkı doldu" in d for k, d in evs), evs[-1:])
+llm._cooldown.clear()
+_ss({"only_gemini": False}); llm.stream_chat = ok_any; seen.clear()
+os.environ["GEMINI_API_KEY"] = ""
+list(llm.route(["groq", "gemini"], [{"role": "user", "content": "x"}], None))
+check("kapatılınca sıradaki sağlayıcılar yine kullanılabilir", seen == ["groq"], seen)
+os.environ["GEMINI_API_KEY"] = "test"; _ss({"only_gemini": True})
 llm.configured = lambda pid: pid == "gemini"
 
 # eski sabitlemelerin temizlenmesi

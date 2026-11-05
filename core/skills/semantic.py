@@ -28,7 +28,7 @@ _working = {}  # pid -> çalıştığı doğrulanan embedding modeli
 
 def _provider():
     for pid, model in EMBED:
-        if llm.configured(pid):
+        if llm.configured(pid) and llm.allowed(pid):
             return pid, env(f"{pid.upper()}_EMBED_MODEL") or _working.get(pid) or model
     return None, None
 

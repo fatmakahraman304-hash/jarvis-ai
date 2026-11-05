@@ -200,8 +200,20 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
             yield {"type": "token", "text": " "}
 
     full_text = full_text.strip()
-    if full_text:
-        memory.add_message(session, "assistant", full_text, persona["id"], source, used.get("provider", ""))
+    if not full_text and len(messages) > 2:
+        # araçlar çalıştı ama model cevap yazmadı (ya da adım sınırı doldu): araçsız son bir çağrıyla mutlaka cevap ver
+        messages.append({"role": "user", "content": "Yukarıdaki araç sonuçlarına dayanarak kullanıcıya ŞİMDİ kısa ve net cevap ver. Yeni araç çağırma."})
+        for kind, data in llm.route(pconf.get("providers", []), messages, None, pconf.get("model", "")):
+            if kind == "text":
+                full_text += data
+                yield {"type": "token", "text": data}
+            elif kind == "error":
+                break
+        full_text = full_text.strip()
+    if not full_text:
+        full_text = "Bu soruya şu an cevap üretemedim; lütfen biraz farklı sorar mısın?"
+        yield {"type": "token", "text": full_text}
+    memory.add_message(session, "assistant", full_text, persona["id"], source, used.get("provider", ""))
     yield {"type": "done", "text": full_text, **used}
 
 
