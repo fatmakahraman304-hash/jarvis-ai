@@ -32,7 +32,9 @@ PROVIDERS = {
         "label": "Groq (Llama / GPT-OSS)",
         "base": "https://api.groq.com/openai/v1",
         "key_env": "GROQ_API_KEY",
-        "prefer": ["llama-3.3-70b-versatile", "openai/gpt-oss-120b", "moonshotai/kimi-k2-instruct", "llama-3.1-8b-instant"],
+        # en güçlü ücretsiz: GPT-OSS 120B (akıl yürütme + araç kullanımı, günde 1000 istek); sonra Qwen 3.8, Llama 3.3 70B
+        "prefer": ["openai/gpt-oss-120b", "qwen/qwen3.8-27b", "llama-3.3-70b-versatile", "openai/gpt-oss-20b", "llama-3.1-8b-instant"],
+        "light": ["openai/gpt-oss-20b", "llama-3.1-8b-instant"],
         "free": True,
     },
     "openrouter": {
@@ -164,7 +166,7 @@ def list_models(pid, refresh=False):
 
 # sohbet modeli OLMAYANLAR (aynı adla başlayan ses/canlı/görsel sürümleri yanlışlıkla seçilmesin)
 NON_CHAT = ("embed", "tts", "image", "whisper", "guard", "vision-preview", "aqa", "live", "transcribe", "robotics",
-            "omni", "banana", "lyria", "veo", "imagen", "audio", "native-audio", "computer-use")
+            "omni", "banana", "lyria", "veo", "imagen", "audio", "native-audio", "computer-use", "orpheus", "playai", "distil-whisper")
 
 
 def is_chat_model(m):
@@ -251,6 +253,42 @@ def status():
     return out
 
 
+class ThinkFilter:
+    """Qwen/DeepSeek gibi modellerin <think>…</think> iç düşüncesini cevaptan ayıklar (parçalı akışta da)."""
+    OPEN, CLOSE = "<think>", "</think>"
+
+    def __init__(self):
+        self.buf, self.inside = "", False
+
+    def feed(self, piece):
+        self.buf += piece
+        out = ""
+        while True:
+            if not self.inside:
+                i = self.buf.find(self.OPEN)
+                if i >= 0:
+                    out += self.buf[:i]
+                    self.buf, self.inside = self.buf[i + len(self.OPEN):], True
+                    continue
+                keep = 0  # etiketin yarısı bu parçada kalmış olabilir
+                for k in range(min(len(self.OPEN) - 1, len(self.buf)), 0, -1):
+                    if self.OPEN.startswith(self.buf[-k:]):
+                        keep = k
+                        break
+                out += self.buf[:len(self.buf) - keep]
+                self.buf = self.buf[len(self.buf) - keep:]
+                return out
+            j = self.buf.find(self.CLOSE)
+            if j < 0:
+                self.buf = self.buf[-(len(self.CLOSE) - 1):]
+                return out
+            self.buf, self.inside = self.buf[j + len(self.CLOSE):].lstrip("\n"), False
+
+    def flush(self):
+        rest, self.buf = ("" if self.inside else self.buf), ""
+        return rest
+
+
 # ---------------- akışlı sohbet ----------------
 def stream_chat(pid, model, messages, tools=None, temperature=0.7, timeout=90):
     """Olay üretir: ("text", parça) ... ve sonda ("final", {"content":..., "tool_calls":[...]})"""
@@ -277,6 +315,7 @@ def stream_chat(pid, model, messages, tools=None, temperature=0.7, timeout=90):
 
     content = []
     calls = {}
+    think = ThinkFilter()
     with resp:
         for raw in resp:
             line = raw.decode("utf-8", "ignore").strip()
@@ -295,6 +334,8 @@ def stream_chat(pid, model, messages, tools=None, temperature=0.7, timeout=90):
                 delta = ch.get("delta") or ch.get("message") or {}
                 piece = delta.get("content")
                 if piece:
+                    piece = think.feed(piece)
+                if piece:
                     content.append(piece)
                     yield ("text", piece)
                 for tc in delta.get("tool_calls") or []:
@@ -308,6 +349,10 @@ def stream_chat(pid, model, messages, tools=None, temperature=0.7, timeout=90):
                     if fn.get("arguments"):
                         a = fn["arguments"]
                         slot["arguments"] += a if isinstance(a, str) else json.dumps(a)
+    tail = think.flush()
+    if tail:
+        content.append(tail)
+        yield ("text", tail)
     tool_calls = []
     for i in sorted(calls):
         c = calls[i]

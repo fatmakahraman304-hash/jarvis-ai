@@ -792,37 +792,48 @@ def _scheduler():
         time.sleep(5)
 
 
+MODEL_MIGRATIONS = [  # (bayrak, eski model kalıbı, .env anahtarları) — her biri yalnızca bir kez çalışır
+    ("3.5.1", r"^(models/)?gemini-(1|2)\.", ("GEMINI_MODEL", "GEMINI_VISION_MODEL")),
+    ("3.5.3-groq", r"^(llama-3\.3-70b|llama-3\.1-8b|moonshotai/kimi-k2|mixtral|gemma2|llama3-)", ("GROQ_MODEL",)),
+]
+
+
 def _migrate_old_models():
-    """v3.5.1: eski Gemini 1.x/2.x sabitlemelerini kaldır → otomatik en iyi (Gemini 3.8). Bir kez çalışır."""
+    """Eski model sabitlemelerini kaldır → otomatik en iyi ücretsiz model. Her geçiş bir kez çalışır."""
     try:
-        st = load_settings()
-        if st.get("models_migrated") == "3.5.1":
-            return
-        old = re.compile(r"^(models/)?gemini-(1|2)\.")
-        changed = []
-        pers = st.get("personas") or {}
-        for pid, conf in pers.items():
-            if isinstance(conf, dict) and old.match(conf.get("model") or ""):
-                changed.append(f"{pid}: {conf['model']}")
-                conf["model"] = ""
         from .config import ROOT
         import os
-        envf = ROOT / ".env"
-        if envf.exists():
-            lines = envf.read_text(encoding="utf-8").splitlines()
-            keep = []
-            for ln in lines:
-                k, _, v = ln.partition("=")
-                if k.strip() in ("GEMINI_MODEL", "GEMINI_VISION_MODEL") and old.match(v.strip()):
-                    changed.append(f"{k.strip()}={v.strip()}")
-                    os.environ.pop(k.strip(), None)
-                    continue
-                keep.append(ln)
-            if len(keep) != len(lines):
-                envf.write_text("\n".join(keep) + "\n", encoding="utf-8")
-        save_settings({"personas": pers, "models_migrated": "3.5.1"})
-        if changed:
-            memory.notify("Eski Gemini modeli sabitlemesi kaldırıldı, artık en yeni model kullanılıyor: " + ", ".join(changed), "info")
+        done = set(load_settings().get("models_migrated_list") or [])
+        if load_settings().get("models_migrated") == "3.5.1":
+            done.add("3.5.1")
+        for flag, pat, keys in MODEL_MIGRATIONS:
+            if flag in done:
+                continue
+            st = load_settings()
+            old = re.compile(pat)
+            changed = []
+            pers = st.get("personas") or {}
+            for pid, conf in pers.items():
+                if isinstance(conf, dict) and old.match(conf.get("model") or ""):
+                    changed.append(f"{pid}: {conf['model']}")
+                    conf["model"] = ""
+            envf = ROOT / ".env"
+            if envf.exists():
+                lines = envf.read_text(encoding="utf-8").splitlines()
+                keep = []
+                for ln in lines:
+                    k, _, v = ln.partition("=")
+                    if k.strip() in keys and old.match(v.strip()):
+                        changed.append(f"{k.strip()}={v.strip()}")
+                        os.environ.pop(k.strip(), None)
+                        continue
+                    keep.append(ln)
+                if len(keep) != len(lines):
+                    envf.write_text("\n".join(keep) + "\n", encoding="utf-8")
+            done.add(flag)
+            save_settings({"personas": pers, "models_migrated_list": sorted(done)})
+            if changed:
+                memory.notify("Eski model sabitlemesi kaldırıldı, artık en iyi ücretsiz model kullanılıyor: " + ", ".join(changed), "info")
     except Exception as e:
         print("[model geçişi]", e)
 

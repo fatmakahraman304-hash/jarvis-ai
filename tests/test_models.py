@@ -80,10 +80,21 @@ list(llm.route(["gemini"], [{"role": "user", "content": "c"}], None, light=True)
 check("arka plan işleri hafif ücretsiz modelle (3.5 Flash-Lite)", seen == ["gemini-3.5-flash-lite"], seen)
 llm._cooldown.clear()
 
+GROQ = ["llama-3.1-8b-instant", "whisper-large-v3", "meta-llama/llama-prompt-guard-2-86m", "openai/gpt-oss-safeguard-20b",
+        "canopylabs/orpheus-v1-english", "llama-3.3-70b-versatile", "qwen/qwen3.8-27b", "openai/gpt-oss-20b", "openai/gpt-oss-120b"]
+llm.list_models = lambda pid, refresh=False: list(AVAIL) if pid == "gemini" else (list(GROQ) if pid == "groq" else [])
+check("Groq beyni = GPT-OSS 120B (en güçlü ücretsiz)", llm.pick_model("groq") == "openai/gpt-oss-120b", llm.pick_model("groq"))
+rg = llm.ranked_models("groq")
+check("Groq: whisper/guard/ses modelleri seçilmez", rg[:5] == ["openai/gpt-oss-120b", "qwen/qwen3.8-27b", "llama-3.3-70b-versatile", "openai/gpt-oss-20b", "llama-3.1-8b-instant"] and len(rg) == 5, rg)
+check("Groq arka plan işi = GPT-OSS 20B", llm.light_model("groq") == "openai/gpt-oss-20b")
+f = llm.ThinkFilter()
+check("Qwen'in <think> iç düşüncesi cevaba karışmaz", "".join(f.feed(x) for x in ["<thi", "nk>plan…</thi", "nk>\n\nTamam efendim."]) + f.flush() == "Tamam efendim.")
+
 # eski sabitlemelerin temizlenmesi
 from core import server  # noqa: E402
 from core.config import load_settings, save_settings  # noqa: E402
-save_settings({"personas": {"jarvis": {"providers": ["gemini"], "model": "gemini-2.5-flash"}, "friday": {"providers": ["gemini"], "model": "gemini-3.6-flash"}}})
+save_settings({"personas": {"jarvis": {"providers": ["gemini"], "model": "gemini-2.5-flash"}, "friday": {"providers": ["gemini"], "model": "gemini-3.6-flash"},
+                            "ultron": {"providers": ["groq"], "model": "llama-3.3-70b-versatile"}}})
 envf = ROOT / ".env"
 backup = envf.read_text(encoding="utf-8") if envf.exists() else None
 try:
@@ -94,6 +105,8 @@ try:
     check("kişilikteki 2.5 sabitlemesi kaldırıldı", st["personas"]["jarvis"]["model"] == "")
     check("bilinçli 3.x seçimi korunur", st["personas"]["friday"]["model"] == "gemini-3.6-flash")
     check(".env'deki GEMINI_MODEL=2.5 kaldırıldı", "GEMINI_MODEL=gemini-2.5" not in envf.read_text(encoding="utf-8") and not os.environ.get("GEMINI_MODEL"))
+    st2 = load_settings()
+    check("Groq'taki eski llama-3.3 sabitlemesi de kaldırıldı", st2["personas"]["ultron"]["model"] == "")
     save_settings({"personas": {"jarvis": {"model": "gemini-2.5-flash"}}})
     server._migrate_old_models()
     check("geçiş yalnızca bir kez (sonra seçimine dokunmaz)", load_settings()["personas"]["jarvis"]["model"] == "gemini-2.5-flash")
