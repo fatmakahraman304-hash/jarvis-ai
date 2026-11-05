@@ -359,6 +359,23 @@
       const right = el("div");
       if (KEY_LINKS[p.id]) { const a = el("a", "", p.id === "ollama" ? "indir ↗" : "ücretsiz anahtar al ↗"); a.href = KEY_LINKS[p.id]; a.target = "_blank"; right.append(a); }
       row.append(name, inp, right); pl.append(row);
+      if (p.configured) {  // bu sağlayıcının beyni: otomatik (en yeni) ya da elle seçilen model
+        const ms = el("select", "model-pick"); ms.title = "Bu sağlayıcıda kullanılacak model";
+        name.append(ms);
+        JV.api(`/api/models/${p.id}`).then((r) => {
+          if (!r.models || !r.models.length) { ms.remove(); return; }
+          const a = el("option", "", `otomatik · ${r.auto}`); a.value = ""; ms.append(a);
+          r.models.forEach((m) => { const o = el("option", "", m); o.value = m; ms.append(o); });
+          ms.value = r.pinned || "";
+          const dl = document.getElementById("ml-" + p.id) || document.body.appendChild(Object.assign(document.createElement("datalist"), { id: "ml-" + p.id }));
+          dl.innerHTML = r.models.map((m) => `<option value="${m}">`).join("");
+        }).catch(() => ms.remove());
+        ms.onchange = async () => {
+          const k = `${p.id.toUpperCase()}_MODEL`;
+          const r = await JV.api("/api/keys", { body: { [k]: ms.value } });
+          toast(r.ok ? `${p.label.split(" (")[0]} beyni: ${ms.value || "otomatik (en yeni)"}` : (r.error || "Kaydedilemedi"));
+        };
+      }
     });
     const save = el("button", "btn-primary", "ANAHTARLARI KAYDET");
     save.onclick = async () => {
@@ -377,6 +394,7 @@
       (confd.length ? confd : JV.state.providers).forEach((p) => { const o = el("option", "", p.label); o.value = p.id; sel.append(o); });
       sel.value = (conf.providers || []).find((x) => confd.some((c) => c.id === x)) || (confd[0] || {}).id || "";
       const mod = el("input"); mod.placeholder = "model (boş = otomatik en iyisi)"; mod.value = conf.model || "";
+      mod.setAttribute("list", "ml-" + sel.value); sel.addEventListener("change", () => mod.setAttribute("list", "ml-" + sel.value));
       const commit = () => {
         const order = [sel.value, ...(conf.providers || []).filter((x) => x !== sel.value)];
         saveSettings({ personas: { [per.id]: { providers: order, model: mod.value.trim() } } });

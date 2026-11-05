@@ -1,7 +1,10 @@
 {
-  "version": "3.5.0",
+  "version": "3.5.1",
   "date": "2026-11-05",
   "notes": [
+    "Beyin yükseltmesi: Gemini artık en yeni Gemini 3.8 Flash (eski 2.5 sabitlemeleri otomatik kaldırıldı)",
+    "3.8'in kotası dolarsa JARVIS susmaz: önce Gemini 3.6, sonra diğer sağlayıcılar",
+    "Ayarlar > MODELLER: her sağlayıcının altında hangi modelin çalıştığı görünür, istersen listeden elle seçebilirsin",
     "Gmail ve Takvim kurulum sihirbazı: Ayarlar > BAĞLANTILAR'da 5 adım; yapıştırdığın anahtarları anında denetler, Google'a sorup doğrular, bağlandıktan sonra 'BAĞLANTIYI DENE' ile gerçek test",
     "Telegram /panel: düğmeli uzaktan kumanda — 🔒 Kilitle, 😴 Uyut (önce 'emin misin?' sorar), 📸 Ekran, 🖥 Durum, 🔇 Ses, ☀️ Brifing, ⛔ Acil dur",
     "Telegram /ekran: bilgisayarın ekran görüntüsü telefonuna gelir (kapatmak için Ayarlar > BAĞLANTILAR). Sesle de olur: 'ekranı telefonuma at'",

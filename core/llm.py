@@ -23,7 +23,7 @@ PROVIDERS = {
         "label": "Google Gemini",
         "base": "https://generativelanguage.googleapis.com/v1beta/openai",
         "key_env": "GEMINI_API_KEY",
-        "prefer": ["gemini-2.5-flash", "gemini-flash-latest", "gemini-2.0-flash", "gemini-2.5-flash-lite"],
+        "prefer": ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-flash-latest", "gemini-3.5-flash-lite", "gemini-2.5-flash", "gemini-2.5-flash-lite"],
         "free": True,
     },
     "groq": {
@@ -160,6 +160,30 @@ def list_models(pid, refresh=False):
     return models
 
 
+# sohbet modeli OLMAYANLAR (aynı adla başlayan ses/canlı/görsel sürümleri yanlışlıkla seçilmesin)
+NON_CHAT = ("embed", "tts", "image", "whisper", "guard", "vision-preview", "aqa", "live", "transcribe", "robotics",
+            "omni", "banana", "lyria", "veo", "imagen", "audio", "native-audio", "computer-use")
+
+
+def is_chat_model(m):
+    return not any(x in m for x in NON_CHAT)
+
+
+def ranked_models(pid):
+    """Tercih sırasına göre bu hesapta GERÇEKTEN açık olan sohbet modelleri (en iyisi başta)."""
+    prefer = PROVIDERS[pid]["prefer"]
+    available = [m for m in list_models(pid) if is_chat_model(m)]
+    out = []
+    for p in prefer:
+        for m in available:  # önce birebir ad, sonra aynı ailenin tarihli sürümleri (gemini-3.8-flash-001 gibi)
+            if m == p and m not in out:
+                out.append(m)
+        for m in available:
+            if m not in out and (m.startswith(p + ":") or m.startswith(p + "-")) and ("lite" in p or "lite" not in m):
+                out.append(m)
+    return out + [m for m in available if m not in out]
+
+
 def pick_model(pid, override=""):
     if override:
         return override
@@ -167,16 +191,18 @@ def pick_model(pid, override=""):
     if envm:
         return envm
     prefer = PROVIDERS[pid]["prefer"]
-    available = list_models(pid)
-    if available:
-        for p in prefer:
-            for m in available:
-                if m == p or m.startswith(p + ":") or m.startswith(p + "-"):
-                    return m
-        # Gemini için sohbet modeli olmayanları ele
-        chatty = [m for m in available if not any(x in m for x in ("embed", "tts", "image", "whisper", "guard", "vision-preview", "aqa"))]
-        return (chatty or available)[0]
+    if list_models(pid):
+        r = ranked_models(pid)
+        return r[0] if r else list_models(pid)[0]
     return prefer[0] if prefer else ""
+
+
+def next_model(pid, current, tried):
+    """Model kota/erişim hatası verirse AYNI sağlayıcıda bir sonraki en iyi model."""
+    for m in ranked_models(pid) or PROVIDERS[pid]["prefer"]:
+        if m != current and m not in tried:
+            return m
+    return ""
 
 
 def status():
@@ -316,7 +342,8 @@ def route(order, messages, tools, model_override=""):
         if not model:
             continue
         use_tools = tools
-        for attempt in range(2):
+        used = []
+        for attempt in range(5):
             emitted = False
             try:
                 yield ("provider", {"provider": pid, "model": model, "label": PROVIDERS[pid]["label"]})
@@ -335,11 +362,13 @@ def route(order, messages, tools, model_override=""):
                     use_tools = None
                     continue
                 if e.status == 404 and attempt == 0:
-                    # model adı eskimiş olabilir: listeyi yenileyip tekrar dene
-                    list_models(pid, refresh=True)
-                    new_model = pick_model(pid)
-                    if new_model and new_model != model:
-                        model = new_model
+                    list_models(pid, refresh=True)  # model adı eskimiş olabilir: listeyi yenile
+                if e.status in (403, 404, 429) and len(used) < 3:
+                    # bu model kotada/erişilemez: aynı sağlayıcının bir sonraki en iyi modeline geç (ör. 3.8 → 3.6)
+                    nm = next_model(pid, model, used)
+                    if nm:
+                        used.append(model)
+                        model = nm
                         continue
                 break
     yield ("error", "Tüm modeller başarısız: " + ", ".join(tried))

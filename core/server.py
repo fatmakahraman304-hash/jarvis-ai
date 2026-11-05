@@ -706,13 +706,17 @@ async def models(request):
     if pid not in llm.PROVIDERS:
         return JSONResponse({"error": "yok"}, status_code=404)
     refresh = request.query_params.get("refresh") == "1"
-    return JSONResponse({"models": llm.list_models(pid, refresh) if llm.configured(pid) else [],
-                         "selected": llm.pick_model(pid) if llm.configured(pid) else ""})
+    if not llm.configured(pid):
+        return JSONResponse({"models": [], "selected": "", "auto": "", "pinned": ""})
+    llm.list_models(pid, refresh)
+    return JSONResponse({"models": llm.ranked_models(pid), "selected": llm.pick_model(pid),
+                         "auto": (llm.ranked_models(pid) or [""])[0], "pinned": env(f"{pid.upper()}_MODEL")})
 
 
 ALLOWED_KEYS = {p["key_env"] for p in llm.PROVIDERS.values() if p["key_env"]} | {
     "CUSTOM_BASE_URL", "TELEGRAM_BOT_TOKEN", "TELEGRAM_ALLOWED_IDS", "OLLAMA_BASE_URL",
-    "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "HA_URL", "HA_TOKEN", "OCTOPRINT_URL", "OCTOPRINT_KEY", "OPENAI_API_KEY"}
+    "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "HA_URL", "HA_TOKEN", "OCTOPRINT_URL", "OCTOPRINT_KEY", "OPENAI_API_KEY"} | {
+    f"{pid.upper()}_MODEL" for pid in llm.PROVIDERS}
 
 
 async def keys(request):
@@ -786,7 +790,43 @@ def _scheduler():
         time.sleep(5)
 
 
+def _migrate_old_models():
+    """v3.5.1: eski Gemini 1.x/2.x sabitlemelerini kaldır → otomatik en iyi (Gemini 3.8). Bir kez çalışır."""
+    try:
+        st = load_settings()
+        if st.get("models_migrated") == "3.5.1":
+            return
+        old = re.compile(r"^(models/)?gemini-(1|2)\.")
+        changed = []
+        pers = st.get("personas") or {}
+        for pid, conf in pers.items():
+            if isinstance(conf, dict) and old.match(conf.get("model") or ""):
+                changed.append(f"{pid}: {conf['model']}")
+                conf["model"] = ""
+        from .config import ROOT
+        import os
+        envf = ROOT / ".env"
+        if envf.exists():
+            lines = envf.read_text(encoding="utf-8").splitlines()
+            keep = []
+            for ln in lines:
+                k, _, v = ln.partition("=")
+                if k.strip() in ("GEMINI_MODEL", "GEMINI_VISION_MODEL") and old.match(v.strip()):
+                    changed.append(f"{k.strip()}={v.strip()}")
+                    os.environ.pop(k.strip(), None)
+                    continue
+                keep.append(ln)
+            if len(keep) != len(lines):
+                envf.write_text("\n".join(keep) + "\n", encoding="utf-8")
+        save_settings({"personas": pers, "models_migrated": "3.5.1"})
+        if changed:
+            memory.notify("Eski Gemini modeli sabitlemesi kaldırıldı, artık en yeni model kullanılıyor: " + ", ".join(changed), "info")
+    except Exception as e:
+        print("[model geçişi]", e)
+
+
 def _startup():
+    _migrate_old_models()
     threading.Thread(target=_scheduler, daemon=True, name="scheduler").start()
     if env("TELEGRAM_BOT_TOKEN"):
         from . import telegram_bot
