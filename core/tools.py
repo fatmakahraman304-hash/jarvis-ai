@@ -707,6 +707,7 @@ GROUP_INFO = {
     "nodes": ("çoklu bilgisayar: diğer JARVIS'leri bağla, durum, uzaktan komut, dosya gönder/al, kuyruk", "bilgisayar bilgisayara bilgisayarda pc laptop dizüstü masaüstü düğüm ağdaki diğer uzak uzaktaki gönder oradaki ofisteki evdeki tüm bilgisayarlar"),
     "twin": ("dijital ikiz (bilgisayar/ev 3D canlı), protein yapıları, hücre modeli", "vr ar sanal gerçeklik artırılmış gözlük quest ikiz dijital ikiz protein enzim hemoglobin insülin pdb hücre organel mitokondri çekirdek bakteri biyoloji kasa donanım içini"),
     "music": ("müzik/ritim besteleme, MIDI", "müzik beste besteler şarkı melodi ritim davul beat lofi caz piyano ambient sinematik elektronik hiphop trap rock midi enstrümantal fon müziği"),
+    "arfx": ("kamera AR el efektleri, gezegen, kahve falı, uyku modu", "el efekt efektleri gezegen mars jüpiter satürn güneş ateş şimşek mühür büyü sihir hologram fal falıma falımı kahve fincan uyku uyu uyut alkış"),
     "browser": ("tarayıcı otomasyonu: siteye git, oku, tıkla, form doldur, sekmeler", "tarayıcı tarayıcıda site sitesine sitesinde sayfa sayfada form doldur tıkla sekme sekmeyi giriş yap rezervasyon bilet uçak otel sepet ürün sipariş edge chrome web"),
     "plugins": ("eklentiler", ""),
 }

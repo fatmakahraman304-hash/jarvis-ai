@@ -78,6 +78,9 @@ Beyin konuya göre ilgili araçları kendisi seçer; sen sadece ne istediğini s
 | **Ağ** | Ağdaki cihazlar, hız testi, ping ve paket kaybı, internet sorunu teşhisi |
 | **Günlük** | Sesli alarm (tekrarlı), notlar, alışveriş listesi, haberler |
 | **Proje merkezi** | Kod projesi oluşturma, testleri çalıştırma, GitHub (gh CLI) |
+| **AR efektler** | EL > ✨ EFEKT (ya da "el efektlerini aç"): kamera görüntüsünde ✋ ateş, ✋✋ dönen mühür halkaları, 🤏 avuçta parçacık gezegen (Satürn, Dünya, Mars, Jüpiter, Ay, Güneş — taşı, fırlat, iki elle büyüt; "Mars yap"), ✊→✋ patlama, ☝☝ şimşek, ☝ ışık izi; 👍 basılı tut = komut, ✌ = mikrofon, ✊ = sus; yüz kilidi HUD'u. Görüntü bilgisayardan çıkmaz |
+| **Uyku / alkış** | "uyu" ya da boşta kalınca uyku modu; iki kez alkışlayınca uyanır ve karşılar |
+| **Kahve falı** | "falıma bak": fincanı kameraya göster, telvedeki şekillerden eğlencesine fal (bilim değil) |
 | **Telefon** | Dosya gezgini (indir/yükle), Telegram'dan sesli mesaj ve sesli cevap, `/panel` düğmeli uzaktan kumanda (kilitle, uyut — onaylı, ekran, durum, ses, brifing, acil dur), `/ekran` ekran görüntüsü, dosya alma/gönderme, kamera fotoğrafı (izinliyse) |
 | **Uzman ajanlar** | Büyük işi parçalara bölüp aynı anda birden fazla ajana yaptırır |
 | **Anlamsal hafıza** | Kelimesi kelimesine değil anlamına göre hatırlar ("geçen ay tatil hakkında ne konuşmuştuk"); son hatalarından ders çıkarır |

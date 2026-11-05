@@ -33,6 +33,7 @@
   }
   JV.toast = (t, ms) => toast(t, ms);
   JV.sendCommand = (t) => send(t);
+  JV.currentPersona = () => persona;
   JV.persona = () => persona;
   JV.openPanel = (name, open = true) => {
     const n = (name || "").toLowerCase();
@@ -433,6 +434,7 @@
     $("#v-fx").checked = JV.settings.effects !== false;
     $("#v-stt").value = JV.settings.stt_lang || "tr-TR";
     $("#v-engine").value = JV.settings.stt_engine || "auto";
+    $("#sl-idle").value = JV.settings.sleep_idle_min || 0; $("#sl-thr").value = JV.settings.clap_threshold || 0.35; $("#ar-cmd").value = JV.settings.ar_thumb_command || ""; $("#ar-name").value = JV.settings.user_name || "";
     if (JV.loadMics) JV.loadMics();
     JV.api("/api/autostart").then((r) => { $("#o-autostart").checked = !!r.açık; }).catch(() => {});
     $("#b-on").checked = !!(JV.settings.briefing || {}).on; $("#b-time").value = (JV.settings.briefing || {}).time || "08:00";
@@ -450,6 +452,11 @@
   }
   $("#v-lang").onchange = (e) => saveSettings({ voice_lang: e.target.value });
   $("#v-engine").onchange = (e) => saveSettings({ stt_engine: e.target.value });
+  $("#sl-idle").onchange = (e) => saveSettings({ sleep_idle_min: Math.max(0, +e.target.value || 0) });
+  $("#sl-thr").onchange = (e) => saveSettings({ clap_threshold: +e.target.value });
+  $("#ar-cmd").onchange = (e) => saveSettings({ ar_thumb_command: e.target.value.trim() });
+  $("#ar-name").onchange = (e) => saveSettings({ user_name: e.target.value.trim() });
+  $("#sl-now").onclick = () => { $("#settings").classList.add("hidden"); JV.sleep && JV.sleep.enter(); };
   // mikrofon seçimi + test
   async function loadMics() {
     const sel = $("#v-mic"); if (!sel || !JV.stt) return;
@@ -527,6 +534,25 @@
     } finally { setStatus(null); }
   };
   $("#cam-q").addEventListener("keydown", (e) => { if (e.key === "Enter") $("#cam-look").click(); });
+  // ---------- kahve falı (eğlence): kameradaki fincandan tek kare ----------
+  JV.fortune = async () => {
+    if (!camStream) await openCam();
+    if (!camStream) return;
+    toast("☕ Fincanı kameraya göster… 3 sn sonra bakıyorum", 3500);
+    await new Promise((r) => setTimeout(r, 3000));
+    const v = $("#cam-video"); if (!v.videoWidth) return;
+    const c = document.createElement("canvas"); const w = Math.min(1280, v.videoWidth);
+    c.width = w; c.height = Math.round(v.videoHeight * w / v.videoWidth); c.getContext("2d").drawImage(v, 0, 0, c.width, c.height);
+    setStatus("thinking", "FAL BAKILIYOR ☕");
+    try {
+      const q = "Bu bir Türk kahvesi fincanı/tabağı görüntüsü olmalı. Telvede GERÇEKTEN görünen şekillere (yol, kuş, kalp, dağ, balık gibi) bakarak "
+        + "eğlenceli, esprili ve iyimser, 4-5 cümlelik bir kahve falı yorumla; gördüğün şekilleri adlandır. Bunun bilim olmadığını bir kez kısaca, şakayla belirt. "
+        + "Fincan ya da telve görünmüyorsa uydurma: fincanı kameraya göstermesini iste.";
+      const r = await JV.api("/api/vision", { body: { image: c.toDataURL("image/jpeg", 0.85), question: q, persona, session: "main" } });
+      const t = r.text || r.error || "Fala bakılamadı.";
+      addMsg("user", "☕ Falıma bak"); addMsg("ai", t, persona); JV.say(t, persona);
+    } finally { setStatus(null); }
+  };
 
   // ---------- Google kurulum sihirbazı (adım adım) ----------
   let gwStep = 0;

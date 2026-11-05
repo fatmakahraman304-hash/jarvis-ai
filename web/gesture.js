@@ -57,6 +57,7 @@
       await JV.mp.load("hand");
       if (mode === "bas") await JV.mp.load("face");
       running = true; status(""); loop();
+      if (mode === "efekt" && JV.handfx) { JV.handfx.show(stream); JV.mp.load("face", { numFaces: 3 }).catch(() => {}); }
       JV.toast && JV.toast("El kontrolü açık. Modu panelden seç.");
     } catch (e) {
       status("Başlatılamadı: " + (e.message || e)); console.warn(e);
@@ -65,6 +66,7 @@
   }
   function stop() {
     running = false; cancelAnimationFrame(raf);
+    if (JV.handfx && JV.handfx.active) { const h = JV.handfx; mode = "nesne"; h.stop(); }
     if (stream) stream.getTracks().forEach((t) => t.stop()); stream = null;
     showHud(false); cursorEl.style.display = "none"; $("#air-kb").classList.add("hidden");
     if (grabbing) { os("mouse", { action: "up" }, true); grabbing = false; }
@@ -75,6 +77,10 @@
     document.querySelectorAll("#g-modes button").forEach((b) => b.classList.toggle("on", b.dataset.m === m));
     $("#air-kb").classList.toggle("hidden", m !== "klavye");
     if (m === "bas" && running) JV.mp.load("face").catch(() => {});
+    if (JV.handfx) {
+      if (m === "efekt" && running && !JV.handfx.active) { JV.handfx.show(stream); JV.mp.load("face", { numFaces: 3 }).catch(() => {}); }
+      if (m !== "efekt" && JV.handfx.active) JV.handfx.stop();
+    }
     $("#g-help").textContent = HELP[m] || "";
   }
   const HELP = {
@@ -82,6 +88,7 @@
     fare: "İşaret parmağı: fare · Kıstır: tıkla / basılı tut-sürükle (pencere taşıma) · Yumruk+yukarı/aşağı: kaydır · Rock 🤘 bekle: sağ tık",
     klavye: "İşaret parmağını tuşun üstüne getir, kıstırarak bas. Hedef: JARVIS kutusu veya bilgisayar.",
     komut: "Sol el kıstır+yukarı/aşağı: ses · Sağ el kıstır+yukarı/aşağı: parlaklık · Pozlar: ✋ dur · ✌ mikrofon · 👍 onayla · ✊(2sn) kilitle · kendi hareketlerin",
+    efekt: "✋ ateş · ✋✋ mühür halkası · 🤏 gezegen (taşı/fırlat) · 🤏🤏 büyüt · ✊→✋ patlat · ☝☝ şimşek · ☝ ışık izi · 👍 1sn komut · ✌ mikrofon · ✊ 2sn sus · Esc kapat",
     robot: "Elin konumu: taban/omuz · Elin büyüklüğü (kameraya uzaklık): dirsek · Kıstır: kıskaç",
     bas: "Başını çevir: imleç · Uzun göz kırp (yarım sn): tıkla · Sağa/sola bak (1 sn): mod değiştir",
   };
@@ -100,6 +107,13 @@
     } catch (e) { return; }
     drawHud(res, face);
     if (face) return headMode(face, ts);
+    if (mode === "efekt" && JV.handfx && JV.handfx.active) {
+      let faces = null;
+      if (cache.face && JV.handfx.opts.face && ts - (loop.faceT || 0) > 140) { loop.faceT = ts; try { faces = cache.face.detectForVideo(video, ts + 0.5).faceLandmarks; } catch (e) {} }
+      const hs2 = (res.landmarks || []).map((lm, i) => ({ lm, handed: (((res.handedness || res.handednesses || [])[i] || [{}])[0].categoryName === "Left") ? "Right" : "Left" }));
+      JV.handfx.frame(hs2, faces);
+      return;
+    }
     const hands = (res.landmarks || []).map((lm, i) => {
       const lab = ((res.handedness || res.handednesses || [])[i] || [{}])[0].categoryName || "Right";
       return { lm, handed: lab === "Left" ? "Right" : "Left" }; // MediaPipe aynalı görüntü varsayar
@@ -335,6 +349,6 @@
     setMode("nesne");
     setTimeout(() => { engine.custom = JV.settings.custom_gestures || []; renderCustom(); }, 1500);
   }
-  JV.gesture = { start, stop, setMode, isRunning: () => running };
+  JV.gesture = { start, stop, setMode, isRunning: () => running, mode: () => mode };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
 })();

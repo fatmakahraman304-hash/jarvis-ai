@@ -114,7 +114,7 @@
 <!-- el kontrolü -->
 <div id="gesture-hud" class="hidden">
   <canvas id="g-canvas" width="240" height="180"></canvas>
-  <div id="g-modes"><button data-m="nesne">NESNE</button><button data-m="fare">FARE</button><button data-m="klavye">KLAVYE</button><button data-m="komut">KOMUT</button><button data-m="robot">ROBOT</button><button data-m="bas">BAŞ/GÖZ</button></div>
+  <div id="g-modes"><button data-m="nesne">NESNE</button><button data-m="fare">FARE</button><button data-m="klavye">KLAVYE</button><button data-m="komut">KOMUT</button><button data-m="robot">ROBOT</button><button data-m="bas">BAŞ/GÖZ</button><button data-m="efekt">✨ EFEKT</button></div>
   <div id="g-help"></div>
   <label class="g-opt"><input type="checkbox" id="g-os"> baş/göz modunda gerçek fareyi kullan</label>
   <div class="g-row"><button class="mini" id="g-teach">HAREKET ÖĞRET</button><button class="mini" id="g-close">KAPAT</button></div>
@@ -167,6 +167,12 @@
       <label class="row">Mikrofon <select id="v-mic"><option value="">Windows varsayılanı</option></select></label>
       <div class="row"><button class="mini" id="v-mictest">🎙 MİKROFON TESTİ</button> <span id="v-micout" class="note"></span></div>
       <div class="micbar"><i id="v-miclvl"></i></div>
+      <h4>UYKU · ALKIŞ · AR</h4>
+      <label class="row">Boşta kalınca uyku (dakika, 0 = kapalı) <input type="number" id="sl-idle" min="0" max="240" style="width:80px"></label>
+      <label class="row">Alkış hassasiyeti (düşük = hassas) <input type="range" id="sl-thr" min="0.15" max="0.8" step="0.05"></label>
+      <div class="row"><span class="note">Uykudayken iki kez alkışla ya da tıkla: uyanır. Sesle: "uyu".</span><button class="mini" id="sl-now">😴 ŞİMDİ UYU</button></div>
+      <label class="row">Adın (yüz kilidinde görünür) <input id="ar-name" placeholder="Murat"></label>
+      <label class="row">AR efektte 👍 (1 sn) komutu <input id="ar-cmd" placeholder="Bana bugün için kısa bir brifing ver"></label>
       <label class="row">Tanıma dili <select id="v-stt"><option value="tr-TR">Türkçe</option><option value="en-US">English</option></select></label>
       <div id="voice-sliders"></div>
       <h4>SES KİMLİĞİ</h4>
@@ -257,6 +263,8 @@
 <script src="/static/stt.js"></script>
 <script src="/static/app.js"></script>
 <script src="/static/gesture.js"></script>
+<script src="/static/handfx.js"></script>
+<script src="/static/clap.js"></script>
 <script src="/static/camlive.js"></script>
 <script src="/static/translator.js"></script>
 <script src="/static/studio.js"></script>
