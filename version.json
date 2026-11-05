@@ -1,9 +1,9 @@
 {
-  "version": "3.2.0",
+  "version": "3.3.0",
   "date": "2026-11-05",
   "notes": [
-    "Tek tuşla GÜNCELLE düğmesi: bundan sonra yeni özellikler buradan gelir",
-    "Windows bildirim okuma paketi derleyicisiz sürüme geçti",
-    "Güncelleme öncesi otomatik yedek ve test, sorun olursa geri dönüş"
+    "Ses laboratuvarı: Ayarlar > SES'te her kişilik için yüzlerce ses arasından seç (Türkçe, tüm İngilizce aksanlar, Türkçe de konuşan çok dilli sesler)",
+    "Hız, ton, yankı, oda, netlik, kalınlık, ikinci ses katmanı, metalik, distorsiyon, hologram filtresi ve yavaş çekim ayarları",
+    "DİNLE ile kaydetmeden dene; FİLM HAZIR AYARI ile varsayılana dön"
   ]
 }

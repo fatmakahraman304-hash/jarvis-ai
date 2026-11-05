@@ -589,11 +589,20 @@ async def tts(request):
     if not voice.available():
         return JSONResponse({"error": "edge-tts yok"}, status_code=501)
     try:
-        audio = await voice.synthesize(text, request.query_params.get("persona", "jarvis"),
-                                       request.query_params.get("lang", "auto"), request.query_params.get("mood", ""))
+        q = request.query_params
+        audio = await voice.synthesize(text, q.get("persona", "jarvis"), q.get("lang", "auto"), q.get("mood", ""),
+                                       q.get("voice") or None, q.get("rate") if q.get("rate") not in (None, "") else None,
+                                       q.get("pitch") if q.get("pitch") not in (None, "") else None)
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=502)
     return Response(audio, media_type="audio/mpeg", headers={"Cache-Control": "no-store"})
+
+
+async def voices_api(request):
+    try:
+        return JSONResponse(await voice.list_voices())
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=502)
 
 
 async def system(request):
@@ -740,6 +749,7 @@ routes = [
     Route("/api/chat", chat, methods=["POST"]),
     Route("/api/confirm", confirm, methods=["POST"]),
     Route("/api/tts", tts),
+    Route("/api/voices", voices_api),
     Route("/api/system", system),
     Route("/api/processes", processes),
     Route("/api/settings", settings, methods=["GET", "POST"]),

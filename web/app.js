@@ -80,6 +80,7 @@
   }
 
   async function saveSettings(patch) { JV.settings = await JV.api("/api/settings", { body: patch }); return JV.settings; }
+  JV.saveSettings = saveSettings;
 
   // ---------- sohbet ----------
   async function send(text, opts = {}) {
@@ -374,18 +375,7 @@
     $("#v-lang").value = JV.settings.voice_lang || "auto";
     $("#v-fx").checked = JV.settings.effects !== false;
     $("#v-stt").value = JV.settings.stt_lang || "tr-TR";
-    const vs = $("#voice-sliders"); vs.innerHTML = "";
-    JV.state.personas.forEach((per) => {
-      const v = (JV.settings.voice || {})[per.id] || { rate: 0, pitch: 0 };
-      [["rate", "hız %", -40, 40], ["pitch", "ton Hz", -40, 40]].forEach(([k, lab, mn, mx]) => {
-        const row = el("label", "row"); row.append(el("span", "", `${per.id.toUpperCase()} ${lab}`));
-        const r = el("input"); r.type = "range"; r.min = mn; r.max = mx; r.value = v[k] || 0;
-        const out = el("span", "", r.value);
-        r.oninput = () => (out.textContent = r.value);
-        r.onchange = () => saveSettings({ voice: { [per.id]: { [k]: +r.value } } }).then(() => JV.say("Ses ayarı güncellendi.", per.id));
-        row.append(r, out); vs.append(row);
-      });
-    });
+    if (JV.voiceLab) JV.voiceLab.render($("#voice-sliders"));
     loadVoiceIds();
     $("#tts-note").textContent = JV.state.tts ? "Film tarzı sinir ağı sesleri aktif (Microsoft Neural, ücretsiz)." : "edge-tts kurulu değil: tarayıcının kendi sesi kullanılıyor. Kurulum için: pip install edge-tts";
     // platformlar

@@ -395,3 +395,8 @@ body.mode-sessiz #t-command::after{content:" · SESSİZ"}
 .up-bar b{display:block;height:100%;width:0;background:var(--c);box-shadow:var(--glow);transition:width .5s}
 #t-update.has-update{border-color:#22e39a;color:#22e39a;animation:mcpulse 1.6s infinite}
 #t-update.has-update::after{content:" • YENİ"}
+
+.vl-tabs{display:flex;gap:5px;flex-wrap:wrap;margin:6px 0 10px}.vl-tabs .on{background:var(--c);color:#001018}.vl-sep{width:10px}
+.vl-row{display:grid;grid-template-columns:150px 1fr 70px;gap:8px;align-items:center}.vl-row em{font-style:normal;color:var(--dim);font-family:var(--mono);font-size:11px}
+.vl-btns{gap:6px;flex-wrap:wrap}.vl-btns input{flex:1;min-width:160px}
+#vl-voice{max-width:100%}

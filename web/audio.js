@@ -41,32 +41,47 @@
     const s = ctx.createWaveShaper(); s.curve = curve; s.oversample = "4x"; return s;
   }
 
-  // kişiliğe göre efekt zinciri; giriş düğümünü döndürür
-  function chain(persona, fx) {
+  // ---- Film efekt ayarları (Ses laboratuvarından değiştirilebilir) ----
+  // hpf: alçak kesim Hz · bass: kalınlık dB · presence: netlik dB · drive: distorsiyon · metal: metalik halka (0-1)
+  // double: ikinci ses katmanı (0-1) · reverb: yankı (0-1) · room: oda büyüklüğü sn · speed: oynatma hızı · radio: hologram/telsiz filtresi (0-1)
+  const FX = {
+    jarvis: { hpf: 140, bass: 1, presence: 4, drive: 0, metal: 0, double: 0.12, reverb: 0.22, room: 1.4, speed: 1, radio: 0.1 },
+    friday: { hpf: 110, bass: 0, presence: 3, drive: 0, metal: 0, double: 0, reverb: 0.12, room: 0.9, speed: 1, radio: 0 },
+    ultron: { hpf: 50, bass: 8, presence: 2, drive: 6, metal: 0.35, double: 0.5, reverb: 0.38, room: 2.6, speed: 0.96, radio: 0 },
+  };
+  JV.FX_DEFAULTS = FX;
+  JV.fxFor = (persona) => Object.assign({}, FX[persona] || FX.jarvis, ((JV.settings.voice_fx || {})[persona]) || {});
+
+  // efekt zinciri; giriş düğümünü döndürür
+  function chain(persona, fxOn, override) {
     const out = analyser;
     const input = ctx.createGain();
-    if (!fx) { input.connect(out); return { input, rate: 1 }; }
-    const dry = ctx.createGain(), wet = ctx.createGain(), rev = ctx.createConvolver();
-    if (persona === "ultron") {
-      const low = ctx.createBiquadFilter(); low.type = "lowshelf"; low.frequency.value = 220; low.gain.value = 7;
-      const dist = shaper(6);
-      const ring = ctx.createGain(); ring.gain.value = 0.65;
-      const osc = ctx.createOscillator(); osc.frequency.value = 48;
-      const depth = ctx.createGain(); depth.gain.value = 0.35; osc.connect(depth); depth.connect(ring.gain); osc.start();
-      const dly = ctx.createDelay(); dly.delayTime.value = 0.018; const dlyG = ctx.createGain(); dlyG.gain.value = 0.45;
-      input.connect(low); low.connect(dist); dist.connect(ring); ring.connect(dry);
-      low.connect(dly); dly.connect(dlyG); dlyG.connect(dry);
-      ring.connect(rev); rev.buffer = impulse(2.6, 2.2); wet.gain.value = 0.38; dry.gain.value = 0.9;
-      rev.connect(wet); dry.connect(out); wet.connect(out);
-      return { input, rate: 0.96, cleanup: () => osc.stop() };
+    if (!fxOn) { input.connect(out); return { input, rate: 1 }; }
+    const f = Object.assign(JV.fxFor(persona), override || {});
+    const dry = ctx.createGain(), wet = ctx.createGain(), rev = ctx.createConvolver(), cleanups = [];
+    const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = f.hpf;
+    const low = ctx.createBiquadFilter(); low.type = "lowshelf"; low.frequency.value = 220; low.gain.value = f.bass;
+    const pres = ctx.createBiquadFilter(); pres.type = "peaking"; pres.frequency.value = 3200; pres.gain.value = f.presence; pres.Q.value = 0.9;
+    input.connect(hp); hp.connect(low); low.connect(pres);
+    let node = pres;
+    if (f.radio > 0) { // hologram/telsiz: bant geçiren + hafif sıkıştırma
+      const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 1800; bp.Q.value = 0.4 + f.radio * 1.2;
+      const mixA = ctx.createGain(), mixB = ctx.createGain(), sum = ctx.createGain(); mixA.gain.value = 1 - f.radio; mixB.gain.value = f.radio * 1.6;
+      node.connect(mixA); node.connect(bp); bp.connect(mixB); mixA.connect(sum); mixB.connect(sum); node = sum;
     }
-    const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = persona === "jarvis" ? 140 : 100;
-    const pres = ctx.createBiquadFilter(); pres.type = "peaking"; pres.frequency.value = persona === "jarvis" ? 3000 : 4200; pres.gain.value = persona === "jarvis" ? 3 : 2; pres.Q.value = 0.9;
-    input.connect(hp); hp.connect(pres); pres.connect(dry); pres.connect(rev);
-    rev.buffer = impulse(persona === "jarvis" ? 1.3 : 0.9, 3);
-    dry.gain.value = 0.92; wet.gain.value = persona === "jarvis" ? 0.2 : 0.12;
+    if (f.drive > 0) { const d = shaper(f.drive); node.connect(d); node = d; }
+    if (f.metal > 0) {
+      const ring = ctx.createGain(); ring.gain.value = 1 - f.metal * 0.5;
+      const osc = ctx.createOscillator(); osc.frequency.value = 48;
+      const depth = ctx.createGain(); depth.gain.value = f.metal; osc.connect(depth); depth.connect(ring.gain); osc.start();
+      cleanups.push(() => osc.stop()); node.connect(ring); node = ring;
+    }
+    node.connect(dry);
+    if (f.double > 0) { const dly = ctx.createDelay(); dly.delayTime.value = 0.018; const g = ctx.createGain(); g.gain.value = f.double * 0.9; low.connect(dly); dly.connect(g); g.connect(dry); }
+    node.connect(rev); rev.buffer = impulse(Math.max(0.3, f.room), persona === "ultron" ? 2.2 : 3);
+    dry.gain.value = 0.92; wet.gain.value = f.reverb;
     rev.connect(wet); dry.connect(out); wet.connect(out);
-    return { input, rate: 1 };
+    return { input, rate: f.speed || 1, cleanup: () => cleanups.forEach((c) => c()) };
   }
 
   function mood(text) {
@@ -78,10 +93,12 @@
     return "";
   }
 
-  async function fetchTTS(text, persona, myGen, lang) {
+  async function fetchTTS(text, persona, myGen, lang, opts) {
     if (!JV.state || !JV.state.tts) return null;
     try {
-      const r = await JV.api(`/api/tts?persona=${persona}&mood=${mood(text)}${lang ? "&lang=" + lang : ""}&text=${encodeURIComponent(text)}`, { raw: true });
+      const o = opts || {};
+      const extra = (o.voice ? "&voice=" + encodeURIComponent(o.voice) : "") + (o.rate != null ? "&rate=" + o.rate : "") + (o.pitch != null ? "&pitch=" + o.pitch : "");
+      const r = await JV.api(`/api/tts?persona=${persona}&mood=${mood(text)}${lang ? "&lang=" + lang : ""}${extra}&text=${encodeURIComponent(text)}`, { raw: true });
       if (!r.ok) return null;
       const buf = await r.arrayBuffer();
       if (myGen !== gen) return null;
@@ -109,9 +126,9 @@
     });
   }
 
-  function playBuffer(buffer, persona) {
+  function playBuffer(buffer, persona, fxOverride) {
     return new Promise((resolve) => {
-      const c = chain(persona, JV.settings.effects !== false);
+      const c = chain(persona, JV.settings.effects !== false || !!fxOverride, fxOverride);
       const src = ctx.createBufferSource();
       src.buffer = buffer; src.playbackRate.value = c.rate;
       src.connect(c.input);
@@ -131,7 +148,7 @@
       JV.onCaption && JV.onCaption(item.text);
       const buf = await item.promise;
       if (myGen !== gen) break;
-      if (buf) await playBuffer(buf, item.persona);
+      if (buf) await playBuffer(buf, item.persona, item.fx);
       else await browserSpeak(item.text, item.persona, item.lang);
     }
     playing = false;
@@ -150,6 +167,15 @@
     ensureCtx();
     const myGen = gen;
     queue.push({ text, persona, lang, promise: fetchTTS(text, persona, myGen, lang) });
+    pump();
+  };
+
+  // Ses laboratuvarı önizlemesi: kaydetmeden belirli ses/hız/ton/efektle konuş
+  JV.sayWith = function (text, persona, opts = {}) {
+    ensureCtx(); if (ctx.state === "suspended") ctx.resume();
+    JV.stopSpeaking(false);
+    const myGen = gen;
+    queue.push({ text, persona, lang: opts.lang, fx: opts.fx, promise: fetchTTS(text, persona, myGen, opts.lang, opts) });
     pump();
   };
 
