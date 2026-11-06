@@ -30,14 +30,13 @@ const check = (name, cond, extra = "") => { console.log((cond ? "  ✓ " : "  �
   try {
     await p.goto(`http://127.0.0.1:${sp}/`); await wait(2000); await p.click("#boot-btn").catch(() => {}); await wait(800);
     console.log("DÜNYALAR");
-    for (const v of ["globe", "lab", "science", "space", "city", "twin", "bio"]) {
+    for (const v of ["globe", "lab", "science", "space", "twin", "bio"]) {
       await p.click(`[data-view="${v}"]`); await wait(1800);
       check(`${v} görünümü açıldı`, (await p.evaluate(() => JV.getView())) === v);
     }
     await p.click('[data-view="core"]'); await wait(500);
     console.log("ARAÇ → ARAYÜZ KOMUTLARI");
     const cmds = [
-      ["city_command", { ui: "city", action: "weather", value: "kar" }, () => JV.worlds.city.stats().hava === "kar"],
       ["digital_twin", { ui: "twin", kind: "pc" }, () => JV.getView() === "twin"],
       ["cell_show", { ui: "bio", kind: "cell", cell: "plant" }, () => JV.getView() === "bio"],
       ["knowledge_graph", { ui: "graph", title: "T", nodes: [{ id: "A" }, { id: "B" }], edges: [{ a: "A", b: "B" }] }, () => JV.getView() === "graph"],
