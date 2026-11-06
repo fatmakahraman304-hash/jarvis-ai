@@ -16,5 +16,7 @@ jobs:
           node-version: 22
       - name: Check JavaScript syntax
         run: node --check web/lab.js
+      - name: Check Python syntax
+        run: python -m py_compile core/skills/holo.py
       - name: Validate release metadata
         run: node -e "const v=require('./version.json'); if(!/^\\d+\\.\\d+\\.\\d+$/.test(v.version)) process.exit(1); console.log('JARVIS version:',v.version)"
