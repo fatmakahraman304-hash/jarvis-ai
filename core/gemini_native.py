@@ -183,13 +183,37 @@ TIMEOUT = 20  # görev katmanı 10 sn (FAST) veya 20 sn (SMART) gönderir
 _NO_THINK_CFG = set()  # bu ayarı kabul etmeyen modeller
 
 
+def _new_flash(model):
+    """3.5+ Flash models no longer need the legacy sampling arguments."""
+    import re
+    return bool(re.match(r"^gemini-3\\.(?:[5-9]|[1-9][0-9])(?:-|$)", str(model)))
+
+
+def _shape_summary(body):
+    """Log only request structure, never prompts, tool arguments or API keys."""
+    contents = body.get("contents") or []
+    parts = [p for turn in contents for p in (turn.get("parts") or [])]
+    calls = [p for p in parts if "functionCall" in p]
+    replies = [p for p in parts if "functionResponse" in p]
+    names = len((body.get("tools") or [{}])[0].get("functionDeclarations") or [])
+    signatures = sum(bool(p.get("thoughtSignature")) for p in calls)
+    last = contents[-1].get("role", "?") if contents else "empty"
+    # Request size and part counts are sufficient to distinguish plain/tool/continuation errors.
+    return (f"turlar={len(contents)} arac_tanimi={names} cagri={len(calls)} "
+            f"arac_yaniti={len(replies)} imzali_cagri={signatures} son_rol={last}")
+
+
 def stream(key, model, messages, tools=None, temperature=0.7, timeout=20, tool_choice="auto"):
     """("text", parça) ... ("final", {"content", "tool_calls"}) üretir — llm.stream_chat ile aynı sözleşme."""
     sys_inst, contents = convert(messages, model=model)
-    body = {"contents": contents, "generationConfig": {"temperature": temperature}}
-    if model.startswith("gemini-3") and model not in _NO_THINK_CFG:
-        # Gemini 3 varsayılan olarak uzun 'düşünür' → yavaş. Sesli asistan için düşük düşünme: çok daha hızlı cevap
-        body["generationConfig"]["thinkingConfig"] = {"thinkingLevel": "low"}
+    body = {"contents": contents}
+    # 3.5+ Flash APIs deprecate temperature/top_p/top_k; Flash-Lite also defaults
+    # to MINIMAL thinking. Omit both optional settings instead of blindly retrying
+    # a request which may already have consumed the final available model quota.
+    if not _new_flash(model):
+        body["generationConfig"] = {"temperature": temperature}
+    if model.startswith("gemini-3") and "flash-lite" not in model and model not in _NO_THINK_CFG:
+        body.setdefault("generationConfig", {})["thinkingConfig"] = {"thinkingLevel": "low"}
     if sys_inst:
         body["systemInstruction"] = sys_inst
     t = _tools(tools)
@@ -221,12 +245,14 @@ def stream(key, model, messages, tools=None, temperature=0.7, timeout=20, tool_c
                                == "request contains an invalid argument")
             except (ValueError, TypeError, AttributeError):
                 pass
-        if (e.code == 400 and "thinkingConfig" in body["generationConfig"]
+        if (e.code == 400 and "thinkingConfig" in body.get("generationConfig", {})
                 and ("thinking" in txt.lower() or generic_400)):
             _NO_THINK_CFG.add(model)  # no second optional-setting retry for this model
             yield from stream(key, model, messages, tools, temperature, timeout, tool_choice)
             return
         print(f"[gemini] {model} HTTP {e.code} ({time.time() - t0:.1f} sn): {txt[:160]}")
+        if e.code == 400:
+            print(f"[gemini-teşhis] {model}: {_shape_summary(body)}")
         raise NativeError(e.code, txt)
     except (TimeoutError, OSError, ValueError) as e:
         print(f"[gemini] {model} cevap vermedi ({time.time() - t0:.1f} sn): {e}")
