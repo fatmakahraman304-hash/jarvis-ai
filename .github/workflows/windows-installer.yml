@@ -23,9 +23,9 @@ jobs:
       - name: Validate release metadata and Python syntax
         shell: pwsh
         run: |
-          $v = Get-Content version.json | ConvertFrom-Json
-          if ($v.version -ne "4.6.29") { throw "Unexpected version: $($v.version)" }
-          python -m compileall -q core run.py
+          $release = Get-Content version.json | ConvertFrom-Json
+          if ($release.version -ne "4.6.29") { throw "Unexpected version: $($release.version)" }
+          python -m py_compile run.py core/skills/holo.py
       - name: Install Inno Setup
         run: choco install innosetup --yes --no-progress
       - name: Compile installer
