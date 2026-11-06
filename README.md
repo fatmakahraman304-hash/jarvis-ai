@@ -1,5 +1,11 @@
 # J.A.R.V.I.S. Personal AI
 
+## 4.6.43 — Tekrarlayan tarayıcı onaylarını azaltma
+
+JARVIS normal tarayıcı gezinmelerinde ve hassas olmayan metin girişlerinde tekrar tekrar onay istemeden çalışır. Bu davranış **Ayarlar > Davranış > Tarayıcıda sıradan işlemleri onaysız yap** seçeneğiyle kapatılabilir; varsayılan açık gelir. Google ile giriş, izin/koşul kabulü, ödeme, silme, paylaşım/çıktı, hassas form alanları ve form gönderme onay korumasını sürdürür. Google hesabına giriş yine Chrome’da elle yapılmalıdır.
+
+Windows masaüstünde genel tıklama, sürükleme ve yazma için önceki **tam otonom** tercihi ayrı kalır ve varsayılan kapalıdır. Acil durdurma ve elle Chrome kullanımı sırasındaki görüntü/araç kilidi değişmez. Otomatik gezinme yalnızca o anki sayfada gerçekten bulunabilen, riskli olarak sınıflandırılmayan kontrollerle sınırlıdır. Bu heuristikler her web sitesinde kusursuz güvenlik garantisi değildir.
+
 ## 4.6.42 — Google girişi ve elle kullanım
 
 Güncellemeden sonra JARVIS’i tamamen kapatıp aç. SPACEPLANNER görünümündeki **Chrome’da elle kullan / giriş yap** düğmesine bas. Ayrı Chrome penceresinde koşulları kendin inceleyip kabul et ve **Continue with Google** ile girişini tamamla. Şifreyi JARVIS sohbetine yazma. Google ek doğrulama isterse Chrome’da kendin tamamla. Hesap oluşturulması ve koşulların kabulü otomatik yapılmaz.

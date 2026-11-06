@@ -38,6 +38,8 @@ jobs:
         run: python tests/test_observe_loop.py
       - name: Check manual login privacy and handoff
         run: python tests/test_manual_login.py
+      - name: Check routine browser approvals
+        run: python tests/test_browser_approval.py
       - name: Check SpacePlanner tools
         run: python tests/test_spaceplanner.py
       - name: Install test browser

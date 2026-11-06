@@ -11,7 +11,7 @@ WEB = ROOT / "web"
 DATA.mkdir(exist_ok=True)
 SETTINGS_FILE = DATA / "settings.json"
 
-VERSION = "4.6.42"
+VERSION = "4.6.43"
 
 
 def _load_env():
@@ -51,7 +51,8 @@ DEFAULT_SETTINGS = {
     "voice_lang": "auto",        # auto | tr | en
     "wake_word": True,
     "effects": True,
-    "auto_control": False,       # ekran/fare/klavye işlemlerinde onay isteme
+    "auto_control": False,       # masaüstünü tamamen otonom kullanmak için isteğe bağlı
+    "routine_browser_auto": True, # güvenli ve sıradan tarayıcı adımlarında onay isteme
     "email_watch": True,         # önemli yeni e-postayı bildir
     "meeting_alerts": True,      # toplantıdan 10 dk önce bildir
     "city": "Istanbul",
