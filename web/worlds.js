@@ -79,6 +79,8 @@
     document.querySelectorAll("[data-view]").forEach((b) => b.classList.toggle("on", b.dataset.view === v));
   };
   JV.getView = () => view;
+  const spacePlannerClose = document.getElementById("spaceplanner-close");
+  if (spacePlannerClose) spacePlannerClose.onclick = () => JV.setView("core");
 
   // arayüz komutları (beynin araç sonuçlarından gelir)
   JV.uiCommand = function (name, args, result) {
