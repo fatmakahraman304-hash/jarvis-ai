@@ -243,16 +243,77 @@
   }
 
 
+  function buildHome3D(p) {
+    const width = p.width, depth = p.depth, height = Number(p.wallHeight) || 2.8;
+    const rooms = p.roomNames || ["Salon", "Mutfak", "Yatak odası", "Banyo", "Çalışma odası", "Antre"].slice(0, p.rooms);
+    const cols = Math.ceil(Math.sqrt(rooms.length)), rows = Math.ceil(rooms.length / cols);
+    const cw = width / cols, ch = depth / rows, wall = 0.12, parts = [];
+    const floorColor = p.floorColor || "#8b7355", wallColor = p.wallColor || "#e4e0d8";
+    parts.push({name:"Zemin döşemesi",type:"box",size:[width,0.12,depth],pos:[0,0.06,0],color:floorColor});
+    const addWall=(name,x,z,sx,sz)=>parts.push({name,type:"box",size:[sx,height,sz],pos:[x,height/2+0.12,z],color:wallColor});
+    addWall("Arka dış duvar",0,-depth/2,width,wall);
+    addWall("Ön dış duvar",0,depth/2,width,wall);
+    addWall("Sol dış duvar",-width/2,0,wall,depth);
+    addWall("Sağ dış duvar",width/2,0,wall,depth);
+    for(let c=1;c<cols;c++) addWall("İç bölme", -width/2+c*cw,0,wall,depth);
+    for(let r=1;r<rows;r++) addWall("İç bölme",0,-depth/2+r*ch,width,wall);
+    // Kapı ve pencereler 3D modelde renkli, duvara oturan elemanlar olarak gösterilir.
+    (p.objects||[]).forEach((o,i)=>{
+      const x=Number(o.x)||0,z=Number(o.z)||0;
+      if(o.type==="door") parts.push({name:"Kapı "+(i+1),type:"box",size:[0.92,2.05,0.09],pos:[x,1.15,z],color:"#80502f"});
+      else if(o.type==="window") parts.push({name:"Pencere "+(i+1),type:"box",size:[1.25,0.95,0.08],pos:[x,1.75,z],color:"#69c9ed"});
+      else {
+        const specs={sofa:[1.9,0.75,0.85,"#657b8d"],bed:[1.6,0.45,2.0,"#b7a0c9"],table:[1.2,0.75,0.8,"#a8794f"],wardrobe:[1.1,2.1,0.6,"#8d735f"],toilet:[0.48,0.42,0.68,"#f0f4f5"],kitchen:[1.8,0.9,0.65,"#777f87"],desk:[1.2,0.75,0.65,"#9b744d"],plant:[0.45,0.9,0.45,"#39875c"]};
+        const s=specs[o.type]||specs.table;
+        parts.push({name:(o.label||o.type)+" "+(i+1),type:"box",size:s.slice(0,3),pos:[x,s[1]/2+0.12,z],color:o.color||s[3]});
+      }
+    });
+    build(parts,"Ev iç mekânı · "+(p.title||"Yeni proje"));
+  }
+
   function renderHomePlan(p) {
-    let el = document.getElementById("home-plan");
-    if (!el) { el = document.createElement("section"); el.id = "home-plan"; document.body.appendChild(el); }
-    const w = 520, h = 360, pad = 28, sx = (w - pad * 2) / p.width, sy = (h - pad * 2) / p.depth;
-    const rooms = ["Salon", "Mutfak", "Yatak odası", "Banyo", "Çalışma odası", "Antre", "Çocuk odası", "Depo"].slice(0, p.rooms);
-    const cols = Math.ceil(Math.sqrt(p.rooms)), rows = Math.ceil(p.rooms / cols), cw = p.width / cols, ch = p.depth / rows;
-    const cells = rooms.map((name, i) => { const x = pad + (i % cols) * cw * sx, y = pad + Math.floor(i / cols) * ch * sy;
-      return '<g><rect x="'+x+'" y="'+y+'" width="'+(cw*sx)+'" height="'+(ch*sy)+'" fill="#102b3a" stroke="#42d9ff" stroke-width="2"/><text x="'+(x+cw*sx/2)+'" y="'+(y+ch*sy/2)+'" fill="#e6f8ff" text-anchor="middle" dominant-baseline="middle" font-size="13">'+name+'</text></g>'; }).join("");
-    el.innerHTML = '<header><b>2D KAT PLANI</b><span>'+p.title+' · '+p.width+' × '+p.depth+' m · '+(p.width*p.depth).toFixed(1)+' m²</span><button id="home-plan-close">KAPAT ✕</button></header><svg viewBox="0 0 '+w+' '+h+'" role="img" aria-label="Ölçülü ev kat planı">'+cells+'</svg><p>3D görünüm için modeli fareyle döndürüp yakınlaştır. Oda yerleşimini konuşarak değiştirebilirsin.</p>';
-    el.classList.add("open"); document.getElementById("home-plan-close").onclick = () => el.classList.remove("open");
+    let el=document.getElementById("home-plan");
+    if(!el){el=document.createElement("section");el.id="home-plan";document.body.appendChild(el);}
+    p.objects=Array.isArray(p.objects)?p.objects:[];
+    p.roomNames=Array.isArray(p.roomNames)?p.roomNames:["Salon","Mutfak","Yatak odası","Banyo","Çalışma odası","Antre","Çocuk odası","Depo"].slice(0,p.rooms);
+    const W=720,H=520,pad=48,sx=(W-pad*2)/p.width,sy=(H-pad*2)/p.depth;
+    const cols=Math.ceil(Math.sqrt(p.roomNames.length)),rows=Math.ceil(p.roomNames.length/cols),cw=p.width/cols,ch=p.depth/rows;
+    const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+    const cells=p.roomNames.map((name,i)=>{
+      const x=pad+(i%cols)*cw*sx,y=pad+Math.floor(i/cols)*ch*sy;
+      return '<g><rect x="'+x+'" y="'+y+'" width="'+(cw*sx)+'" height="'+(ch*sy)+'" fill="'+(p.floorColor||"#243746")+'" stroke="'+(p.wallColor||"#e4e0d8")+'" stroke-width="7"/><text x="'+(x+cw*sx/2)+'" y="'+(y+ch*sy/2)+'" fill="#fff" text-anchor="middle" dominant-baseline="middle" font-size="16">'+esc(name)+'</text><text x="'+(x+cw*sx/2)+'" y="'+(y+ch*sy/2+20)+'" fill="#a9d9e8" text-anchor="middle" font-size="10">'+cw.toFixed(1)+' × '+ch.toFixed(1)+' m</text></g>';
+    }).join("");
+    const objects=p.objects.map((o,i)=>{
+      const x=pad+(o.x+p.width/2)*sx,y=pad+(o.z+p.depth/2)*sy;
+      const color=o.type==="door"?"#d99b53":o.type==="window"?"#58d8ff":"#b9a2e8";
+      const label=o.type==="door"?"K":o.type==="window"?"P":({sofa:"Koltuk",bed:"Yatak",table:"Masa",wardrobe:"Dolap",toilet:"Klozet",kitchen:"Mutfak",desk:"Çalışma",plant:"Bitki"}[o.type]||o.type);
+      return '<g><rect x="'+(x-18)+'" y="'+(y-11)+'" width="36" height="22" rx="4" fill="'+color+'" stroke="#07131e" stroke-width="2"/><text x="'+x+'" y="'+(y+4)+'" fill="#07131e" text-anchor="middle" font-size="10">'+label+'</text></g>';
+    }).join("");
+    const opts=["sofa","bed","table","wardrobe","toilet","kitchen","desk","plant"].map(v=>'<option value="'+v+'">'+({sofa:"Koltuk",bed:"Yatak",table:"Masa",wardrobe:"Dolap",toilet:"Klozet",kitchen:"Mutfak tezgâhı",desk:"Çalışma masası",plant:"Bitki"}[v])+'</option>').join("");
+    el.innerHTML='<div class="hd-head"><div><b>EV TASARIM STÜDYOSU</b><small>'+esc(p.title)+' · '+p.width+' × '+p.depth+' m · '+(p.width*p.depth).toFixed(1)+' m²</small></div><button id="hd-close">KAPAT ✕</button></div>'+
+      '<div class="hd-toolbar"><label>Yerleştir <select id="hd-tool"><option value="select">Seçim</option><option value="door">Kapı</option><option value="window">Pencere</option>'+opts+'</select></label><label>Zemin <input id="hd-floor" type="color" value="'+(p.floorColor||"#8b7355")+'"></label><label>Duvar <input id="hd-wall" type="color" value="'+(p.wallColor||"#e4e0d8")+'"></label><label>Duvar yüksekliği <input id="hd-height" type="number" min="2.2" max="5" step=".1" value="'+(p.wallHeight||2.8)+'"></label>'+
+      '<button id="hd-undo">Son öğeyi sil</button><button id="hd-save">Projeyi kaydet</button><button id="hd-load">Projeyi yükle</button><button id="hd-export">JSON dışa aktar</button><button id="hd-3d">3D iç mekânı yenile</button></div>'+
+      '<svg id="hd-plan" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Düzenlenebilir ölçülü ev planı"><rect x="'+pad+'" y="'+pad+'" width="'+(p.width*sx)+'" height="'+(p.depth*sy)+'" fill="#142534" stroke="#fff" stroke-width="8"/>'+cells+objects+'</svg>'+
+      '<p>Plan üzerine tıklayarak seçtiğin kapı, pencere veya mobilyayı yerleştir. 3D görünümde fareyle döndürüp yakınlaştır. Proje bu tarayıcıda saklanır.</p>';
+    el.classList.add("open");
+    document.getElementById("hd-close").onclick=()=>el.classList.remove("open");
+    document.getElementById("hd-plan").onclick=(ev)=>{
+      if(ev.target.closest("text"))return;
+      const rect=ev.currentTarget.getBoundingClientRect(),pt={x:(ev.clientX-rect.left)/rect.width*W,y:(ev.clientY-rect.top)/rect.height*H};
+      const x=Math.max(-p.width/2,Math.min(p.width/2,(pt.x-pad)/sx-p.width/2));
+      const z=Math.max(-p.depth/2,Math.min(p.depth/2,(pt.y-pad)/sy-p.depth/2));
+      const type=document.getElementById("hd-tool").value;
+      if(type==="select"){const near=p.objects.reduce((best,o,i)=>Math.hypot(o.x-x,o.z-z)<(best.d||Infinity)?{i,d:Math.hypot(o.x-x,o.z-z)}:best,null);if(near&&near.d<1.2){p.objects.splice(near.i,1);renderHomePlan(p);}return;}
+      p.objects.push({type,x,z,label:type});renderHomePlan(p);
+    };
+    document.getElementById("hd-floor").onchange=e=>{p.floorColor=e.target.value;renderHomePlan(p);};
+    document.getElementById("hd-wall").onchange=e=>{p.wallColor=e.target.value;renderHomePlan(p);};
+    document.getElementById("hd-height").onchange=e=>{p.wallHeight=Math.max(2.2,Math.min(5,+e.target.value||2.8));renderHomePlan(p);};
+    document.getElementById("hd-undo").onclick=()=>{p.objects.pop();renderHomePlan(p);};
+    document.getElementById("hd-3d").onclick=()=>buildHome3D(p);
+    document.getElementById("hd-save").onclick=()=>{try{localStorage.setItem("jarvis.homeDesign",JSON.stringify(p));JV.toast&&JV.toast("Ev projesi kaydedildi.");}catch(e){JV.toast&&JV.toast("Proje kaydedilemedi.");}};
+    document.getElementById("hd-load").onclick=()=>{try{const saved=JSON.parse(localStorage.getItem("jarvis.homeDesign")||"null");if(saved){p= saved;renderHomePlan(p);buildHome3D(p);}else JV.toast&&JV.toast("Kayıtlı proje bulunamadı.");}catch(e){JV.toast&&JV.toast("Kayıt okunamadı.");}};
+    document.getElementById("hd-export").onclick=()=>{const blob=new Blob([JSON.stringify(p,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="jarvis-ev-projesi.json";a.click();URL.revokeObjectURL(url);};
   }
 
   // ---- yüzen panel ----
@@ -357,8 +418,9 @@
         const width = Math.max(4, Math.min(30, Number(p.width) || 10));
         const depth = Math.max(4, Math.min(30, Number(p.depth) || 8));
         const rooms = Math.max(2, Math.min(8, Number(p.rooms) || 4));
-        build(D.house({ width: width / 2, depth: depth / 2, height: 2.8, rooms: 0, roof: p.roof || "#34495e" }), "Ev tasarımı · " + (r.title || "Yeni proje"));
-        renderHomePlan({ width, depth, rooms, title: r.title || "Yeni ev", style: p.style || "Modern" });
+        const plan = { width, depth, rooms, title: r.title || "Yeni ev", style: p.style || "Modern", roomNames: Array.isArray(p.roomNames) ? p.roomNames.slice(0, 16) : ["Salon","Mutfak","Yatak odası","Banyo","Çalışma odası","Antre","Çocuk odası","Depo"].slice(0, rooms), objects: Array.isArray(p.objects) ? p.objects : [], wallHeight: Number(p.wallHeight) || 2.8, wallColor: p.wallColor || "#e4e0d8", floorColor: p.floorColor || "#8b7355" };
+        buildHome3D(plan);
+        renderHomePlan(plan);
       }
       else if (ui === "holo_scene") { let parts = args.parts; try { parts = typeof parts === "string" ? JSON.parse(parts) : parts; } catch (e) { return; } build(parts, r.title || args.title); }
       else if (ui === "holo_action") action(r.action, r.value);
