@@ -26,6 +26,7 @@ def main():
 
     assert _quick_ack("Merhaba, nasılsın?", {"core", "plugins", "semantic"}) == ""
     assert _quick_ack("Bilgisayarımın durumu", {"core", "windows"}) == "Bilgisayarı kontrol ediyorum, efendim."
+    assert _quick_ack("chromu aç", {"core", "browser"}) == "Hemen araştırıyorum, efendim."
     assert _quick_ack("Find recent news", {"core", "browser"}) == "I'm looking into that now."
     print("FAST CONVERSATION: OK")
 
