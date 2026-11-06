@@ -11,7 +11,7 @@ WEB = ROOT / "web"
 DATA.mkdir(exist_ok=True)
 SETTINGS_FILE = DATA / "settings.json"
 
-VERSION = "4.6.12"
+VERSION = "4.6.13"
 
 
 def _load_env():
@@ -67,6 +67,7 @@ DEFAULT_SETTINGS = {
         "friday": {"providers": ["groq", "gemini", "cerebras", "openrouter", "mistral", "xai", "ollama"], "model": ""},
         "ultron": {"providers": ["xai", "openrouter", "gemini", "groq", "mistral", "cerebras", "ollama"], "model": ""},
     },
+    "live_voice_names": {"jarvis": "Charon", "friday": "Aoede", "ultron": "Fenrir"},
     "voice": {
         "jarvis": {"rate": 0, "pitch": 0},
         "friday": {"rate": 0, "pitch": 0},
