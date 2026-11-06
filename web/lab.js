@@ -18,6 +18,7 @@
   beam.position.y = 2; table.add(beam);
 
   let model = null, title = "", explodeK = 0, explodeTarget = 0, autoRotate = true, wire = false, selected = null;
+  let walkMode = false, walkKeys = Object.create(null);
 
   function tint() { const c = U.color(); grid.material.color = c; disc.material.color = c; rings.forEach((r) => (r.material.color = c)); beam.material.color = c; rim.color = c; }
 
@@ -374,7 +375,7 @@
 
   function action(a, v) {
     if (a === "walk") {
-      autoRotate = false;
+      walkMode = true; autoRotate = false;
       const from=camera.position.clone(),to=new T.Vector3(0,0.85,1.15);
       U.tween(700,e=>camera.position.lerpVectors(from,to,e));
       if(controls&&controls.target){controls.target.set(0,0.8,0);controls.update();}
@@ -422,6 +423,10 @@
     action,
   };
 
+  window.addEventListener("keydown", e => { if (!walkMode) return; if (["KeyW","KeyA","KeyS","KeyD","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.code)) { walkKeys[e.code]=true; e.preventDefault(); } if (e.code==="Escape") walkMode=false; });
+  window.addEventListener("keyup", e => { if (walkMode) walkKeys[e.code]=false; });
+  window.addEventListener("blur", () => { walkKeys=Object.create(null); });
+
   JV.worlds.lab = {
     scene,
     enter() {
@@ -430,8 +435,18 @@
       if (!model) build(D.robot({}), "Holografik robot (örnek)");
       renderPanel();
     },
-    exit() { document.getElementById("holo-panel").classList.add("hidden"); },
+    exit() { walkMode=false; walkKeys=Object.create(null); document.getElementById("holo-panel").classList.add("hidden"); },
     update(dt, t) {
+      if (walkMode) {
+        const forward = new T.Vector3(); camera.getWorldDirection(forward); forward.y = 0; forward.normalize();
+        const right = new T.Vector3().crossVectors(forward, new T.Vector3(0,1,0)).normalize();
+        const move = new T.Vector3();
+        if (walkKeys.KeyW || walkKeys.ArrowUp) move.add(forward);
+        if (walkKeys.KeyS || walkKeys.ArrowDown) move.sub(forward);
+        if (walkKeys.KeyD || walkKeys.ArrowRight) move.add(right);
+        if (walkKeys.KeyA || walkKeys.ArrowLeft) move.sub(right);
+        if (move.lengthSq()) { move.normalize().multiplyScalar(dt * 1.8); camera.position.add(move); if (controls.target) controls.target.add(move); camera.position.y = 0.85; if (controls.target) controls.target.y = 0.8; }
+      }
       rings[0].rotation.z += dt * 0.3; rings[1].rotation.z -= dt * 0.2;
       beam.material.opacity = 0.03 + 0.015 * Math.sin(t * 2);
       if (model) {
