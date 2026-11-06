@@ -17,7 +17,7 @@ AUDIO_EXTENSIONS = {".mp3", ".wav", ".ogg", ".m4a", ".webm"}
 
 
 def _key(text):
-    return re.sub(r"\\s+", " ", (text or "").strip()).casefold()
+    return re.sub(r"\s+", " ", (text or "").strip()).casefold()
 
 
 def find_clip(persona, lang, text):
