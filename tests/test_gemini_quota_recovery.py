@@ -40,12 +40,12 @@ class GeminiRecoveryTests(unittest.TestCase):
         }}}}]
         with patch.object(gemini_native.urllib.request, "urlopen",
                           side_effect=[bad_request(), io.BytesIO(payload)]) as req:
-            events = list(gemini_native.stream("test", "gemini-3.5-flash-lite",
+            events = list(gemini_native.stream("test", "gemini-3.5-flash",
                          [{"role": "user", "content": "devam"}], decl, tool_choice="required"))
         self.assertEqual(req.call_count, 2)
         bodies = [json.loads(c.args[0].data) for c in req.call_args_list]
         self.assertIn("thinkingConfig", bodies[0]["generationConfig"])
-        self.assertNotIn("thinkingConfig", bodies[1]["generationConfig"])
+        self.assertNotIn("thinkingConfig", bodies[1].get("generationConfig", {}))
         self.assertEqual(bodies[0]["tools"], bodies[1]["tools"])
         self.assertEqual(bodies[0]["toolConfig"], bodies[1]["toolConfig"])
         self.assertEqual(bodies[0]["contents"], bodies[1]["contents"])
@@ -55,12 +55,12 @@ class GeminiRecoveryTests(unittest.TestCase):
         with patch.object(gemini_native.urllib.request, "urlopen",
                           side_effect=[bad_request(), bad_request()]) as req:
             with self.assertRaisesRegex(gemini_native.NativeError, "400"):
-                list(gemini_native.stream("test", "gemini-3.5-flash-lite",
+                list(gemini_native.stream("test", "gemini-3.5-flash",
                                          [{"role": "user", "content": "selam"}]))
         self.assertEqual(req.call_count, 2)
 
     def test_429_then_400_reports_400_and_skips_cooling_models(self):
-        models = ["gemini-3.8-flash", "gemini-3.5-flash-lite"]
+        models = ["gemini-3.8-flash", "gemini-3.5-flash"]
         seen = []
 
         def stream(pid, model, messages, tools=None, **kwargs):
