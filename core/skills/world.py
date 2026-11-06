@@ -1,53 +1,12 @@
-"""Sanal dünya / şehir kurucu: JARVIS'in şehir simülasyonunu sesle yönetmesi + fizik hesapları (gerçek formüller)."""
+"""Fizik hesapları: serbest düşme, fren mesafesi ve eğik atış (gerçek formüller)."""
 import math
 
 from ..tools import S, _schema
 
 PLANETS = {"dünya": 9.81, "ay": 1.62, "mars": 3.71, "venüs": 8.87, "jüpiter": 24.79, "satürn": 10.44, "sıfır": 0.0}
-PLANET_NAMES = {"dünya": "Dünya", "ay": "Ay", "mars": "Mars", "venüs": "Venüs", "jüpiter": "Jüpiter", "satürn": "Satürn", "sıfır": "Sıfır"}
-ACTIONS = {"time", "speed", "weather", "wind", "traffic", "gravity", "new", "build", "drop", "fire", "extinguish", "clear", "tool", "reset_edits"}
-ALIAS = {"saat": "time", "zaman": "speed", "hız": "speed", "hava": "weather", "rüzgar": "wind", "rüzgâr": "wind", "trafik": "traffic", "yerçekimi": "gravity",
-         "yeni": "new", "inşa": "build", "ekle": "build", "kur": "build", "düşür": "drop", "top": "drop", "ateş": "fire", "yangın": "fire", "söndür": "extinguish",
-         "temizle": "clear", "araç": "tool", "sıfırla": "reset_edits"}
-
 
 def _n(t):
     return str(t or "").strip().lower().replace("İ", "i").replace("I", "ı")
-
-
-def city_command(action, value="", kind="", count=1, height=0):
-    """Sanal şehri yönetir. action: time (saat 0-24), speed (zaman ölçeği 0/1/60/600/3600), weather (açık/yağmur/kar/sis/fırtına), wind (m/s),
-    traffic (araç sayısı 0-250), gravity (Dünya/Ay/Mars/Jüpiter/… ya da m/s²), new (yeni şehir, value=tohum), build (kind=bina/ev/ağaç/park, count),
-    drop (yükseklikten top bırak, value=metre), fire, extinguish, clear, tool (bak/bina/ev/ağaç/park/sil/top/ateş)."""
-    a = _n(action)
-    a = ALIAS.get(a, a)
-    if a not in ACTIONS:
-        return "Bilinmeyen işlem. Seçenekler: " + ", ".join(sorted(ACTIONS))
-    v = value
-    if a == "gravity":
-        k = _n(value)
-        if k in PLANETS:
-            v = PLANET_NAMES[k]
-        else:
-            try:
-                v = float(str(value).replace(",", "."))
-            except ValueError:
-                return "Yerçekimi: Dünya, Ay, Mars, Venüs, Jüpiter, Satürn, Sıfır ya da m/s² değeri."
-    if a == "weather":
-        v = {"güneşli": "açık", "açık": "açık", "yağmurlu": "yağmur", "yağmur": "yağmur", "karlı": "kar", "kar": "kar", "sisli": "sis", "sis": "sis",
-             "fırtına": "fırtına", "fırtınalı": "fırtına"}.get(_n(value), "açık")
-    if a in ("time", "speed", "wind", "traffic", "drop") and v not in ("", None):
-        try:
-            v = float(str(v).replace(",", ".").replace(":", "."))
-        except ValueError:
-            return f"{a} için sayı gerekli."
-    out = {"ui": "city", "action": a, "value": v}
-    if a == "build":
-        out.update({"kind": _n(kind) or "bina", "count": max(1, min(int(count or 1), 200)), "height": float(height or 0) or None})
-    if a == "drop":
-        h = float(v or 60)
-        out["fizik"] = free_fall(h)
-    return out
 
 
 def free_fall(height, planet="Dünya", drag=False, mass=1.0, area=0.03, cd=0.47):
@@ -106,11 +65,6 @@ def physics_calc(kind, a="", b="", c="", d=""):
 
 
 TOOLS = {
-    "city_command": (city_command, _schema("SANAL ŞEHİR'i (3D şehir kurucu) yönetir: saat, zaman ölçeği, hava, rüzgâr, trafik, yerçekimi (gezegen), bina/ev/park inşa et, "
-                                           "top bırak (serbest düşme deneyi), ateş yak/söndür, yeni şehir.",
-                                           {"action": S("time/speed/weather/wind/traffic/gravity/new/build/drop/fire/extinguish/clear/tool"), "value": S("değer"),
-                                            "kind": S("build için: bina/ev/ağaç/park"), "count": {"type": "integer"}, "height": {"type": "number", "description": "bina yüksekliği m"}},
-                                           ["action"]), False),
     "physics_calc": (physics_calc, _schema("Gerçek formüllerle fizik hesabı: serbest düşme (hava dirençli dahil, gezegen seçilebilir), fren/durma mesafesi, eğik atış.",
                                            {"kind": S("free_fall/braking/projectile"), "a": S("1. değer"), "b": S("2. değer"), "c": S("3. değer"), "d": S("4. değer")}, ["kind"]), False),
 }
