@@ -250,18 +250,49 @@
     const cw = width / cols, ch = depth / rows, wall = 0.12, parts = [];
     const floorColor = p.floorColor || "#8b7355", wallColor = p.wallColor || "#e4e0d8";
     parts.push({name:"Zemin döşemesi",type:"box",size:[width,0.12,depth],pos:[0,0.06,0],color:floorColor});
-    const addWall=(name,x,z,sx,sz)=>parts.push({name,type:"box",size:[sx,height,sz],pos:[x,height/2+0.12,z],color:wallColor});
+    const addWall=(name,x,z,sx,sz)=> {
+      const horizontal = sx > sz, length = horizontal ? sx : sz, center = horizontal ? x : z;
+      const line = horizontal ? z : x;
+      const openings = (p.objects||[]).filter(o => (o.type==="door"||o.type==="window") &&
+        Math.abs((horizontal?o.z:o.x)-line)<0.45).map(o => ({
+          at:(horizontal?o.x:o.z)-center+length/2,
+          width:o.type==="door"?0.95:1.3, type:o.type
+        })).sort((u,v)=>u.at-v.at);
+      let cursor=0;
+      const segment=(from,to,label,y=height/2+0.12,h=height)=>{
+        if(to-from<0.08)return;
+        const size=horizontal?[to-from,h,wall]:[wall,h,to-from];
+        const pos=horizontal?[center-length/2+(from+to)/2,y,line]:[line,y,center-length/2+(from+to)/2];
+        parts.push({name:label,type:"box",size,pos,color:wallColor});
+      };
+      openings.forEach((o,i)=>{
+        const left=Math.max(cursor,o.at-o.width/2),right=Math.min(length,o.at+o.width/2);
+        segment(cursor,left,name+" duvar bölümü");
+        if(o.type==="window"){
+          const sill=0.85,top=2.15;
+          const lower=horizontal?[right-left,sill,wall]:[wall,sill,right-left];
+          const upper=horizontal?[right-left,Math.max(0.1,height-top),wall]:[wall,Math.max(0.1,height-top),right-left];
+          const mid=horizontal?[center-length/2+(left+right)/2,0.12+sill/2,line]:[line,0.12+sill/2,center-length/2+(left+right)/2];
+          parts.push({name:"Pencere alt duvarı",type:"box",size:lower,pos:mid,color:wallColor});
+          const topPos=mid.slice();topPos[1]=0.12+top+Math.max(0.1,height-top)/2;
+          parts.push({name:"Pencere üst duvarı",type:"box",size:upper,pos:topPos,color:wallColor});
+          parts.push({name:"Cam pencere",type:"box",size:horizontal?[right-left,1.15,0.035]:[0.035,1.15,right-left],pos:horizontal?[mid[0],1.55,line]:[line,1.55,mid[2]],color:"#69c9ed"});
+        }
+        cursor=Math.max(cursor,right);
+      });
+      segment(cursor,length,name);
+    };
     addWall("Arka dış duvar",0,-depth/2,width,wall);
     addWall("Ön dış duvar",0,depth/2,width,wall);
     addWall("Sol dış duvar",-width/2,0,wall,depth);
     addWall("Sağ dış duvar",width/2,0,wall,depth);
-    for(let c=1;c<cols;c++) addWall("İç bölme", -width/2+c*cw,0,wall,depth);
-    for(let r=1;r<rows;r++) addWall("İç bölme",0,-depth/2+r*ch,width,wall);
+    for(let col=1;col<cols;col++) addWall("İç bölme",-width/2+col*cw,0,wall,depth);
+    for(let row=1;row<rows;row++) addWall("İç bölme",0,-depth/2+row*ch,width,wall);
     // Kapı ve pencereler 3D modelde renkli, duvara oturan elemanlar olarak gösterilir.
     (p.objects||[]).forEach((o,i)=>{
       const x=Number(o.x)||0,z=Number(o.z)||0;
-      if(o.type==="door") parts.push({name:"Kapı "+(i+1),type:"box",size:[0.92,2.05,0.09],pos:[x,1.15,z],color:"#80502f"});
-      else if(o.type==="window") parts.push({name:"Pencere "+(i+1),type:"box",size:[1.25,0.95,0.08],pos:[x,1.75,z],color:"#69c9ed"});
+      if(o.type==="door") parts.push({name:"Kapı kasası "+(i+1),type:"box",size:[0.07,2.1,0.08],pos:[x-0.46,1.17,z],color:"#80502f"},{name:"Kapı kanadı "+(i+1),type:"box",size:[0.88,2.0,0.045],pos:[x,1.12,z],color:"#a66b3f"});
+      else if(o.type==="window") { /* Cam ve duvar açıklığı addWall içinde üretilir. */ }
       else {
         const specs={sofa:[1.9,0.75,0.85,"#657b8d"],bed:[1.6,0.45,2.0,"#b7a0c9"],table:[1.2,0.75,0.8,"#a8794f"],wardrobe:[1.1,2.1,0.6,"#8d735f"],toilet:[0.48,0.42,0.68,"#f0f4f5"],kitchen:[1.8,0.9,0.65,"#777f87"],desk:[1.2,0.75,0.65,"#9b744d"],plant:[0.45,0.9,0.45,"#39875c"]};
         const s=specs[o.type]||specs.table;
@@ -292,7 +323,7 @@
     const opts=["sofa","bed","table","wardrobe","toilet","kitchen","desk","plant"].map(v=>'<option value="'+v+'">'+({sofa:"Koltuk",bed:"Yatak",table:"Masa",wardrobe:"Dolap",toilet:"Klozet",kitchen:"Mutfak tezgâhı",desk:"Çalışma masası",plant:"Bitki"}[v])+'</option>').join("");
     el.innerHTML='<div class="hd-head"><div><b>EV TASARIM STÜDYOSU</b><small>'+esc(p.title)+' · '+p.width+' × '+p.depth+' m · '+(p.width*p.depth).toFixed(1)+' m²</small></div><button id="hd-close">KAPAT ✕</button></div>'+
       '<div class="hd-toolbar"><label>Yerleştir <select id="hd-tool"><option value="select">Seçim</option><option value="door">Kapı</option><option value="window">Pencere</option>'+opts+'</select></label><label>Zemin <input id="hd-floor" type="color" value="'+(p.floorColor||"#8b7355")+'"></label><label>Duvar <input id="hd-wall" type="color" value="'+(p.wallColor||"#e4e0d8")+'"></label><label>Duvar yüksekliği <input id="hd-height" type="number" min="2.2" max="5" step=".1" value="'+(p.wallHeight||2.8)+'"></label>'+
-      '<button id="hd-undo">Son öğeyi sil</button><button id="hd-save">Projeyi kaydet</button><button id="hd-load">Projeyi yükle</button><button id="hd-export">JSON dışa aktar</button><button id="hd-3d">3D iç mekânı yenile</button></div>'+
+      '<button id="hd-undo">Son öğeyi sil</button><button id="hd-save">Projeyi kaydet</button><button id="hd-load">Projeyi yükle</button><button id="hd-export">JSON dışa aktar</button><button id="hd-3d">3D iç mekânı yenile</button><button id="hd-walk">İçeride gez</button><label>Odalar <input id="hd-rooms" value="'+esc(p.roomNames.join(", "))+'" size="34"></label><button id="hd-rooms-apply">Oda adlarını uygula</button></div>'+
       '<svg id="hd-plan" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Düzenlenebilir ölçülü ev planı"><rect x="'+pad+'" y="'+pad+'" width="'+(p.width*sx)+'" height="'+(p.depth*sy)+'" fill="#142534" stroke="#fff" stroke-width="8"/>'+cells+objects+'</svg>'+
       '<p>Plan üzerine tıklayarak seçtiğin kapı, pencere veya mobilyayı yerleştir. 3D görünümde fareyle döndürüp yakınlaştır. Proje bu tarayıcıda saklanır.</p>';
     el.classList.add("open");
@@ -311,6 +342,8 @@
     document.getElementById("hd-height").onchange=e=>{p.wallHeight=Math.max(2.2,Math.min(5,+e.target.value||2.8));renderHomePlan(p);};
     document.getElementById("hd-undo").onclick=()=>{p.objects.pop();renderHomePlan(p);};
     document.getElementById("hd-3d").onclick=()=>buildHome3D(p);
+    document.getElementById("hd-walk").onclick=()=>action("walk");
+    document.getElementById("hd-rooms-apply").onclick=()=>{p.roomNames=document.getElementById("hd-rooms").value.split(",").map(s=>s.trim()).filter(Boolean).slice(0,16);p.rooms=p.roomNames.length;renderHomePlan(p);buildHome3D(p);};
     document.getElementById("hd-save").onclick=()=>{try{localStorage.setItem("jarvis.homeDesign",JSON.stringify(p));JV.toast&&JV.toast("Ev projesi kaydedildi.");}catch(e){JV.toast&&JV.toast("Proje kaydedilemedi.");}};
     document.getElementById("hd-load").onclick=()=>{try{const saved=JSON.parse(localStorage.getItem("jarvis.homeDesign")||"null");if(saved){p= saved;renderHomePlan(p);buildHome3D(p);}else JV.toast&&JV.toast("Kayıtlı proje bulunamadı.");}catch(e){JV.toast&&JV.toast("Kayıt okunamadı.");}};
     document.getElementById("hd-export").onclick=()=>{const blob=new Blob([JSON.stringify(p,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="jarvis-ev-projesi.json";a.click();URL.revokeObjectURL(url);};
@@ -340,7 +373,13 @@
   }
 
   function action(a, v) {
-    if (a === "explode") explodeTarget = v ? +v : 1;
+    if (a === "walk") {
+      autoRotate = false;
+      const from=camera.position.clone(),to=new T.Vector3(0,0.85,1.15);
+      U.tween(700,e=>camera.position.lerpVectors(from,to,e));
+      if(controls&&controls.target){controls.target.set(0,0.8,0);controls.update();}
+      U.caption("İç mekân görünümü · fareyle bakış yönünü değiştir");
+    } else if (a === "explode") explodeTarget = v ? +v : 1;
     else if (a === "assemble") explodeTarget = 0;
     else if (a === "rotate") autoRotate = v === "" || v == null ? !autoRotate : /on|aç|true|1/.test(v);
     else if (a === "wireframe") { wire = !wire; if (model) model.traverse((o) => o.userData.fill && (o.userData.fill.visible = !wire)); }
