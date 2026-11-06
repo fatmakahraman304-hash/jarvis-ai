@@ -678,7 +678,7 @@ def route(order, messages, tools, model_override="", light=False, tier="legacy",
                         busy_retried.add(model)
                         time.sleep(1.5)
                         continue
-                    _cooldown[(pid, model)] = time.time() + 120
+                    _cooldown[(pid, model)] = time.time() + (30 * 60 if e.status in (503, 504) else 120)
                 if e.status in (403, 404, 429, 500, 502, 503, 504) and len(used) < 3:
                     # bu model kotada/erişilemez: aynı sağlayıcının bir sonraki en iyi modeline geç (ör. 3.8 → 3.6)
                     nm = (next_model_for_tier(pid, model, used, tier) if pid == "gemini" and tier in GEMINI_LADDERS else next_model(pid, model, used))
