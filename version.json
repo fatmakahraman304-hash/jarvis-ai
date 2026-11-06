@@ -1,9 +1,9 @@
 {
-  "version": "4.6.2",
+  "version": "4.6.3",
   "date": "2026-11-06",
   "notes": [
-    "🔊 JARVIS / FRIDAY / ULTRON: Türkçe ve İngilizce özel ses kayıtları desteği eklendi",
-    "🎙 Kayıtlı cümleler birebir ses dosyasından çalınır; diğer cümlelerde Neural TTS devam eder",
-    "📁 Kendi lisanslı ses kayıtlarını data/voice_assets klasörüne ekleyebilirsin"
+    "🧠 Üst menü sadeleştirildi: yalnızca AI MODEL görünür",
+    "💠 AI MODEL penceresinden JARVIS, FRIDAY ve ULTRON çipleri seçilebilir",
+    "⚙️ Seçilen kişilik kaydedilir ve arayüzde aktif çip vurgulanır"
   ]
 }
