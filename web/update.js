@@ -37,12 +37,39 @@
   }
   function badge() { const t = $("#t-update"); if (t) t.classList.toggle("has-update", !!(info && info.yeni_var)); }
   async function apply() {
-    $("#up-go", root).disabled = true;
-    const poll = setInterval(async () => { try { const s = await JV.api("/api/update?state=1"); $("#up-prog", root).style.width = (s.ilerleme || 0) + "%"; $("#up-step", root).textContent = s.adım || ""; } catch (e) {} }, 700);
-    let r; try { r = await JV.api("/api/update", { body: { action: "apply" } }); } catch (e) { r = { durum: "hata", hata: e.message }; }
-    clearInterval(poll);
-    if (r.durum === "güncellendi") { $("#up-prog", root).style.width = "100%"; $("#up-step", root).textContent = `v${r.yeni} kuruldu. Yeniden başlatılıyor…`; JV.say && JV.say("Güncelleme tamamlandı, yeniden başlıyorum.", JV.persona ? JV.persona() : "jarvis"); waitRestart(); }
-    else { $("#up-step", root).innerHTML = `<span class="dn">${esc(r.hata || r.durum)}</span>`; $("#up-go", root).disabled = false; }
+    const go = $("#up-go", root), checkButton = $("#up-check", root), back = $("#up-back", root);
+    go.disabled = true;
+    checkButton.disabled = true;
+    back.disabled = true;
+    let polling = true, timer = null;
+    async function poll() {
+      if (!polling) return;
+      try {
+        const s = await JV.api("/api/update?state=1");
+        $("#up-prog", root).style.width = Math.max(0, Math.min(100, Number(s.ilerleme) || 0)) + "%";
+        $("#up-step", root).textContent = s.adım || "Güncelleme hazırlanıyor…";
+      } catch (e) {
+        $("#up-step", root).textContent = "Güncelleme durumu okunamıyor; bağlantı yeniden denenecek…";
+      }
+      if (polling) timer = setTimeout(poll, 900);
+    }
+    poll();
+    let r;
+    try { r = await JV.api("/api/update", { body: { action: "apply" } }); }
+    catch (e) { r = { durum: "hata", hata: e.message }; }
+    polling = false;
+    if (timer) clearTimeout(timer);
+    if (r.durum === "güncellendi") {
+      $("#up-prog", root).style.width = "100%";
+      $("#up-step", root).textContent = `v${r.yeni} kuruldu. Yeniden başlatılıyor…`;
+      JV.say && JV.say("Güncelleme tamamlandı, yeniden başlıyorum.", JV.persona ? JV.persona() : "jarvis");
+      waitRestart();
+    } else {
+      $("#up-step", root).textContent = r.hata || r.durum || "Güncelleme tamamlanamadı.";
+      go.disabled = false;
+      checkButton.disabled = false;
+      back.disabled = false;
+    }
   }
   function waitRestart() {
     let down = false, failures = 0;
