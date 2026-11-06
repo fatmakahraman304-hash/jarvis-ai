@@ -672,24 +672,15 @@ body.ar-on #holobook.open{background:rgba(0,8,14,.35)}
 .msg .body:empty~.msg-copy{display:none}
 @media (hover:none){.msg-copy{opacity:.6}}
 
-/* EV TASARIM çalışma alanı */
-#home-plan{display:none;position:fixed;z-index:24;left:50%;top:110px;transform:translateX(-50%);width:min(560px,92vw);padding:14px;background:rgba(3,15,25,.96);border:1px solid #36cfff;border-radius:12px;box-shadow:0 0 30px #0af5;color:#dff}
-#home-plan.open{display:block}
-#home-plan header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-family:var(--mono);font-size:12px}
-#home-plan header span{flex:1;color:#9bd3e5}
-#home-plan button{background:#102b3a;border:1px solid #36cfff;border-radius:6px;padding:6px 10px;cursor:pointer}
-#home-plan svg{display:block;width:100%;max-height:52vh;margin-top:12px;background:#07131e;border-radius:8px}
-#home-plan p{font-size:13px;color:#9bd3e5;margin:8px 2px 0}
 
-
-/* EV TASARIM STÜDYOSU · düzenlenebilir 2D/3D proje alanı */
-#home-plan{width:min(980px,96vw);max-height:calc(100vh - 130px);overflow:auto}
-#home-plan .hd-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
-#home-plan .hd-head small{display:block;color:#9bd3e5;margin-top:4px}
-#home-plan .hd-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
-#home-plan .hd-toolbar label{display:flex;align-items:center;gap:5px;font-size:12px;color:#b8dce8}
-#home-plan .hd-toolbar input,#home-plan .hd-toolbar select{max-width:120px;background:#102b3a;color:#eaffff;border:1px solid #36cfff;border-radius:5px;padding:5px}
-#home-plan .hd-toolbar button{font-size:11px;color:#dff}
-#home-plan #hd-plan{width:100%;max-height:58vh;cursor:crosshair;touch-action:manipulation}
-#home-plan #hd-plan g{pointer-events:none}
-@media(max-width:700px){#home-plan{top:70px;padding:9px}#home-plan .hd-toolbar{gap:5px}#home-plan #hd-plan{max-height:48vh}}
+/* SpacePlanner dış planlama arayüzü */
+#spaceplanner-view{display:none;position:fixed;inset:0;z-index:30;background:#0b1119;color:#eaf3fb}
+body.view-design #spaceplanner-view{display:flex;flex-direction:column}
+body.view-design #world{display:none}
+.spaceplanner-bar{height:48px;min-height:48px;display:flex;align-items:center;gap:14px;padding:0 14px;background:#101d2b;border-bottom:1px solid #29445a;font:12px var(--mono,monospace)}
+.spaceplanner-bar strong{color:#8fe8ff;letter-spacing:.08em}
+.spaceplanner-bar span{color:#a9bac9;flex:1}
+.spaceplanner-bar a{color:#9ee7ff;text-decoration:none}
+.spaceplanner-bar button{background:#193449;color:#eaf6ff;border:1px solid #3d7898;border-radius:6px;padding:7px 10px;cursor:pointer}
+#spaceplanner-frame{display:block;width:100%;height:calc(100% - 48px);border:0;background:#fff}
+@media(max-width:700px){.spaceplanner-bar{gap:8px;padding:0 8px;font-size:10px}.spaceplanner-bar span{display:none}.spaceplanner-bar button{padding:6px}}
