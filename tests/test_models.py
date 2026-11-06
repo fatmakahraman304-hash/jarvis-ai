@@ -103,9 +103,12 @@ def busy(pid, model, messages, tools=None, temperature=0.7, timeout=90):
 
 llm.stream_chat = busy
 evs = list(llm.route(["gemini"], [{"role": "user", "content": "x"}], None))
-check("503 (yoğun): bir kez tekrar dener, sonra 3.6 cevap verir", seen == ["gemini-3.8-flash", "gemini-3.8-flash", "gemini-3.6-flash"] and ("text", "3.6 cevabı") in evs, seen)
+check("503 (yoğun): aynı yavaş modeli tekrar denemeden 3.6 cevap verir", seen == ["gemini-3.8-flash", "gemini-3.6-flash"] and ("text", "3.6 cevabı") in evs, seen)
+rest_until = llm.cooling("gemini", "gemini-3.8-flash")
+import time as _busy_time  # noqa: E402
+check("503 alan 3.8 modeli 30 dakika dinlendirilir", rest_until - _busy_time.time() > 1700 and rest_until - _busy_time.time() <= 1800)
 seen.clear(); list(llm.route(["gemini"], [{"role": "user", "content": "y"}], None))
-check("yoğun 3.8 iki dakika kenarda: sonraki mesaj doğrudan 3.6", seen == ["gemini-3.6-flash"], seen)
+check("dinlenen 3.8 sonraki mesajda denenmez, doğrudan 3.6 kullanılır", seen == ["gemini-3.6-flash"], seen)
 llm._cooldown.clear()
 
 print("ANAHTAR SAĞLIĞI")

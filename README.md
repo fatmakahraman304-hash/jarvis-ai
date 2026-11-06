@@ -176,6 +176,11 @@ Windows Python Proactor event loop, tarayıcı/istemci bağlantıyı aniden kapa
 
 **`Invalid HTTP request received`** farklı bir uyarıdır: sunucuya geçersiz HTTP veya yanlış protokolle gelen bağlantı isteğini gösterir. Normal bilgisayar modunda ekranda yazan `http://127.0.0.1:8765`, LAN/HTTPS modunda ekranda yazan `https://...` adresini kullan. Yanlış protokol isteği devam ediyorsa tarayıcı adresini, uzantıları veya güvenlik yazılımının yerel port taramasını kontrol et.
 
+
+## Güncelleme testi düzeltmesi (v4.6.10)
+
+4.6.9 model yönlendiricisi 503/504 alan bir modeli aynı istekte tekrar denemeden bir sonraki modele geçirir ve 30 dakika dinlendirir. `tests/test_models.py` içindeki eski beklenti aynı modeli tekrar denemeyi ve 2 dakikalık beklemeyi beklediği için güncelleme ön kontrolünü yanlışlıkla başarısız yapabiliyordu. Test artık uygulamanın gerçek no-retry / 30 dakika cooldown davranışını doğrular.
+
 ## Çok platform
 
 | Nereden | Nasıl |
