@@ -139,7 +139,7 @@
 
   function handleEvent(ev, body, sent) {
     switch (ev.type) {
-      case "provider": $("#model-badge").textContent = `MODEL: ${ev.label} · ${ev.model}`; setStatus("thinking", "DÜŞÜNÜYOR · " + ev.model); break;
+      case "provider": $("#model-badge").textContent = "AI MODEL"; $("#model-badge").title = `Yanıt motoru: ${ev.label} · ${ev.model} — kişilik seçmek için tıkla`; setStatus("thinking", "DÜŞÜNÜYOR · " + ev.model); break;
       case "token": body.textContent += ev.text; sent.push(ev.text); scrollLog(); break;
       case "tool":
         if (ev.status === "running") {
