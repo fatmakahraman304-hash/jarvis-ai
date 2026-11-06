@@ -242,6 +242,16 @@ def apply(restart=True):
             new = new / "JARVIS"
         if not (new / "run.py").exists() or not (new / "core").is_dir():
             raise RuntimeError("İndirilen paket geçerli bir JARVIS değil.")
+        try:
+            package_info = json.loads((new / "version.json").read_text(encoding="utf-8"))
+            package_version = package_info.get("version")
+        except (OSError, ValueError, AttributeError) as exc:
+            raise RuntimeError("İndirilen paketin sürüm bilgisi okunamadı; güncelleme uygulanmadı.") from exc
+        if package_version != info["uzak"]:
+            raise RuntimeError(
+                "İndirilen paket kontrol edilen sürümle eşleşmiyor; güncelleme uygulanmadı. "
+                "Güncellemeyi yeniden kontrol edip tekrar dene."
+            )
         STATE.update({"ilerleme": 35, "adım": "yeni sürüm test ediliyor"})
         ok, out = _tests(new)
         if not ok:

@@ -40,6 +40,7 @@ def make_zip(src, version, broken=False):
     copy_code(tmp)
     cfg = tmp / "core" / "config.py"
     cfg.write_text(cfg.read_text(encoding="utf-8").replace(f'VERSION = "{src}"', f'VERSION = "{version}"'), encoding="utf-8")
+    (tmp / "version.json").write_text(json.dumps({"version": version}), encoding="utf-8")
     (tmp / "core" / "yeni_modul.py").write_text("X = 1\n", encoding="utf-8")
     if broken:
         (tmp / "core" / "brain.py").write_text("bozuk kod (\n", encoding="utf-8")
