@@ -119,6 +119,108 @@
     } catch (e) { return null; }
   }
 
+  // Mark LVI-style Gemini Live speech output. Keep one persistent session and
+  // serialize sentences; Edge TTS remains the fallback and voice-lab preview.
+  let liveSocket = null, liveConnect = null, liveReady = false;
+  let liveCurrent = null, liveSequence = 0, liveQueue = Promise.resolve();
+  let liveFailureUntil = 0, liveWarned = false;
+
+  function liveEnsureSocket() {
+    if (liveSocket && liveSocket.readyState === WebSocket.OPEN && liveReady) return Promise.resolve();
+    if (liveConnect) return liveConnect;
+    liveConnect = new Promise((resolve, reject) => {
+      const scheme = location.protocol === "https:" ? "wss:" : "ws:";
+      const url = new URL(scheme + "//" + location.host + "/api/live-voice");
+      if (JV.token) url.searchParams.set("token", JV.token);
+      const ws = new WebSocket(url.toString());
+      liveSocket = ws;
+      let settled = false;
+      const timer = setTimeout(() => {
+        if (!settled) { settled = true; liveConnect = null; reject(new Error("Gemini Live bağlantı zaman aşımı")); try { ws.close(); } catch (_) {} }
+      }, 12000);
+      ws.onmessage = (event) => {
+        let msg;
+        try { msg = JSON.parse(event.data); } catch (_) { return; }
+        if (msg.type === "ready") {
+          liveReady = true;
+          if (!settled) { settled = true; clearTimeout(timer); liveConnect = null; resolve(); }
+        } else if (msg.type === "audio" && liveCurrent && msg.id === liveCurrent.id) {
+          liveCurrent.chunks.push(msg.data);
+          liveCurrent.rate = msg.sample_rate || 24000;
+        } else if (msg.type === "done" && liveCurrent && msg.id === liveCurrent.id) {
+          const job = liveCurrent; liveCurrent = null; clearTimeout(job.timer);
+          if (!job.chunks.length) job.reject(new Error("Gemini Live ses verisi döndürmedi"));
+          else job.resolve({ chunks: job.chunks, rate: job.rate || 24000 });
+        } else if (msg.type === "error") {
+          const err = new Error(msg.text || "Gemini Live ses hatası");
+          if (liveCurrent) { const job = liveCurrent; liveCurrent = null; clearTimeout(job.timer); job.reject(err); }
+          if (!settled) { settled = true; clearTimeout(timer); liveConnect = null; reject(err); }
+        }
+      };
+      ws.onerror = () => {
+        const err = new Error("Gemini Live WebSocket bağlantısı kurulamadı");
+        if (!settled) { settled = true; clearTimeout(timer); liveConnect = null; reject(err); }
+        if (liveCurrent) { const job = liveCurrent; liveCurrent = null; clearTimeout(job.timer); job.reject(err); }
+      };
+      ws.onclose = () => {
+        liveReady = false; liveSocket = null; liveConnect = null;
+        if (!settled) { settled = true; clearTimeout(timer); reject(new Error("Gemini Live bağlantısı kapandı")); }
+        if (liveCurrent) { const job = liveCurrent; liveCurrent = null; clearTimeout(job.timer); job.reject(new Error("Gemini Live bağlantısı kapandı")); }
+      };
+    });
+    return liveConnect;
+  }
+
+  function livePcmBuffer(result) {
+    const size = result.chunks.reduce((n, s) => n + Math.floor((s.length * 3) / 4), 0);
+    const bytes = new Uint8Array(size);
+    let offset = 0;
+    for (const part of result.chunks) {
+      const raw = atob(part), chunk = new Uint8Array(raw.length);
+      for (let i = 0; i < raw.length; i++) chunk[i] = raw.charCodeAt(i);
+      bytes.set(chunk.subarray(0, size - offset), offset);
+      offset += chunk.length;
+    }
+    const usable = bytes.byteLength - (bytes.byteLength % 2);
+    if (!usable) throw new Error("Gemini Live boş PCM ses döndürdü");
+    const pcm = new Int16Array(bytes.buffer, bytes.byteOffset, usable / 2);
+    const buffer = ensureCtx().createBuffer(1, pcm.length, result.rate);
+    const channel = buffer.getChannelData(0);
+    for (let i = 0; i < pcm.length; i++) channel[i] = pcm[i] / 32768;
+    return buffer;
+  }
+
+  function liveRequest(text, myGen) {
+    if (Date.now() < liveFailureUntil) return Promise.reject(new Error("Gemini Live kısa süreliğine beklemeye alındı"));
+    return liveEnsureSocket().then(() => {
+      if (myGen !== gen) return null;
+      const id = String(++liveSequence);
+      return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => {
+          if (liveCurrent && liveCurrent.id === id) liveCurrent = null;
+          reject(new Error("Gemini Live yanıtı 25 saniyede tamamlanmadı"));
+        }, 25000);
+        liveCurrent = { id, chunks: [], rate: 24000, resolve, reject, timer };
+        try { liveSocket.send(JSON.stringify({ id, text })); }
+        catch (e) { clearTimeout(timer); liveCurrent = null; reject(e); }
+      });
+    }).then((result) => {
+      if (!result || myGen !== gen) return null;
+      return livePcmBuffer(result);
+    }).catch((error) => {
+      liveFailureUntil = Date.now() + 60000;
+      if (liveSocket) { try { liveSocket.close(); } catch (_) {} }
+      throw error;
+    });
+  }
+
+  function liveSynthesize(text, myGen) {
+    const task = liveQueue.then(() => liveRequest(text, myGen));
+    liveQueue = task.catch(() => null);
+    return task;
+  }
+  addEventListener("pagehide", () => { try { liveSocket && liveSocket.close(); } catch (_) {} });
+
   function browserSpeak(text, persona, forceLang) {
     return new Promise((resolve) => {
       if (!("speechSynthesis" in window)) return resolve();
@@ -159,8 +261,19 @@
       currentItem = item;
       setSpeaking(true);
       JV.onCaption && JV.onCaption(item.text);
-      const buf = await item.promise;
+      let buf = item.promise ? await item.promise : null;
       if (myGen !== gen) break;
+      if (!buf && item.live && JV.settings.live_voice !== false) {
+        try { buf = await liveSynthesize(item.text, myGen); }
+        catch (e) {
+          if (!liveWarned) {
+            liveWarned = true;
+            JV.toast && JV.toast("Gemini Live sesi kullanılamadı; Edge TTS ile devam ediyorum: " + e.message, 8000);
+          }
+        }
+      }
+      if (myGen !== gen) break;
+      if (!buf && item.live) buf = await fetchTTS(item.text, item.persona, myGen, item.lang, null, true);
       if (buf) await playBuffer(buf, item.persona, item.fx);
       else await browserSpeak(item.text, item.persona, item.lang);
     }
@@ -179,7 +292,7 @@
     if (JV.quiet && !force) return; // sessiz mod
     ensureCtx();
     const myGen = gen;
-    queue.push({ text, persona, lang, promise: fetchTTS(text, persona, myGen, lang, null, true) });
+    queue.push({ text, persona, lang, live: true, promise: JV.settings.live_voice === false ? fetchTTS(text, persona, myGen, lang, null, true) : null });
     pump();
   };
 
