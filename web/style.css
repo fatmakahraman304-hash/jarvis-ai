@@ -680,3 +680,16 @@ body.ar-on #holobook.open{background:rgba(0,8,14,.35)}
 #home-plan button{background:#102b3a;border:1px solid #36cfff;border-radius:6px;padding:6px 10px;cursor:pointer}
 #home-plan svg{display:block;width:100%;max-height:52vh;margin-top:12px;background:#07131e;border-radius:8px}
 #home-plan p{font-size:13px;color:#9bd3e5;margin:8px 2px 0}
+
+
+/* EV TASARIM STÜDYOSU · düzenlenebilir 2D/3D proje alanı */
+#home-plan{width:min(980px,96vw);max-height:calc(100vh - 130px);overflow:auto}
+#home-plan .hd-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+#home-plan .hd-head small{display:block;color:#9bd3e5;margin-top:4px}
+#home-plan .hd-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+#home-plan .hd-toolbar label{display:flex;align-items:center;gap:5px;font-size:12px;color:#b8dce8}
+#home-plan .hd-toolbar input,#home-plan .hd-toolbar select{max-width:120px;background:#102b3a;color:#eaffff;border:1px solid #36cfff;border-radius:5px;padding:5px}
+#home-plan .hd-toolbar button{font-size:11px;color:#dff}
+#home-plan #hd-plan{width:100%;max-height:58vh;cursor:crosshair;touch-action:manipulation}
+#home-plan #hd-plan g{pointer-events:none}
+@media(max-width:700px){#home-plan{top:70px;padding:9px}#home-plan .hd-toolbar{gap:5px}#home-plan #hd-plan{max-height:48vh}}
