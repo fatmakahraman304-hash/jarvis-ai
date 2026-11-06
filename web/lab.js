@@ -356,7 +356,16 @@
     document.getElementById("hd-load").onclick=()=>{try{const saved=JSON.parse(localStorage.getItem("jarvis.homeDesign")||"null");if(saved){p= saved;renderHomePlan(p);buildHome3D(p);}else JV.toast&&JV.toast("Kayıtlı proje bulunamadı.");}catch(e){JV.toast&&JV.toast("Kayıt okunamadı.");}};
     document.getElementById("hd-export").onclick=()=>{const blob=new Blob([JSON.stringify(p,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="jarvis-ev-projesi.json";a.click();URL.revokeObjectURL(url);};
      document.getElementById("hd-import").onclick=()=>document.getElementById("hd-import-file").click();
-     document.getElementById("hd-import-file").onchange=async e=>{const file=e.target.files&&e.target.files[0];if(!file)return;try{const data=JSON.parse(await file.text());if(!data||!Array.isArray(data.roomNames)||!Array.isArray(data.objects)||!Number.isFinite(+data.width)||!Number.isFinite(+data.depth))throw new Error("invalid");p=Object.assign({},data);renderHomePlan(p);buildHome3D(p);JV.toast&&JV.toast("Ev projesi içe aktarıldı.");}catch(err){JV.toast&&JV.toast("JSON proje dosyası geçersiz.");}e.target.value="";};
+     document.getElementById("hd-import-file").onchange=async e=>{const file=e.target.files&&e.target.files[0];if(!file)return;try{
+       if(file.size>2*1024*1024)throw new Error("large");
+       const data=JSON.parse(await file.text()),allowed=["door","window","sofa","bed","table","wardrobe","toilet","kitchen","desk","plant"];
+       if(!data||!Array.isArray(data.roomNames)||!Array.isArray(data.objects)||!Number.isFinite(+data.width)||!Number.isFinite(+data.depth)||data.width<4||data.width>30||data.depth<4||data.depth>30||data.objects.length>250)throw new Error("invalid");
+       const roomNames=data.roomNames.map(n=>String(n).trim().slice(0,40)).filter(Boolean).slice(0,16);
+       if(!roomNames.length)throw new Error("rooms");
+       const objects=data.objects.map(o=>{if(!o||!allowed.includes(o.type)||!Number.isFinite(+o.x)||!Number.isFinite(+o.z))throw new Error("object");return {type:o.type,x:Math.max(-data.width/2,Math.min(data.width/2,+o.x)),z:Math.max(-data.depth/2,Math.min(data.depth/2,+o.z)),label:String(o.label||o.type).slice(0,40),color:/^#[0-9a-f]{6}$/i.test(o.color||"")?o.color:undefined};});
+       p=Object.assign({},data,{roomNames,objects,wallHeight:Math.max(2.2,Math.min(5,+data.wallHeight||2.8))});
+       renderHomePlan(p);buildHome3D(p);JV.toast&&JV.toast("Ev projesi içe aktarıldı.");
+      }catch(err){JV.toast&&JV.toast("JSON proje dosyası geçersiz veya desteklenmiyor.");}e.target.value="";};
   }
 
   // ---- yüzen panel ----
