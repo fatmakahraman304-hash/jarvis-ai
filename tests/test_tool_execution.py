@@ -15,7 +15,7 @@ TOOLS=[{'type':'function','function':{'name':'spaceplanner_open','parameters':{'
 def call(name,**args):return {'id':name,'type':'function','function':{'name':name,'arguments':json.dumps(args)}}
 
 class ExecutionTests(unittest.TestCase):
-    def run_brain(self,rounds,text='JARVIS, SpacePlanner aç ve bir oda çiz',history=None):
+    def run_brain(self,rounds,text='JARVIS, SpacePlanner aç ve bir oda çiz',history=None,failure=None):
         executed=[];requests=[];iterator=iter(rounds)
         def route(*args,**kwargs):
             requests.append((args,kwargs));row=next(iterator,{'content':'İşlem sonucu alındı.'})
@@ -23,6 +23,7 @@ class ExecutionTests(unittest.TestCase):
             yield ('final',{'content':row.get('content',''),'tool_calls':row.get('calls',[])})
         def execute(name,args):
             executed.append(name)
+            if name==failure:return "Hata: Playwright bulunamadı"
             return json.dumps({'ekran_analizi':'Oda çizimi görünür.'}) if name=='browser_observe' else 'ok'
         with patch.object(brain.llm,'route',side_effect=route),patch.object(brain.tools,'execute',side_effect=execute),patch.object(brain.tools,'is_critical',return_value=False),patch.object(brain.memory,'history',return_value=history or []),patch.object(brain.memory,'add_message'),patch.object(brain,'_estop',return_value=False):
             events=list(brain.chat(text,groups_override={'browser','computer'}))
@@ -51,6 +52,11 @@ class ExecutionTests(unittest.TestCase):
     def test_future_promise_after_open_must_continue(self):
         executed,_,_=self.run_brain([{'calls':[call('spaceplanner_open')]},{'content':'Şimdi çizmeye başlıyorum.'},{'calls':[call('spaceplanner_draw',points=[{'x':1,'y':1},{'x':2,'y':2}])]},{'content':'Sonuç doğrulandı.'}])
         self.assertIn('spaceplanner_draw',executed)
+
+    def test_actual_tool_failure_remains_blocked(self):
+        executed,_,events=self.run_brain([{'calls':[call('spaceplanner_open')]},{'content':'Tarayıcı açılamadı. Playwright gerekli.'}],failure='spaceplanner_open')
+        self.assertEqual(events[-1]['outcome'],'blocked')
+        self.assertIn('Playwright',events[-1]['text'])
 
     def test_command_example_is_not_forced_to_execute(self):
         executed,requests,events=self.run_brain([{'content':'Örnek: [spaceplanner_open]'}],text='SpacePlanner aç komutunu örnek olarak açıkla')

@@ -423,7 +423,7 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
             response = step_text or final.get("content") or ""
             promise = bool(re.search(r"başlıyorum|devam ediyorum|çizeceğim|yerleştireceğim|açıyorum|yapacağım", response.casefold()))
             unfinished_drawing = bool(re.search(r"\b(çiz|tasarla)\b", task_goal.casefold())) and not (performed_tools & {"spaceplanner_draw", "browser_click", "browser_fill", "browser_press", "mouse_click", "mouse_drag", "key_press", "type_text"})
-            if ui_task and task_outcome != "needs_confirmation" and (_text_tool_markers(response) or not performed_tools or promise or unfinished_drawing):
+            if ui_task and task_outcome != "needs_confirmation" and (_text_tool_markers(response) or not performed_tools or promise or (unfinished_drawing and task_outcome != "blocked")):
                 if repair_attempts < 2:
                     repair_attempts += 1
                     messages.append({"role": "assistant", "content": response})
@@ -469,6 +469,8 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
                 observation = tools.execute("browser_observe", {})
                 yield {"type": "tool", "name": "browser_observe", "args": {}, "status": "done", "result": observation[:600]}
                 browser_observed = not observation.startswith(("Hata:", "Araç "))
+                if not browser_observed:
+                    task_outcome = "blocked"
                 performed_tools.add("browser_observe")
                 acted_this_round = True
                 result = "İŞLEM HENÜZ YAPILMADI. Önce güncel sayfa analiz edildi; hedefi bu yeni gözleme göre yeniden seç:\n" + observation
@@ -477,6 +479,8 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
                 observation = tools.execute("screen_look", {})
                 yield {"type": "tool", "name": "screen_look", "args": {}, "status": "done", "result": observation[:600]}
                 desktop_observed = not observation.startswith(("Hata:", "Araç "))
+                if not desktop_observed:
+                    task_outcome = "blocked"
                 performed_tools.add("screen_look")
                 acted_this_round = True
                 result = "İŞLEM HENÜZ YAPILMADI. Önce ekran analiz edildi; bu gözleme göre hedefi screen_find ile bul ve sonraki adımda hareket et:\n" + observation
@@ -501,6 +505,9 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
                     research_page_reads += 1
                 result = tools.execute(name, args)
                 performed_tools.add(name)
+                failed = result.startswith(("Hata:", "Parametre hatası:", "Araç ", "Bilinmeyen araç:"))
+                if ui_task and failed:
+                    task_outcome = "blocked"
                 observer = _observer_for(name)
                 if observer:
                     acted_this_round = True
@@ -510,6 +517,11 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
                         yield {"type": "tool", "name": observer, "args": {}, "status": "done", "result": result[:600]}
                     desktop_observed = observer == "screen_look" and _observation_ready(result)
                     browser_observed = observer == "browser_observe" and _observation_ready(result)
+                    if ui_task:
+                        if not _observation_ready(result):
+                            task_outcome = "blocked"
+                        elif not failed and task_outcome == "blocked":
+                            task_outcome = "finished"
                 elif name in {"screen_look", "screen_find", "read_screen_text"}:
                     desktop_observed = not result.startswith(("Hata:", "Araç "))
                 elif name in {"browser_read", "browser_look", "browser_observe"}:
