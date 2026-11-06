@@ -308,7 +308,23 @@
       const x=Number(o.x)||0,z=Number(o.z)||0;
       if(o.type==="door") parts.push({name:"Kapı kasası "+(i+1),type:"box",size:[0.07,2.1,0.08],pos:[x-0.46,1.17,z],color:"#80502f"},{name:"Kapı kanadı "+(i+1),type:"box",size:[0.88,2.0,0.045],pos:[x-0.44,1.12,z],rot:[0,-(Number(o.rotation)||0),0],color:o.color||"#a66b3f",hinge:true});
       else if(o.type==="window") { /* Cam ve duvar açıklığı addWall içinde üretilir. */ }
-      else {
+      else if(o.type==="stairs") {
+        const ow=Math.max(0.8,Number(o.width)||1),od=Math.max(1.2,Number(o.depth)||2),count=Math.max(6,Math.min(24,Math.ceil(height/0.19))),rise=(height+0.3)/count,run=od/count,angle=-(Number(o.rotation)||0)*DEG,cos=Math.cos(angle),sin=Math.sin(angle),color=o.color||"#9d8063";
+        const local=(lx,lz)=>[x+lx*cos+lz*sin,z-lx*sin+lz*cos];
+        for(let step=0;step<count;step++){
+          const lz=-od/2+(step+0.5)*run,[px,pz]=local(0,lz);
+          parts.push({name:"Merdiven "+(i+1)+" · basamak "+(step+1),type:"box",size:[ow,rise,run+0.025],pos:[px,0.12+(step+0.5)*rise,pz],rot:[0,angle/DEG,0],color});
+        }
+        const railLength=Math.hypot(od,height+0.3),railTilt=Math.atan2(height+0.3,od)/DEG;
+        [-1,1].forEach(side=>{
+          const [rx,rz]=local(side*(ow/2-0.04),0);
+          parts.push({name:"Merdiven korkuluğu "+(i+1),type:"box",size:[0.07,0.08,railLength],pos:[rx,0.12+(height+0.3)/2+0.48,rz],rot:[-railTilt,angle/DEG,0],color:"#d6dce1"});
+          for(let post=0;post<=4;post++){
+            const t=post/4,lz=-od/2+t*od,lx=side*(ow/2-0.04),[qx,qz]=local(lx,lz);
+            parts.push({name:"Korkuluk dikmesi",type:"box",size:[0.045,0.95,0.045],pos:[qx,0.12+t*(height+0.3)+0.42,qz],rot:[0,angle/DEG,0],color:"#d6dce1"});
+          }
+        });
+      } else {
         const specs={sofa:[1.9,0.75,0.85,"#657b8d"],bed:[1.6,0.45,2.0,"#b7a0c9"],table:[1.2,0.75,0.8,"#a8794f"],wardrobe:[1.1,2.1,0.6,"#8d735f"],toilet:[0.48,0.42,0.68,"#f0f4f5"],kitchen:[1.8,0.9,0.65,"#777f87"],desk:[1.2,0.75,0.65,"#9b744d"],plant:[0.45,0.9,0.45,"#39875c"],fridge:[0.7,1.9,0.7,"#c8d2d8"],shower:[0.9,2.0,0.9,"#8acbdc"],sink:[0.6,0.85,0.5,"#e5edf0"],stairs:[1.0,2.8,2.0,"#9d8063"],pool:[3,0.6,2,"#3c9dc4"],tree:[1,2.8,1,"#39875c"],fence:[2,1.2,0.12,"#9b7852"],gate:[1,1.2,0.12,"#a66b3f"],light:[0.25,0.12,0.25,"#ffe08a"],outlet:[0.12,0.12,0.05,"#d9e5ed"],switch:[0.1,0.15,0.04,"#e7e7e7"],radiator:[0.8,0.65,0.15,"#e5edf0"]};
         const s=specs[o.type]||specs.table,ow=Math.max(.1,Number(o.width)||s[0]),od=Math.max(.1,Number(o.depth)||s[2]);
         parts.push({name:(o.label||o.type)+" "+(i+1),type:"box",size:[ow,s[1],od],pos:[x,s[1]/2+0.12,z],rot:[0,-(Number(o.rotation)||0),0],color:o.color||s[3]});
