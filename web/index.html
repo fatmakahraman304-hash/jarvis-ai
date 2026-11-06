@@ -53,12 +53,21 @@
     <div id="p-name">J.A.R.V.I.S.</div>
     <div id="p-full">Just A Rather Very Intelligent System</div>
   </div>
-  <nav id="personas"></nav>
+  
   <div class="top-right">
-    <div id="model-badge" title="Şu an cevaplayan model">MODEL: —</div>
+    <button id="model-badge" type="button" title="Yapay zekâ modunu seç">AI MODEL</button>
     <div id="clock">--:--</div>
   </div>
 </header>
+<!-- AI model / persona seçici -->
+<div id="ai-model-picker" class="hidden" role="dialog" aria-modal="true" aria-labelledby="ai-model-title">
+  <div class="ai-model-card">
+    <div class="ai-model-head"><div><h2 id="ai-model-title">AI MODELLERİ</h2><p>Takmak istediğin çipi seç.</p></div><button id="ai-model-close" type="button" aria-label="Kapat">×</button></div>
+    <div id="ai-model-options" class="ai-model-options"></div>
+    <div class="ai-model-rail"></div>
+  </div>
+</div>
+
 
 <aside id="left" class="panel">
   <div class="panel-title">SİSTEM</div>
