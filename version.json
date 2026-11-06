@@ -1,9 +1,10 @@
 {
-  "version": "4.6.6",
+  "version": "4.6.7",
   "date": "2026-11-06",
   "notes": [
-    "🐛 Hızlı konuşma karşılığındaki re modülü eksik import hatası düzeltildi",
-    "⚡ Uzun araç işlemlerinde anında kısa sesli karşılık",
-    "🧠 Tam SQLite geçmişini koruyan 24.000 karakterlik kayan bağlam penceresi"
+    "⚡ Kısa komutlar FAST katmanında Flash-Lite modellerine yönlendirilir",
+    "🧠 Uzun ve karmaşık işler SMART katmanında Flash modellerini kullanır",
+    "⏱ FAST 10 sn, SMART/SEARCH 20 sn zaman aşımı; yavaş model sıradaki modele geçer",
+    "🧹 Eski gemini-3.3-flash sabitlemesi otomatik temizlenir"
   ]
 }

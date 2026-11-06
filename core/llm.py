@@ -83,6 +83,30 @@ PROVIDERS = {
     },
 }
 
+# Gemini model roles mirrored from Mark LVI's measured FAST / SMART / SEARCH ladders.
+# This web build uses browser speech recognition + Edge TTS; Gemini Live audio
+# sessions are not sent through the text/tool endpoint.
+GEMINI_LADDERS = {
+    "fast": (
+        "gemini-2.5-flash-lite", "gemini-3.5-flash-lite",
+        "gemini-3.1-flash-lite", "gemini-flash-lite-latest",
+        "gemini-2.5-flash", "gemini-3.5-flash",
+        "gemini-3.6-flash", "gemini-3-flash-preview",
+    ),
+    "smart": (
+        "gemini-2.5-flash", "gemini-3.5-flash",
+        "gemini-2.5-flash-lite", "gemini-3.5-flash-lite",
+        "gemini-3.1-flash-lite", "gemini-3.6-flash",
+        "gemini-3-flash-preview", "gemini-flash-latest",
+    ),
+    "search": (
+        "gemini-2.5-flash", "gemini-3.5-flash",
+        "gemini-2.5-flash-lite", "gemini-flash-latest",
+    ),
+}
+GEMINI_TIMEOUTS = {"fast": 10, "smart": 20, "search": 20, "legacy": 20}
+
+
 
 class ProviderError(Exception):
     def __init__(self, provider, status, body):
@@ -285,6 +309,46 @@ def ranked_models(pid):
             if m not in out and (m.startswith(p + ":") or m.startswith(p + "-")) and ("lite" in p or "lite" not in m):
                 out.append(m)
     return out + [m for m in available if m not in out]
+
+
+def ranked_models_for_tier(pid, tier="smart"):
+    """Rank one provider for the requested job; Gemini follows Mark LVI's tiers."""
+    if pid != "gemini" or tier not in GEMINI_LADDERS:
+        return ranked_models(pid)
+    prefer = GEMINI_LADDERS[tier]
+    available = [m for m in list_models(pid) if is_chat_model(m)]
+    if not available:
+        return list(prefer)
+    out = []
+    for wanted in prefer:
+        for model in available:
+            if model == wanted and model not in out:
+                out.append(model)
+        for model in available:
+            if model not in out and (model.startswith(wanted + "-") or model.startswith(wanted + ":")):
+                out.append(model)
+    # Keep not-yet-listed chat models as last-resort fallbacks, never ahead of the measured ladder.
+    return out + [m for m in ranked_models(pid) if m not in out]
+
+
+def pick_model_for_tier(pid, tier="smart", override=""):
+    """Honor an explicit pin; otherwise select the measured task-specific ladder."""
+    if override:
+        return override
+    env_model = env(f"{pid.upper()}_MODEL")
+    if env_model:
+        return env_model
+    models = ranked_models_for_tier(pid, tier)
+    ready = [m for m in models if not cooling(pid, m)]
+    return (ready or models or [""])[0]
+
+
+def next_model_for_tier(pid, current, tried, tier="smart"):
+    """Move to the next healthy rung in the same task-specific model ladder."""
+    for model in ranked_models_for_tier(pid, tier):
+        if model != current and model not in tried and not cooling(pid, model):
+            return model
+    return ""
 
 
 # ---- ücretsiz kota takibi: kotası dolan model, kota yenilenene kadar atlanır (her mesajda boşuna denenmez) ----
@@ -494,7 +558,7 @@ def vision(prompt, image_bytes, mime="image/png", system="", light=False):
     for pid in VISION_ORDER:
         if not configured(pid) or not allowed(pid) or key_bad(pid):
             continue
-        model = env(f"{pid.upper()}_VISION_MODEL") or ((light and light_model(pid)) or (pick_model(pid) if pid in ("gemini", "xai", "custom") else VISION_DEFAULTS.get(pid, "")))
+        model = env(f"{pid.upper()}_VISION_MODEL") or ((light and light_model(pid)) or (pick_model_for_tier(pid, "smart") if pid == "gemini" else (pick_model(pid) if pid in ("xai", "custom") else VISION_DEFAULTS.get(pid, ""))))
         tried = []
         while model and len(tried) < 3:
             tried.append(model)
@@ -513,10 +577,10 @@ def vision(prompt, image_bytes, mime="image/png", system="", light=False):
                 if e.status == 429:
                     mark_exhausted(pid, model, e.body)
                 elif e.status in (500, 502, 503, 504):
-                    _cooldown[(pid, model)] = time.time() + 120
+                    _cooldown[(pid, model)] = time.time() + (30 * 60 if e.status in (503, 504) else 120)
                 if e.status not in (404, 429, 500, 502, 503, 504) or not PROVIDERS[pid].get("prefer"):
                     break
-                model = next_model(pid, model, tried)
+                model = (next_model_for_tier(pid, model, tried, "smart") if pid == "gemini" else next_model(pid, model, tried))
     raise RuntimeError("Görüntü analizi yapılamadı. " + ", ".join(errors))
 
 
@@ -526,6 +590,9 @@ def _tools_unsupported(err):
 
 
 def light_model(pid):
+    # Background/short tasks use the same FAST ladder as Mark LVI.
+    if pid == "gemini":
+        return pick_model_for_tier("gemini", "fast")
     if env(f"{pid.upper()}_MODEL") or not PROVIDERS[pid].get("light"):
         return ""
     avail = set(list_models(pid))
@@ -548,7 +615,7 @@ def allowed(pid):
     return pid == "gemini" or not only_gemini() or not _key("gemini")  # Gemini anahtarı hiç yoksa kilitleme
 
 
-def route(order, messages, tools, model_override="", light=False):
+def route(order, messages, tools, model_override="", light=False, tier="legacy", timeout=None):
     """Sağlayıcıları sırayla dener; kota/hata olursa sıradakine geçer (tek beyin, çok model).
 
     Olay üretir: ("provider", {...}), ("text", parça), ("final", {...}), ("error", metin)
@@ -565,20 +632,26 @@ def route(order, messages, tools, model_override="", light=False):
         yield ("error", "NO_PROVIDER")
         return
     for i, pid in enumerate(candidates):
-        model = pick_model(pid, model_override if i == 0 else "")
-        if light and not (model_override and i == 0):
+        override = model_override if i == 0 else ""
+        if pid == "gemini" and tier in GEMINI_LADDERS:
+            model = pick_model_for_tier(pid, tier, override)
+        else:
+            model = pick_model(pid, override)
+        if light and not override:
             model = light_model(pid) or model
+        call_timeout = int(timeout or (10 if light else GEMINI_TIMEOUTS.get(tier, 20)))
         if not model:
             continue
         use_tools = tools
         used = []
-        busy_retried = set()
-        for attempt in range(7):
+        max_fallbacks = (min(7, max(0, len(ranked_models_for_tier(pid, tier)) - 1))
+                         if pid == "gemini" and tier in GEMINI_LADDERS else 3)
+        for attempt in range(max_fallbacks + 1):
             emitted = False
             try:
                 yield ("provider", {"provider": pid, "model": model, "label": PROVIDERS[pid]["label"]})
                 try:
-                    for ev in stream_chat(pid, model, messages, use_tools):
+                    for ev in stream_chat(pid, model, messages, use_tools, timeout=call_timeout):
                         if ev[0] == "text":
                             emitted = True
                         yield ev
@@ -603,16 +676,11 @@ def route(order, messages, tools, model_override="", light=False):
                 if e.status == 429:
                     mark_exhausted(pid, model, e.body)
                 if e.status in (500, 502, 503, 504):
-                    # Google'da model geçici yoğun (UNAVAILABLE/overloaded): bir kez kısa bekleyip aynı modeli dene,
-                    # yine olmazsa bu modeli 2 dk kenara al ve aynı sağlayıcının sıradaki modeline geç
-                    if e.status != 504 and model not in busy_retried:
-                        busy_retried.add(model)
-                        time.sleep(1.5)
-                        continue
-                    _cooldown[(pid, model)] = time.time() + 120
-                if e.status in (403, 404, 429, 500, 502, 503, 504) and len(used) < 3:
+                    # Mirror Mark LVI: rest unavailable models, then advance the ladder immediately.
+                    _cooldown[(pid, model)] = time.time() + (30 * 60 if e.status in (503, 504) else 120)
+                if e.status in (403, 404, 429, 500, 502, 503, 504) and len(used) < max_fallbacks:
                     # bu model kotada/erişilemez: aynı sağlayıcının bir sonraki en iyi modeline geç (ör. 3.8 → 3.6)
-                    nm = next_model(pid, model, used)
+                    nm = (next_model_for_tier(pid, model, used, tier) if pid == "gemini" and tier in GEMINI_LADDERS else next_model(pid, model, used))
                     if nm:
                         used.append(model)
                         model = nm

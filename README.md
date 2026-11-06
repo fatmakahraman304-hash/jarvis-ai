@@ -143,6 +143,19 @@ Mark-LVI'den ilham alan iki sohbet iyileştirmesi:
 
 Yeni sürüm, Ayarlar > **GÜNCELLE** üzerinden version.json sürümü görüldüğünde kurulabilir.
 
+
+## Model dağılımı ve hız (v4.6.7)
+
+JARVIS artık Mark LVI'nin görev bazlı Gemini model sırasını izler:
+
+- **FAST:** kısa komutlar ve araç seçimi — Gemini 2.5 Flash-Lite → 3.5 Flash-Lite → 3.1 Flash-Lite → Flash-Lite Latest; gerekirse normal Flash modelleri.
+- **SMART:** uzun/karmaşık işler, planlama, kod ve görüntü muhakemesi — Gemini 2.5 Flash → 3.5 Flash → ardından Lite ve yedek Flash modelleri.
+- **SEARCH:** kaynaklı araştırma — Gemini 2.5 Flash → 3.5 Flash → Flash-Lite yedeği.
+
+FAST isteklerinde ilk model için 10 saniye, SMART/SEARCH isteklerinde 20 saniye sınırı kullanılır. Zaman aşımına uğrayan model sonraki isteği bekletmemesi için geçici olarak kenara alınır. Eski gemini-3.3-flash sabitlemesi bir kez temizlenir; açıkça seçilmiş diğer model ayarları korunur.
+
+**Ses motoru notu:** Mark LVI'nin ana konuşması Gemini 3.1 Flash Live (yedek: Gemini 2.5 Native Audio) ile tam çift yönlü ses oturumudur. Bu JARVIS arayüzü ise tarayıcı konuşma tanıma + Edge TTS kullanıyor; Live ses oturumu henüz bu web konuşma hattına bağlı değildir. Bu sürüm aynı FAST/SMART/SEARCH metin modeli dağılımını ve hızlı yedeklemeyi getirir.
+
 ## Çok platform
 
 | Nereden | Nasıl |

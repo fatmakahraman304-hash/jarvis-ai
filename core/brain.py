@@ -106,6 +106,21 @@ def _quick_ack(text, groups):
     return "On it. I'll take care of that."
 
 
+def _conversation_tier(text, groups=None):
+    """Choose FAST for ordinary commands, SMART for complex work, SEARCH for sourced research."""
+    low = (text or "").casefold().strip()
+    search_words = ("araştır", "kaynak", "kaynaklarıyla", "internette", "web'de", "webde", "güncel haber")
+    if any(word in low for word in search_words):
+        return "search"
+    smart_words = ("neden", "analiz", "karşılaştır", "kıyasla", "detaylı", "kapsamlı",
+                   "planla", "tasarla", "rapor", "kod yaz", "programla", "geliştir",
+                   "mimari", "ekip kur", "adım adım", "strateji")
+    heavy_groups = {"team", "selfdev", "knowledge", "office", "studio", "finance"}
+    if len(low) >= 180 or any(word in low for word in smart_words) or (set(groups or ()) & heavy_groups):
+        return "smart"
+    return "fast"
+
+
 
 def _system_prompt(persona, source):
     facts = memory.facts(60)
@@ -223,6 +238,8 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
     if guest:
         groups -= GUEST_BLOCKED
 
+    tier = _conversation_tier(text, groups)
+
     # Speak immediately while the web/phone model request is starting.
     if not hidden and source in ("web", "phone"):
         ack = _quick_ack(text, groups)
@@ -240,7 +257,7 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
             break
         final = None
         step_text = ""
-        for ev in llm.route(pconf.get("providers", []), messages, tools.specs(groups), pconf.get("model", "")):
+        for ev in llm.route(pconf.get("providers", []), messages, tools.specs(groups), pconf.get("model", ""), tier=tier):
             kind, data = ev
             if kind == "provider":
                 used = {"provider": data["provider"], "model": data["model"]}
@@ -299,7 +316,7 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
     if not full_text and len(messages) > 2:
         # araçlar çalıştı ama model cevap yazmadı (ya da adım sınırı doldu): araçsız son bir çağrıyla mutlaka cevap ver
         messages.append({"role": "user", "content": "Yukarıdaki araç sonuçlarına dayanarak kullanıcıya ŞİMDİ kısa ve net cevap ver. Yeni araç çağırma."})
-        for kind, data in llm.route(pconf.get("providers", []), messages, None, pconf.get("model", "")):
+        for kind, data in llm.route(pconf.get("providers", []), messages, None, pconf.get("model", ""), tier=tier):
             if kind == "text":
                 full_text += data
                 yield {"type": "token", "text": data}
@@ -341,7 +358,7 @@ def ask(prompt, system="", persona_id=None, light=True):
     order = settings["personas"].get(persona["id"], {}).get("providers", [])
     msgs = ([{"role": "system", "content": system}] if system else []) + [{"role": "user", "content": prompt}]
     out = ""
-    for kind, data in llm.route(order, msgs, None, light=light):
+    for kind, data in llm.route(order, msgs, None, light=light, tier=("fast" if light else "smart")):
         if kind == "text":
             out += data
         elif kind == "error":
