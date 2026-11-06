@@ -43,7 +43,7 @@ jobs:
       - name: Install test browser
         run: python -m playwright install --with-deps chromium
       - name: Check real Chrome session manual handoff
-        run: python tests/test_manual_login_browser.py
+        run: JARVIS_TEST_HEADED=1 xvfb-run -a python tests/test_manual_login_browser.py
       - name: Check native agent with real browser
         run: python tests/test_agent_browser_execution.py
       - name: Check real canvas input

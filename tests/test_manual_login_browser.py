@@ -17,7 +17,7 @@ def start():
     pw=sync_playwright().start()
     exe=os.environ.get('JARVIS_TEST_CHROMIUM') or pw.chromium.executable_path
     def launch(args,**kw):return real_popen([*args,'--no-sandbox'],**kw)
-    with patch.object(chrome_session,'executable',return_value=exe),patch.object(chrome_session.subprocess,'Popen',side_effect=launch),patch.dict(os.environ,{'JARVIS_BROWSER_HEADLESS':'1'}):
+    with patch.object(chrome_session,'executable',return_value=exe),patch.object(chrome_session.subprocess,'Popen',side_effect=launch),patch.dict(os.environ,{'JARVIS_BROWSER_HEADLESS':'' if os.environ.get('JARVIS_TEST_HEADED')=='1' else '1'}):
         b,ctx,process=chrome_session.launch(pw,Path(tempfile.mkdtemp(prefix='jv_profile_')))
     p=ctx.new_page()
     p.route('https://spaceplanner.co/**',lambda r:r.fulfill(content_type='text/html',body='''
