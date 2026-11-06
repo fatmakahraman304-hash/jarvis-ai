@@ -139,18 +139,32 @@ def _req_lines(p):
 
 
 def _tests(base):
-    """Yeni sürümün hızlı testleri, geçici veri klasörüyle (gerçek hafızana dokunmaz)."""
+    """Yeni sürüm testlerini geçici veri klasöründe çalıştırır ve her adımı arayüze bildirir."""
     tmp = tempfile.mkdtemp(prefix="jv_upd_")
     envv = dict(os.environ, JARVIS_DATA=tmp, PYTHONIOENCODING="utf-8")
-    for t in ("test_smoke.py", "test_fast_conversation.py", "test_model_tiers.py", "test_models.py", "test_windows_transport.py", "test_research_budget.py", "test_live_voice.py"):
-        f = base / "tests" / t
-        if not f.exists():
-            continue
-        r = subprocess.run([sys.executable, str(f)], capture_output=True, text=True, timeout=600, encoding="utf-8", errors="ignore", env=envv, cwd=str(base))
-        if r.returncode != 0:
-            return False, (r.stdout + r.stderr)[-1500:]
-    shutil.rmtree(tmp, ignore_errors=True)
-    return True, ""
+    tests = ("test_smoke.py", "test_fast_conversation.py", "test_model_tiers.py", "test_models.py", "test_windows_transport.py", "test_research_budget.py", "test_live_voice.py")
+    try:
+        selected = [t for t in tests if (base / "tests" / t).exists()]
+        total = len(selected)
+        for index, t in enumerate(selected, 1):
+            # Test aşamasında sabit %35 yerine canlı alt-adım ve ilerleme göster.
+            progress = 35 + int(17 * (index - 1) / max(total, 1))
+            STATE.update({"ilerleme": progress, "adım": f"yeni sürüm test ediliyor ({index}/{total}): {t}"})
+            f = base / "tests" / t
+            try:
+                result = subprocess.run(
+                    [sys.executable, str(f)], capture_output=True, text=True,
+                    timeout=600, encoding="utf-8", errors="ignore",
+                    env=envv, cwd=str(base)
+                )
+            except subprocess.TimeoutExpired:
+                return False, f"{t} testi 10 dakika içinde tamamlanmadı; güncelleme uygulanmadı."
+            if result.returncode != 0:
+                return False, f"{t} testi başarısız; güncelleme uygulanmadı.\n" + (result.stdout + result.stderr)[-1500:]
+        STATE.update({"ilerleme": 52, "adım": "testler tamamlandı"})
+        return True, ""
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
 
 
 def apply(restart=True):
