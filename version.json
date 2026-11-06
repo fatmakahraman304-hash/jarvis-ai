@@ -1,9 +1,9 @@
 {
-  "version": "4.6.42",
+  "version": "4.6.43",
   "date": "2026-11-06",
   "notes": [
-    "Chrome’da elle kullan / giriş yap düğmesiyle Google girişini kendin tamamlayabilirsin",
-    "Elle kullanım sırasında araçlar, ekran analizi ve canlı görüntü aktarımı duraklatılır",
-    "JARVIS’e geri ver aynı plan sekmesinde devam eder; açık Google giriş penceresi veya dolu şifre alanıyla otomasyon başlamaz"
+    "Sıradan tarayıcı tıklamaları ve metin girişleri artık tekrarlayan onay pencereleri olmadan sürer",
+    "Google girişi, izin/koşul kabulü, ödeme, silme, form gönderimi ve hassas alanlar onay gerektirir",
+    "Masaüstünü tam otonom kullanma ayarı ayrıca isteğe bağlı kalır"
   ]
 }
