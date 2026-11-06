@@ -472,12 +472,12 @@ class ThinkFilter:
 
 
 # ---------------- akışlı sohbet ----------------
-def stream_chat(pid, model, messages, tools=None, temperature=0.7, timeout=90):
+def stream_chat(pid, model, messages, tools=None, temperature=0.7, timeout=90, tool_choice="auto"):
     """Olay üretir: ("text", parça) ... ve sonda ("final", {"content":..., "tool_calls":[...]})"""
     if pid == "gemini":
         from . import gemini_native
         try:
-            yield from gemini_native.stream(_key(pid), model, messages, tools, temperature, min(timeout, gemini_native.TIMEOUT))
+            yield from gemini_native.stream(_key(pid), model, messages, tools, temperature, min(timeout, gemini_native.TIMEOUT), tool_choice)
         except gemini_native.NativeError as e:
             raise ProviderError(pid, e.status, e.body)
         return
@@ -486,7 +486,7 @@ def stream_chat(pid, model, messages, tools=None, temperature=0.7, timeout=90):
         body.pop("temperature", None)
     if tools:
         body["tools"] = tools
-        body["tool_choice"] = "auto"
+        body["tool_choice"] = tool_choice
     req = urllib.request.Request(
         _base(pid) + "/chat/completions",
         data=json.dumps(body).encode("utf-8"),
@@ -639,12 +639,16 @@ def allowed(pid):
     return pid == "gemini" or not only_gemini() or not _key("gemini")  # Gemini anahtarı hiç yoksa kilitleme
 
 
-def route(order, messages, tools, model_override="", light=False, tier="legacy", timeout=None):
+def route(order, messages, tools, model_override="", light=False, tier="legacy", timeout=None, require_tools=False):
     """Sağlayıcıları sırayla dener; kota/hata olursa sıradakine geçer (tek beyin, çok model).
 
     Olay üretir: ("provider", {...}), ("text", parça), ("final", {...}), ("error", metin)
     """
     tried = []
+    tool_failures = False
+    if require_tools and not tools:
+        yield ("error", "Bu işlem için gerçek araç çağrısı gerekli; kullanılabilir araç bulunamadı. İşlem yapılmadı.")
+        return
     candidates = [p for p in order if p in PROVIDERS] + [p for p in PROVIDERS if p not in order]
     candidates = [p for p in candidates if configured(p) and allowed(p)]
     if not candidates and only_gemini():
@@ -675,7 +679,17 @@ def route(order, messages, tools, model_override="", light=False, tier="legacy",
             try:
                 yield ("provider", {"provider": pid, "model": model, "label": PROVIDERS[pid]["label"]})
                 try:
-                    for ev in stream_chat(pid, model, messages, use_tools, timeout=call_timeout):
+                    kwargs = {"timeout": call_timeout}
+                    if require_tools:
+                        kwargs["tool_choice"] = "required"
+                    events = stream_chat(pid, model, messages, use_tools, **kwargs)
+                    if require_tools:
+                        events = list(events)
+                        names = {(t.get("function") or t).get("name") for t in use_tools}
+                        finals = [data for kind, data in events if kind == "final"]
+                        if not finals or not finals[-1].get("tool_calls") or any((c.get("function") or {}).get("name") not in names for c in finals[-1]["tool_calls"]):
+                            raise ProviderError(pid, 422, "Native tool call required; model returned text instead of a function call")
+                    for ev in events:
                         if ev[0] == "text":
                             emitted = True
                         yield ev
@@ -689,12 +703,19 @@ def route(order, messages, tools, model_override="", light=False, tier="legacy",
                 if report_bad_key(pid, e.status, e.body):
                     break  # anahtar geçersiz: bu sağlayıcının başka modelini denemenin anlamı yok
                 if emitted:
-                    yield ("text", "\n[bağlantı kesildi]")
-                    yield ("final", {"content": "", "tool_calls": []})
+                    yield ("error", "Model bağlantısı yanıt tamamlanmadan kesildi; işlem tamamlandı sayılmadı.")
                     return
-                if use_tools and _tools_unsupported(e) and attempt == 0:
-                    use_tools = None
-                    continue
+                if use_tools and _tools_unsupported(e):
+                    # Araçsız yeniden denemek, işlemi yapmadan yapılmış gibi metin
+                    # üretmesine neden olur. Araçları koruyup başka model dene.
+                    tool_failures = True
+                    _cooldown[(pid, model)] = time.time() + 120
+                    nm = (next_model_for_tier(pid, model, used, tier) if pid == "gemini" and tier in GEMINI_LADDERS else next_model(pid, model, used))
+                    if nm and attempt < max_fallbacks:
+                        used.append(model)
+                        model = nm
+                        continue
+                    break
                 if e.status == 404:
                     # Model ID may still appear in /models while this project is blocked from generateContent.
                     _cooldown[(pid, model)] = time.time() + 6 * 60 * 60
@@ -713,6 +734,9 @@ def route(order, messages, tools, model_override="", light=False, tier="legacy",
                         model = nm
                         continue
                 break
+    if tool_failures:
+        yield ("error", "Bağlı model gerçek araç çağrısı üretemedi veya araç isteğini reddetti. İstenen işlem tamamlanmadı; araçlar kapatılıp metinle yapılmış gibi gösterilmedi.")
+        return
     if only_gemini():
         if key_bad("gemini"):
             yield ("error", key_bad("gemini"))

@@ -31,6 +31,10 @@
     if (s) document.body.classList.add(s);
     $("#status-text").textContent = text || (s === "listening" ? "DİNLİYOR" : s === "thinking" ? "İŞLENİYOR" : "BEKLEMEDE");
   }
+  function setTaskState(state, text) {
+    const label = $("#task-state");
+    if (label) { label.dataset.state = state; label.textContent = text; }
+  }
   JV.toast = (t, ms) => toast(t, ms);
   JV.sendCommand = (t) => send(t);
   JV.currentPersona = () => persona;
@@ -108,15 +112,18 @@
     if (busy && abortCtl) abortCtl.abort();
     JV.stopSpeaking(false);
     busy = true; setStatus("thinking");
+    const task = { done: false, outcome: "running" };
+    setTaskState("running", "KOMUT İŞLENİYOR");
     if (!opts.hidden) addMsg("user", text, null, opts.speaker);
     const body = addMsg("ai", "", persona);
     const sent = JV.Sentencer(persona);
-    abortCtl = new AbortController();
+    const requestCtl = new AbortController();
+    abortCtl = requestCtl;
     const url = opts.confirm ? "/api/confirm" : "/api/chat";
     const payload = opts.confirm ? opts.confirm : { text, persona, session: opts.guest ? "guest" : "main", source: isPhone ? "phone" : "web", speaker: opts.speaker || "", guest: !!opts.guest };
     try {
-      const r = await JV.api(url, { body: payload, raw: true, signal: abortCtl.signal });
-      if (r.status === 401) { body.textContent = "Erişim anahtarı gerekli."; return; }
+      const r = await JV.api(url, { body: payload, raw: true, signal: requestCtl.signal });
+      if (r.status === 401) { task.outcome = "blocked"; setTaskState("blocked", "İŞLEM DURDU · ERİŞİM ANAHTARI GEREKLİ"); body.textContent = "Erişim anahtarı gerekli."; return; }
       const reader = r.body.getReader(); const dec = new TextDecoder(); let buf = "";
       while (true) {
         const { value, done } = await reader.read(); if (done) break;
@@ -125,20 +132,28 @@
         while ((i = buf.indexOf("\n\n")) >= 0) {
           const line = buf.slice(0, i); buf = buf.slice(i + 2);
           if (!line.startsWith("data:")) continue;
-          handleEvent(JSON.parse(line.slice(5)), body, sent);
+          handleEvent(JSON.parse(line.slice(5)), body, sent, task);
         }
       }
+      if (!task.done) throw new Error("İşlem akışı tamamlanmadan kesildi; görev tamamlandı sayılmadı.");
     } catch (e) {
-      if (e.name !== "AbortError") { body.parentElement.classList.add("err"); body.textContent = "Bağlantı hatası: " + e.message; }
+      if (abortCtl === requestCtl) {
+        task.outcome = e.name === "AbortError" ? "paused" : "blocked";
+        setTaskState(task.outcome, e.name === "AbortError" ? "İŞLEM DURDURULDU" : "İŞLEM DURDU · AKIŞ HATASI");
+        if (e.name !== "AbortError") { body.parentElement.classList.add("err"); body.textContent += (body.textContent ? "\n" : "") + "Bağlantı hatası: " + e.message; }
+      }
     } finally {
-      sent.flush(); busy = false;
-      if (!JV.speaking) setStatus(recognizing ? "listening" : null);
+      if (abortCtl === requestCtl) {
+        sent.flush(); busy = false;
+        if (!JV.speaking) setStatus(recognizing ? "listening" : null);
+      }
       if (!body.textContent) body.parentElement.remove();
     }
   }
 
-  function handleEvent(ev, body, sent) {
+  function handleEvent(ev, body, sent, task) {
     switch (ev.type) {
+      case "progress": setTaskState("running", ev.text); setStatus("thinking", "ARAÇ ÇAĞRISI DOĞRULANIYOR"); break;
       case "ack": setStatus("thinking", ev.text.toLocaleUpperCase("tr-TR")); JV.say(ev.text, persona); break;
       case "provider": $("#model-badge").textContent = "AI MODEL"; $("#model-badge").title = `Yanıt motoru: ${ev.label} · ${ev.model} — kişilik seçmek için tıkla`; setStatus("thinking", "DÜŞÜNÜYOR · " + ev.model); break;
       case "token": body.textContent += ev.text; sent.push(ev.text); scrollLog(); break;
@@ -147,12 +162,16 @@
           const t = el("div", "msg tool", `⚙ ${ev.name} …`); body.parentElement.before(t); scrollLog();
           const nice = { browser_observe: "SAYFAYI YENİDEN ANALİZ EDİYOR", screen_look: "EKRANI ANALİZ EDİYOR", screen_find: "EKRANDA HEDEFİ BULUYOR", browser_read: "SAYFAYI KONTROL EDİYOR", spaceplanner_open: "SPACEPLANNER AÇILIYOR", web_search: "İNTERNETTE ARIYOR", news_search: "HABERLERE BAKIYOR", read_webpage: "SAYFAYI OKUYOR", weather: "HAVA DURUMUNA BAKIYOR" }[ev.name];
           setStatus("thinking", nice || ("ÇALIŞIYOR: " + ev.name));
+          setTaskState("running", nice || ("ÇALIŞIYOR: " + ev.name));
         }
         if (ev.status === "done" && ev.result && ev.result.startsWith("{") && ev.result.includes('"ui"') && JV.uiCommand) { try { JV.uiCommand(ev.name, ev.args, ev.result); } catch (e) { console.warn(e); } }
         break;
-      case "confirm": showConfirm(ev); break;
-      case "error": body.parentElement.classList.add("err"); if (!body.textContent) { body.textContent = ev.text; JV.say(ev.text, persona); } break;
-      case "done": break;
+      case "confirm": task.outcome = "needs_confirmation"; setTaskState("needs_confirmation", "İŞLEM ONAY BEKLİYOR"); showConfirm(ev); break;
+      case "error": task.outcome = "blocked"; setTaskState("blocked", "İŞLEM DURDU · YANITTA HATA AYRINTISI VAR"); body.parentElement.classList.add("err"); if (!body.textContent.includes(ev.text)) body.textContent += (body.textContent ? "\n" : "") + ev.text; JV.say(ev.text, persona); break;
+      case "done":
+        task.done = true; task.outcome = ev.outcome || (task.outcome === "running" ? "finished" : task.outcome);
+        setTaskState(task.outcome, { finished: "İŞLEM SONLANDI", blocked: "İŞLEM DURDU · TAMAMLANMADI", paused: "İŞLEM DURDU · KALAN ADIMLAR VAR", needs_confirmation: "İŞLEM ONAY BEKLİYOR" }[task.outcome] || "İŞLEM SONLANDI");
+        break;
     }
   }
 

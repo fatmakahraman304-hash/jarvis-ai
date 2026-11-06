@@ -1,5 +1,12 @@
 # J.A.R.V.I.S. Personal AI
 
+## 4.6.38 — Metin yerine gerçek araç çalıştırma
+
+“SpacePlanner aç” gibi eylem isteyen komutlarda ilk adım gerçek function/tool call gerektirir. Gemini’de ANY modu kullanılır; araç desteklenmezse araçsız yapılmış gibi cevap üretmek yerine başka araç destekli model denenir veya açık hata gösterilir. [spaceplanner_open] gibi metinler hiçbir zaman komut olarak ayrıştırılıp çalıştırılmaz. Bozuk yanıt en fazla iki kez gerçek araç çağrısı için yeniden istenir.
+
+Diyalog alanında görev durumu mikrofon dinlemesinden ayrı gösterilir: işlem sonlandı, tamamlanmadı, kalan adımlar var veya onay bekleniyor. Akış tamamlanmadan kesilirse hata görünür. Çizim görevlerinde süre/adım sınırında kalan iş açıklanır; her ev tasarımının tamamlanacağı garanti edilmez. Gerçek hesap/API anahtarı ve kullanıcı cihazı üzerindeki canlı SpacePlanner çizimi ayrıca denenmelidir.
+
+
 ## 4.6.37 — Ev tasarımı yalnızca SpacePlanner
 
 PLAN / ARAÇLAR sekmesi ve yerel mimari editör, oda/mobilya kataloğu, alan/çakışma/metraj araçları, yerel proje sürümleme ve aktarım kodları kaldırıldı. Ev tasarımı için “SpacePlanner aç” veya “ev tasarımı” de: JARVIS kontrollü SpacePlanner sekmesinde çalışır, engelleri kontrol edip her işlemden sonra yeniden analiz eder.

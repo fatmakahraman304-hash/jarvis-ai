@@ -29,6 +29,30 @@ _OBSERVATIONS = {"browser_read", "browser_look", "browser_observe", "screen_look
 _LIVE_TOOLS = _BROWSER_ACTIONS | _DESKTOP_ACTIONS | _OBSERVATIONS | {"browser_close"}
 
 
+def _ui_action_requested(text, groups):
+    low = (text or "").casefold()
+    if not ({"browser", "computer"} & set(groups)):
+        return False
+    if re.search(r"\b(nasıl|nedir|örnek|açıkla|anlat|açma|yapma)\b", low):
+        return False
+    if re.sub(r"^(?:jarvis|friday)[,\s]+", "", low).strip(" .!?") == "ev tasarımı":
+        return True
+    return bool(re.search(r"\b(aç|açıp|açar|açabilir|çiz|çizip|tasarla|yerleştir|tıkla|doldur|sürükle|götür|open|draw|design|click|move)\b", low))
+
+
+def _text_tool_markers(text):
+    # Yalnızca bozuk yanıtı tespit eder. Metinden argüman çıkarılmaz ve
+    # hiçbir köşeli parantez ifadesi araç olarak yürütülmez.
+    return any(name in tools.TOOLS for name in re.findall(r"\[([a-z][a-z0-9_]+)(?=[\s\]\({])", text or ""))
+
+
+def _spaceplanner_start(text):
+    low = (text or "").casefold()
+    if re.sub(r"^(?:jarvis|friday)[,\s]+", "", low).strip(" .!?") == "ev tasarımı":
+        return True
+    return bool(re.search(r"space\s*planner|spacelanner|spaceplaner|spacepllaner", low) and re.search(r"\b(aç|açıp|çiz|tasarla|open|draw|design)\b", low))
+
+
 def _observer_for(name):
     if name in _BROWSER_ACTIONS:
         return "browser_observe"
@@ -316,6 +340,12 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
         groups -= GUEST_BLOCKED
 
     tier = _conversation_tier(text, groups)
+    ui_task = _ui_action_requested(text, groups)
+    task_goal = text
+    if re.fullmatch(r"(?:devam(?: et)?|kaldığın yerden devam(?: et)?)[.!?\s]*", text.casefold().strip()):
+        previous = next((h["content"] for h in reversed(hist) if h["role"] == "user" and not re.fullmatch(r"devam(?: et)?[.!?\s]*", h["content"].casefold().strip())), "")
+        if previous and _ui_action_requested(previous, groups):
+            ui_task, task_goal = True, previous
 
     # Speak immediately while the web/phone model request is starting.
     if not hidden and source in ("web", "phone"):
@@ -333,6 +363,11 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
     research_page_reads = 0
     desktop_observed = False
     browser_observed = False
+    performed_tools = set()
+    repair_attempts = 0
+    force_next_tool = False
+    task_outcome = "finished"
+    stop_reason = ""
     step_budget = min(MAX_STEPS, 4) if tier == "search" else MAX_STEPS
     if "browser" in groups and tier != "search":
         step_budget = max(step_budget, 32)
@@ -342,8 +377,10 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
     for _step in range(step_budget):
         if time.time() - turn_t0 > turn_budget:
             print(f"[beyin] {turn_budget} sn doldu, eldeki bilgiyle cevaplanıyor")
+            stop_reason = "İşlem süre sınırına ulaştı; kalan adımlar yapılmadı."
             break
-        if _estop() and source == "auto":
+        if _estop() and (source == "auto" or ui_task):
+            stop_reason = "Acil durdurma etkin; görev durduruldu."
             yield {"type": "error", "text": "Acil durdurma etkin: otomatik işlem yapılmadı."}
             break
         final = None
@@ -354,27 +391,56 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
             search_attempts=research_search_attempts,
             page_reads=research_page_reads,
         )
-        for ev in llm.route(pconf.get("providers", []), messages, available_tools, pconf.get("model", ""), tier=tier):
+        route_options = {"tier": tier}
+        require_call = ui_task and task_outcome != "needs_confirmation" and (not performed_tools or force_next_tool)
+        if require_call:
+            route_options["require_tools"] = True
+            if not performed_tools and _spaceplanner_start(text):
+                launch = [s for s in available_tools if s["function"]["name"] == "spaceplanner_open"]
+                if launch:
+                    available_tools = launch
+        force_next_tool = False
+        for ev in llm.route(pconf.get("providers", []), messages, available_tools, pconf.get("model", ""), **route_options):
             kind, data = ev
             if kind == "provider":
                 used = {"provider": data["provider"], "model": data["model"]}
                 yield {"type": "provider", **data}
             elif kind == "text":
                 step_text += data
-                yield {"type": "token", "text": data}
+                if not ui_task:
+                    yield {"type": "token", "text": data}
             elif kind == "final":
                 final = data
             elif kind == "error":
                 msg = NO_PROVIDER_MSG if data == "NO_PROVIDER" else data
                 yield {"type": "error", "text": msg}
-                yield {"type": "done", "text": msg, **used}
+                yield {"type": "done", "text": msg, "outcome": "blocked", **used}
                 return
         if final is None:
             break
-        full_text += step_text
         calls = final.get("tool_calls") or []
         if not calls:
+            response = step_text or final.get("content") or ""
+            promise = bool(re.search(r"başlıyorum|devam ediyorum|çizeceğim|yerleştireceğim|açıyorum|yapacağım", response.casefold()))
+            unfinished_drawing = bool(re.search(r"\b(çiz|tasarla)\b", task_goal.casefold())) and not (performed_tools & {"spaceplanner_draw", "browser_click", "browser_fill", "browser_press", "mouse_click", "mouse_drag", "key_press", "type_text"})
+            if ui_task and task_outcome != "needs_confirmation" and (_text_tool_markers(response) or not performed_tools or promise or (unfinished_drawing and task_outcome != "blocked")):
+                if repair_attempts < 2:
+                    repair_attempts += 1
+                    messages.append({"role": "assistant", "content": response})
+                    messages.append({"role": "user", "content": "SİSTEM DENETİMİ: Bu metin bir araç çağrısı değildir ve yazılan komutlar ÇALIŞTIRILMADI. Henüz istenen eylem tamamlanmadı. Araç adını düz metinde yazma. Uygun GERÇEK function/tool call üret; eksik argümanları güncel gözlemden al. Asıl kullanıcı görevini sürdür. Yapamıyorsan yapılmış gibi konuşma."})
+                    force_next_tool = True
+                    yield {"type": "progress", "text": "Model yanıtı gerçek araç çağrısı için yeniden doğrulanıyor."}
+                    continue
+                full_text = "Model gerçek araç çağrısıyla göreve devam edemedi. İstenen işlem tamamlanmadı; metindeki araç adları çalıştırılmadı."
+                task_outcome = "blocked"
+                yield {"type": "error", "text": full_text}
+                break
+            full_text += response if ui_task else step_text
+            if ui_task and response:
+                yield {"type": "token", "text": response}
             break
+        if not ui_task:
+            full_text += step_text
         messages.append({"role": "assistant", "content": final.get("content") or "", "tool_calls": calls})
         acted_this_round = False
         for call in calls:
@@ -403,6 +469,9 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
                 observation = tools.execute("browser_observe", {})
                 yield {"type": "tool", "name": "browser_observe", "args": {}, "status": "done", "result": observation[:600]}
                 browser_observed = not observation.startswith(("Hata:", "Araç "))
+                if not browser_observed:
+                    task_outcome = "blocked"
+                performed_tools.add("browser_observe")
                 acted_this_round = True
                 result = "İŞLEM HENÜZ YAPILMADI. Önce güncel sayfa analiz edildi; hedefi bu yeni gözleme göre yeniden seç:\n" + observation
             elif name in _DESKTOP_ACTIONS and not desktop_observed:
@@ -410,10 +479,14 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
                 observation = tools.execute("screen_look", {})
                 yield {"type": "tool", "name": "screen_look", "args": {}, "status": "done", "result": observation[:600]}
                 desktop_observed = not observation.startswith(("Hata:", "Araç "))
+                if not desktop_observed:
+                    task_outcome = "blocked"
+                performed_tools.add("screen_look")
                 acted_this_round = True
                 result = "İŞLEM HENÜZ YAPILMADI. Önce ekran analiz edildi; bu gözleme göre hedefi screen_find ile bul ve sonraki adımda hareket et:\n" + observation
             elif tools.is_critical(name, args):
-                pid = _new_pending(name, args, persona["id"], session, source, task=text)
+                pid = _new_pending(name, args, persona["id"], session, source, task=task_goal)
+                task_outcome = "needs_confirmation"
                 if name in (_BROWSER_ACTIONS | _DESKTOP_ACTIONS):
                     acted_this_round = True
                 yield {"type": "confirm", "id": pid, "name": name, "args": args, "text": describe(name, args)}
@@ -431,6 +504,10 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
                 elif name == "read_webpage":
                     research_page_reads += 1
                 result = tools.execute(name, args)
+                performed_tools.add(name)
+                failed = result.startswith(("Hata:", "Parametre hatası:", "Araç ", "Bilinmeyen araç:"))
+                if ui_task and failed:
+                    task_outcome = "blocked"
                 observer = _observer_for(name)
                 if observer:
                     acted_this_round = True
@@ -440,6 +517,11 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
                         yield {"type": "tool", "name": observer, "args": {}, "status": "done", "result": result[:600]}
                     desktop_observed = observer == "screen_look" and _observation_ready(result)
                     browser_observed = observer == "browser_observe" and _observation_ready(result)
+                    if ui_task:
+                        if not _observation_ready(result):
+                            task_outcome = "blocked"
+                        elif not failed and task_outcome == "blocked":
+                            task_outcome = "finished"
                 elif name in {"screen_look", "screen_find", "read_screen_text"}:
                     desktop_observed = not result.startswith(("Hata:", "Araç "))
                 elif name in {"browser_read", "browser_look", "browser_observe"}:
@@ -455,23 +537,38 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
         if full_text and not full_text.endswith((" ", "\n")):
             full_text += " "
             yield {"type": "token", "text": " "}
+    else:
+        stop_reason = "İşlem adım sınırına ulaştı; kalan adımlar yapılmadı."
 
     full_text = full_text.strip()
+    if stop_reason:
+        task_outcome = "paused"
+        full_text = ""
+        messages.append({"role": "user", "content": stop_reason + " Yalnızca gerçek araç sonuçlarına dayanarak yapılanları ve kalan adımları bildir. Tamamlanmamış işe tamamlandı deme; komut veya araç adı taklidi yazma."})
     if not full_text and len(messages) > 2:
         # araçlar çalıştı ama model cevap yazmadı (ya da adım sınırı doldu): araçsız son bir çağrıyla mutlaka cevap ver
         messages.append({"role": "user", "content": "Yukarıdaki araç sonuçlarına dayanarak kullanıcıya ŞİMDİ kısa ve net cevap ver. Yeni araç çağırma."})
         for kind, data in llm.route(pconf.get("providers", []), messages, None, pconf.get("model", ""), tier=tier):
             if kind == "text":
                 full_text += data
-                yield {"type": "token", "text": data}
+                if not ui_task:
+                    yield {"type": "token", "text": data}
             elif kind == "error":
                 break
         full_text = full_text.strip()
+        if ui_task:
+            if _text_tool_markers(full_text):
+                full_text = "Model araç sonucu yerine komut metni üretti. Görev tamamlanmadı; bu metin çalıştırılmadı."
+                task_outcome = "blocked"
+            elif stop_reason:
+                full_text = stop_reason + (" " + full_text if full_text else "")
+            if full_text:
+                yield {"type": "token", "text": full_text}
     if not full_text:
         full_text = "Bu soruya şu an cevap üretemedim; lütfen biraz farklı sorar mısın?"
         yield {"type": "token", "text": full_text}
     memory.add_message(session, "assistant", full_text, persona["id"], source, used.get("provider", ""))
-    yield {"type": "done", "text": full_text, **used}
+    yield {"type": "done", "text": full_text, "outcome": task_outcome, **used}
 
 
 def resolve(pending_id, approve=True):

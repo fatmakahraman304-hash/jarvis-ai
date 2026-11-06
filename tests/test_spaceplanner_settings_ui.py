@@ -41,6 +41,19 @@ try:
             p.wait_for_selector('#spaceplanner-open',state='visible')
             assert p.evaluate('JV.getView()')=='design'
             assert p.url.startswith(base)
+            def sse(events):return ''.join('data: '+json.dumps(e)+'\n\n' for e in events)
+            response={'body':sse([{'type':'token','text':'Önceki kısmi yanıt.'},{'type':'error','text':'Gerçek araç çağrısı oluşmadı.'},{'type':'done','text':'Gerçek araç çağrısı oluşmadı.','outcome':'blocked'}])}
+            p.route('**/api/chat',lambda r:r.fulfill(content_type='text/event-stream',body=response['body']))
+            p.evaluate("JV.sendCommand('SpacePlanner aç')")
+            assert p.locator('#task-state').get_attribute('data-state')=='blocked'
+            assert 'Gerçek araç çağrısı oluşmadı.' in p.locator('#log').inner_text()
+            response['body']=sse([{'type':'token','text':'Kesik yanıt'}])
+            p.evaluate("JV.sendCommand('SpacePlanner aç')")
+            assert p.locator('#task-state').get_attribute('data-state')=='blocked'
+            assert 'tamamlanmadan kesildi' in p.locator('#log').inner_text()
+            response['body']=sse([{'type':'token','text':'SpacePlanner açık.'},{'type':'done','text':'SpacePlanner açık.','outcome':'finished'}])
+            p.evaluate("JV.sendCommand('SpacePlanner aç')")
+            assert p.locator('#task-state').get_attribute('data-state')=='finished'
             assert not errors,errors
             print('Removed local planner; existing settings and SpacePlanner launch view passed.')
         finally:b.close()

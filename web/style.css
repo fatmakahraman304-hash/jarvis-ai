@@ -700,3 +700,6 @@ html[data-theme="light"] input,html[data-theme="light"] select,html[data-theme="
 html[data-theme="light"] .msg .body,html[data-theme="light"] #log{color:#17334b}
 
 html[data-theme="light"] .s-tabs button.active{background:#076d9b;color:#fff}
+#task-state{font:11px var(--mono);padding:6px 10px;color:var(--dim);border-bottom:1px solid var(--line);line-height:1.5}
+#task-state[data-state=running]{color:var(--c)}
+#task-state[data-state=blocked],#task-state[data-state=paused],#task-state[data-state=needs_confirmation]{color:#e5a54c}
