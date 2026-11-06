@@ -131,7 +131,7 @@ def macro_run(name, persona="", _depth=0):
 def match_trigger(text):
     """Kullanıcının söylediği tam olarak bir makro tetikleyicisiyse adını döndürür."""
     t = _norm(text)
-    for w in ("jarvis", "friday", "ultron"):
+    for w in ("jarvis", "friday"):
         t = re.sub(rf"^(hey )?{w},? ", "", t)
     r = memory._q("SELECT name FROM macros WHERE trigger=? OR name=?", (t, t), one=True)
     return r["name"] if r else None
