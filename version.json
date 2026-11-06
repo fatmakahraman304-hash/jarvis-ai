@@ -1,7 +1,8 @@
 {
-  "version": "4.6.22",
+  "version": "4.6.23",
   "date": "2026-11-06",
   "notes": [
+    "🧰 EV TASARIM PRO: eğri duvarları 2D Bézier çizimi ve 3D segment geometrisiyle oluşturma, elektrik hattı güzergâhı çizimi/3D gösterimi/DXF katmanı, eğri duvar DXF örnekleme, çok katlı projede elektrik hatlarını koruma ve çalışan geri al/yinele geçmişi eklendi",
     "🪜 EV TASARIM PRO: merdivenler artık kat yüksekliğine göre gerçek 3D basamaklar, eğimli korkuluklar ve dikmelerle oluşturulur; genişlik, derinlik ve dönüş açısı planla eşleşir",
     "🏗 EV TASARIM PRO: tüm katları tek 3D yapıda üst üste gösterme, seçilebilir/silinebilir duvarlar ve CAD uyumlu DXF dışa aktarma eklendi",
     "🏠 EV TASARIM PRO: birden fazla kat arasında geçiş, yeni kat ekleme ve fotoğraf/çizim referansını planın altında izleme eklendi",
