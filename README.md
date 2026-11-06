@@ -1,5 +1,12 @@
 # J.A.R.V.I.S. Personal AI
 
+## 4.6.12 — Mark LVI tarzı canlı ses
+
+- Ayarlar → **SES** bölümündeki **Mark LVI tarzı Gemini Live sesi (Charon)** seçeneğiyle JARVIS yanıtlarını Gemini Live'ın Charon sesiyle dinleyebilirsin.
+- Yanıtı hâlâ JARVIS'in kendi beyni üretir; web araması, araçlar, hafıza, kritik işlem onayı ve mevcut konuşma akışı korunur. Gemini Live yalnızca metni sese dönüştürür.
+- Canlı ses oturumu aynı tarayıcı bağlantısı boyunca açık tutulur; böylece her cümlede yeniden oturum açılmaz. Live bağlantısı veya ses üretimi başarısızsa Edge TTS'ye geri dönülür.
+- Bu özellik Gemini API anahtarı ve `google-genai` paketini kullanır; Gemini Live ses kotası/faturalandırması geçerli olabilir. Eski Edge TTS davranışına dönmek için seçeneği kapat.
+
 Tek beyin, çok model, çok platform. Üç kişilik: **JARVIS** (mavi, sakin İngiliz uşak), **FRIDAY** (turuncu, enerjik operasyon uzmanı), **ULTRON** (kırmızı, karanlık ve teatral). Hepsi aynı hafızayı ve aynı bilgisayar yetkilerini paylaşır; sadece karakter, ses, renk ve tercih ettikleri model değişir.
 
 ## 3 adımda çalıştır (Windows 11)

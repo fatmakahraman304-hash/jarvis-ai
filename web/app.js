@@ -453,6 +453,7 @@
     // ses
     $("#v-lang").value = JV.settings.voice_lang || "auto";
     $("#v-fx").checked = JV.settings.effects !== false;
+    $("#v-live").checked = JV.settings.live_voice !== false;
     $("#v-stt").value = JV.settings.stt_lang || "tr-TR";
     $("#v-engine").value = JV.settings.stt_engine || "auto";
     $("#sl-idle").value = JV.settings.sleep_idle_min || 0; $("#sl-thr").value = JV.settings.clap_threshold || 0.35; $("#ar-cmd").value = JV.settings.ar_thumb_command || ""; $("#ar-name").value = JV.settings.user_name || "";
@@ -471,6 +472,7 @@
     const p3 = el("p"); p3.innerHTML = `<b>Telegram (her yerden):</b> ${JV.state.telegram ? "<span style='color:#3cff8a'>bağlı ✓</span>" : "bağlı değil"}. @BotFather'dan bot oluştur, <code>.env</code> dosyasına <code>TELEGRAM_BOT_TOKEN</code> ve kendi kimliğin için <code>TELEGRAM_ALLOWED_IDS</code> yaz, yeniden başlat.`;
     pi.append(p1, p2, p3);
   }
+  $("#v-live").onchange = (e) => { JV.settings.live_voice = e.target.checked; saveSettings({ live_voice: e.target.checked }); };
   $("#v-lang").onchange = (e) => saveSettings({ voice_lang: e.target.value });
   $("#v-engine").onchange = (e) => saveSettings({ stt_engine: e.target.value });
   $("#sl-idle").onchange = (e) => saveSettings({ sleep_idle_min: Math.max(0, +e.target.value || 0) });

@@ -12,7 +12,7 @@ from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import HTMLResponse, FileResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
-from starlette.routing import Mount, Route
+from starlette.routing import Mount, Route, WebSocketRoute
 from starlette.staticfiles import StaticFiles
 
 from . import brain, llm, memory, original_voice, personas, tools, voice
@@ -786,6 +786,12 @@ async def confirm(request):
     return _sse(brain.resolve(body.get("id", ""), bool(body.get("approve"))))
 
 
+async def live_voice_api(websocket):
+    """Mark LVI-style Gemini Live speech output; JARVIS brain remains unchanged."""
+    from .live_voice import live_voice_socket
+    await live_voice_socket(websocket)
+
+
 async def tts(request):
     text = (request.query_params.get("text") or "").strip()[:1500]
     if not text:
@@ -1043,6 +1049,7 @@ routes = [
     Route("/api/chat", chat, methods=["POST"]),
     Route("/api/confirm", confirm, methods=["POST"]),
     Route("/api/tts", tts),
+    WebSocketRoute("/api/live-voice", live_voice_api),
     Route("/api/original-voice", original_voice_api),
     Route("/api/voices", voices_api),
     Route("/api/system", system),

@@ -1,10 +1,10 @@
 {
-  "version": "4.6.11",
+  "version": "4.6.12",
   "date": "2026-11-06",
   "notes": [
-    "⚡ SEARCH görevleri artık Gemini 3.5 Flash-Lite ile başlar; 10 saniyelik sınırla Flash yedeklerine geçer",
-    "🔎 Web araması tüm motorlarda paralel başlar ve ilk işe yarar sonuçta döner; haber araması yalnızca gerektiğinde yapılır",
-    "🧠 Bir başarılı web aramasından sonra aynı istekte yeni arama araçları kaldırılır; en fazla bir kaynak sayfası okunur",
-    "🛡 Araştırma turu dört model adımıyla sınırlandırıldı; normal görevlerin adım bütçesi korunur"
+    "🎙 Mark LVI tarzı Gemini Live ses çıkışı eklendi: kalıcı oturum, Charon sesi ve cümle bazlı konuşma kuyruğu",
+    "🧠 Yanıt üretimi JARVIS'in mevcut beyni, araçları, hafızası ve onay akışıyla devam eder; yalnızca seslendirme Live API'ye taşınır",
+    "🔁 Gemini Live ses kullanılamazsa Edge TTS otomatik yedek olur; Ayarlar → Ses'ten Live ses kapatılabilir",
+    "📦 Gemini Live istemcisi ve WebSocket uç noktası eklendi; uzak bağlantılar JARVIS erişim anahtarıyla korunur"
   ]
 }
