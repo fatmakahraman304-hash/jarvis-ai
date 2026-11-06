@@ -1,10 +1,10 @@
 {
-  "version": "4.6.7",
+  "version": "4.6.8",
   "date": "2026-11-06",
   "notes": [
-    "⚡ Kısa komutlar FAST katmanında Flash-Lite modellerine yönlendirilir",
-    "🧠 Uzun ve karmaşık işler SMART katmanında Flash modellerini kullanır",
-    "⏱ FAST 10 sn, SMART/SEARCH 20 sn zaman aşımı; yavaş model sıradaki modele geçer",
-    "🧹 Eski gemini-3.3-flash sabitlemesi otomatik temizlenir"
+    "🛠 Yeni projelerde erişimi kısıtlanan Gemini 2.5 modelleri varsayılan sıralardan ve eski sabitlemelerden çıkarıldı",
+    "⚡ FAST artık Gemini 3.5 Flash-Lite ile başlıyor",
+    "🧠 SMART ve SEARCH artık Gemini 3.8 Flash ile başlıyor",
+    "🧯 Erişim reddi (404) alan model 6 saat kenara alınır; sonraki istek onu tekrar denemez"
   ]
 }
