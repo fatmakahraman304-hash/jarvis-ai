@@ -31,8 +31,9 @@ J.A.R.V.I.S. PERSONAL AI  v3.1  —  HIZLI KURULUM (Windows 11)
    - Tarayıcı otomasyonu:   start.bat bunu zaten kurar (Edge'i kullanır)
    - Gmail/Takvim:          Ayarlar > BAĞLANTILAR'daki adımlar (~5 dk)
    - Telegram:              @BotFather → token'ı .env içine TELEGRAM_BOT_TOKEN= olarak yaz
-   - Telefon (aynı Wi-Fi):  start-lan.bat   → pencerede yazan adresi telefonda aç
-   - VR gözlük / telefonda mikrofon-kamera:  start-vr.bat  (https; ilk açılışta "Gelişmiş > Devam et")
+   - Telefon (aynı Wi-Fi):  start-lan.bat   → pencerede yazan https:// adresini telefonda aç (ilk sertifika uyarısında "Gelişmiş > Devam et")
+   - VR gözlük:             start-vr.bat  (https; ilk açılışta "Gelişmiş > Devam et")
+   Not: start-lan.bat artık HTTPS'i otomatik açar; iPhone kamera/mikrofonu için HTTP adresi kullanma.
    - Diğer bilgisayarlar:   onlarda da start-lan.bat; ⌘ KOMUTA > BİLGİSAYARLARIM > AĞI TARA
 
 İLK DENEMELER
