@@ -15,6 +15,8 @@ from .config import env, load_settings
 
 LIVE_MODEL = "gemini-3.1-flash-live-preview"
 LIVE_VOICE = "Charon"
+LIVE_VOICES = {"jarvis": "Charon", "friday": "Aoede", "ultron": "Fenrir"}
+ALLOWED_VOICES = {"Charon", "Aoede", "Fenrir", "Puck", "Kore", "Orus", "Leda", "Zephyr"}
 SAMPLE_RATE = 24000
 
 
@@ -51,9 +53,13 @@ async def live_voice_socket(websocket: WebSocket) -> None:
         await websocket.close(code=1011)
         return
 
-    voice_name = str(load_settings().get("live_voice_name") or LIVE_VOICE)
-    if not voice_name or len(voice_name) > 40:
-        voice_name = LIVE_VOICE
+    persona = websocket.query_params.get("persona", "jarvis").lower()
+    if persona not in LIVE_VOICES:
+        persona = "jarvis"
+    configured = load_settings().get("live_voice_names") or {}
+    voice_name = str(configured.get(persona) or LIVE_VOICES[persona])
+    if voice_name not in ALLOWED_VOICES:
+        voice_name = LIVE_VOICES[persona]
 
     config = types.LiveConnectConfig(
         response_modalities=["AUDIO"],
