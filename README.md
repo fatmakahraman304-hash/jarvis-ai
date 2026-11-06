@@ -1,5 +1,9 @@
 # J.A.R.V.I.S. Personal AI
 
+## 4.6.47 — Gemini araç tanımı yükünü azaltma
+
+Gemini 3.5 Flash-Lite başarısızlığında konsol teşhisi `arac_tanimi=231` gösteriyordu; bu kadar geniş araç kümesi istek boyutunu ve şema uyumluluğu riskini artırır. JARVIS artık bir model turunda görevle ilgili en fazla **24 araç** seçer, `enable_tools` ile gerektiğinde ek yetenek grubu açma yolunu ve SpacePlanner çizim uzmanının odaklı akışını korur. Konsolda `[araç-seçimi] aday=231 gönderilen=24` gibi bir satır görünür. Bu, genel HTTP 400'ü kesin çözer garantisi değildir; aynı hata sürerse `[gemini-teşhis]` satırındaki `arac_tanimi` sayısı ve `py -3.13 scripts/diagnose_gemini.py` aşama sonuçları ile hangi adımın engellendiğini belirleyebiliriz. Google'ın HTTP 429 kota sınırı değişmez. Gerçek hesapla canlı API testi yapılmamıştır.
+
 ## 4.6.46 — Gemini Lite HTTP 400 için uyumluluk ve teşhis
 
 Gemini 3.5 ve sonraki Flash modellerine gönderilen eski sampling parametreleri çıkarıldı. Flash-Lite otomatik en düşük düşünme düzeyiyle çalıştığından ayrıca "low" ayarı zorlanmaz. Genel 400 hatasında JARVIS konsoluna yalnızca araç/mesaj sayısı ve düşünme imzası sayısı gibi yapısal bilgiler kaydedilir; sohbet metni veya API anahtarı yazılmaz. Bu ayarlar tek başına bütün HTTP 400 nedenlerini kesin çözmez.

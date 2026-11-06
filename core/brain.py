@@ -80,6 +80,80 @@ def _focused_specs(specs, manual_groups):
     return out
 
 
+def _bounded_specs(specs, task, manual_groups=(), limit=24):
+    """Select request-relevant tools instead of uploading 200+ declarations to Gemini.
+
+    The complete registry remains executable, and enable_tools stays available to
+    request additional groups. This only limits declarations visible in one turn.
+    Order is stable for identical input, and sensitive actions retain their
+    existing execution-time confirmation checks.
+    """
+    specs = list(specs or ())
+    if len(specs) <= limit:
+        return specs
+    text = str(task or "").casefold()
+    words = set(re.findall(r"[a-zçğıöşü0-9]{3,}", text))
+    selected_groups = tools.pick_groups(text)
+    manual_groups = set(manual_groups or ())
+    stop = {"jarvis", "bana", "için", "olan", "olarak", "bir", "bunu", "şunu",
+            "veya", "şimdi", "lütfen", "göre", "sonra", "kadar", "yap", "etti",
+            "istiyorum", "gerekiyor", "devam"}
+    words.difference_update(stop)
+
+    def overlap(haystack):
+        keys = set(re.findall(r"[a-zçğıöşü0-9]{3,}", haystack.casefold()))
+        return sum(1 for w in words if any(
+            k == w or (len(w) >= 4 and len(k) >= 4
+                       and (k.startswith(w) or w.startswith(k)))
+            for k in keys))
+
+    scored = []
+    for index, spec in enumerate(specs):
+        fn = spec.get("function") or {}
+        name = str(fn.get("name") or "")
+        group = tools.TOOL_GROUP.get(name, "core")
+        score = 5 * overlap(name.replace("_", " ")) + overlap(
+            str(fn.get("description") or "")[:280])
+        if group in selected_groups and group != "core":
+            score += 6
+        if group in manual_groups:
+            score += 20
+        if group == "core" and name in {"web_search", "open_app", "open_url"}:
+            score += 2
+        # Direct research commands must not get swamped by broad group keywords
+        # such as "internet" (Windows) or "haber" (daily/worldwatch).
+        research_intent = any(word in text for word in
+                              ("araştır", "internette", "güncel", "kaynak", "haber"))
+        if name == "web_search" and research_intent:
+            score += 40
+        if name == "news_search" and ("haber" in text or "gündem" in text):
+            score += 28
+        if name == "enable_tools":
+            score += 1000
+        if name == "task_report":
+            score += 1000
+        scored.append((-score, index, spec))
+
+    scored.sort(key=lambda item: (item[0], item[1]))
+    # Diversity: a loose group match must not occupy the whole request.
+    selected, per_group = [], {}
+    for item in scored:
+        spec = item[2]
+        name = (spec.get("function") or {}).get("name", "")
+        group = tools.TOOL_GROUP.get(name, "core")
+        group_limit = limit if group in manual_groups else (8 if group != "core" else 10)
+        if per_group.get(group, 0) >= group_limit and name not in {"enable_tools", "task_report"}:
+            continue
+        selected.append(item)
+        per_group[group] = per_group.get(group, 0) + 1
+        if len(selected) >= limit:
+            break
+    chosen = sorted(selected, key=lambda item: item[1])
+    out = [item[2] for item in chosen]
+    print(f"[araç-seçimi] aday={len(specs)} gönderilen={len(out)}")
+    return out
+
+
 _TASK_REPORT = {"type": "function", "function": {
     "name": "task_report", "description": "SpacePlanner çizim görevini bitirmek veya gerçek bir engelde durmak için tek başına çağır. finished yalnızca tüm istekler son ekranda doğrulandıysa; blocked gerçek engel varsa; paused kalan iş varsa. Metinle yapacağım deme; işlem sürüyorsa çizim araçlarını çağır.",
     "parameters": {"type": "object", "properties": {
@@ -444,6 +518,8 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
             available_tools = _focused_specs(available_tools, manual_groups)
         if drawing_task and performed_tools:
             available_tools.append(_TASK_REPORT)
+        if not focused_browser:
+            available_tools = _bounded_specs(available_tools, task_goal, manual_groups)
         route_options = {"tier": tier}
         require_call = ui_task and task_outcome != "needs_confirmation" and (drawing_task or not performed_tools or force_next_tool)
         if require_call:

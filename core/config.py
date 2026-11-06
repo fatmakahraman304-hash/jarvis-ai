@@ -11,7 +11,7 @@ WEB = ROOT / "web"
 DATA.mkdir(exist_ok=True)
 SETTINGS_FILE = DATA / "settings.json"
 
-VERSION = "4.6.46"
+VERSION = "4.6.47"
 
 
 def _load_env():
