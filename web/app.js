@@ -407,6 +407,7 @@
       select.onchange = async () => {
         try {
           await saveSettings({ live_voice_names: { [id]: select.value } });
+          JV.resetLiveVoice && JV.resetLiveVoice();
           toast(labels[id] + " ses profili kaydedildi.");
         } catch (e) { toast("Ses profili kaydedilemedi: " + e.message); }
       };
