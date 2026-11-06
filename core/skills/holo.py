@@ -38,8 +38,9 @@ def holo_design(kind, params="{}"):
 
 
 def home_design(description="", params="{}"):
-    """Ev tasarımı isteğinde JARVIS içindeki eski editör yerine SpacePlanner sayfasını açar."""
-    return {"ui": "spaceplanner"}
+    """Arayüz ve ses komutu aynı kontrollü SpacePlanner oturumunu kullanır."""
+    from .browser import spaceplanner_open
+    return {"ui": "spaceplanner", "sayfa": spaceplanner_open(), "istek": description}
 
 
 def holo_scene(title, parts):

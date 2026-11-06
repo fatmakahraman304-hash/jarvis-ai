@@ -717,7 +717,6 @@ TOOLS.update(_skill_tools)
 TOOL_GROUP.update(_skill_groups)
 
 GROUP_INFO = {
-    "browser": ("SpacePlanner ve web sitelerinde tarayıcıyı görerek kullanma, tıklama, form doldurma, sekme yönetimi", "spaceplanner space planner kat planı katplanı oda çiz ev çiz ev tasarla mimari mimari plan yerleşim planı salon mutfak yatak odası mobilya kapı pencere merdiven çatı bahçe elektrik planı 3d görünüm walkthrough dışa aktar export pdf dxf svg glb floorplan plan çiz oda yerleştir"),
     "google": ("Gmail ve Google Takvim", "mail posta gmail gelen kutu ileti yanıtla cevapla taslak takvim toplantı randevu ajanda etkinlik davet meet program bugün yarın hafta"),
     "computer": ("ekranı görme, fare/klavye, pencereler, pano, kamera, görsel analiz", "ekran ekranda tıkla tıklat yaz klavye fare mouse pencere sekme pano kopyala yapıştır kamera bak gör görsel resim fotoğraf foto oku ocr buton hata mesajı kullan"),
     "windows": ("Windows/donanım/güvenlik/dosya bakımı", "parlaklık wifi wi-fi internet ağ bluetooth yazıcı yazdır usb disk sürücü başlangıç açılış program kurulu gpu ekran-kartı sıcaklık fan yavaş kasıyor donuyor yinelenen kopya zip arşiv sıkıştır yedek düzenle temizle güvenlik virüs defender tarama şüpheli güvenlik duvarı izle"),
@@ -754,7 +753,7 @@ GROUP_INFO = {
     "cams": ("telefon kameraları (JARVIS'in gözü), güvenlik modu", "kamera kameraya kameradan mutfak mutfakta salon salonda kapı kapıya bahçe oda odada bak göz izle güvenlik hareket alarm bebek ne var"),
     "library": ("kitaplık: kitaplarım, raf taraması, notlar, alıntılar, okuma durumu", "kitap kitabı kitaplık kitaplığım kitaplığımı raf raftan okudum okuyorum okunacak sayfa sayfadayım alıntı roman yazar bitirdim öner"),
     "arfx": ("kamera AR el efektleri, gezegen, kahve falı, uyku modu", "el efekt efektleri gezegen mars jüpiter satürn güneş ateş şimşek mühür büyü sihir hologram fal falıma falımı kahve fincan uyku uyu uyut alkış"),
-    "browser": ("tarayıcı otomasyonu: siteye git, oku, tıkla, form doldur, sekmeler", "tarayıcı tarayıcıda site sitesine sitesinde sayfa sayfada form doldur tıkla sekme sekmeyi giriş yap rezervasyon bilet uçak otel sepet ürün sipariş edge chrome web"),
+    "browser": ("SpacePlanner çizimi ve tarayıcı otomasyonu", "spaceplanner space planner kat planı katplanı oda çiz ev tasarla mimari yerleşim salon mutfak yatak mobilya kapı pencere merdiven çatı bahçe elektrik floorplan tarayıcı tarayıcıda site sitesine sitesinde sayfa sayfada form doldur tıkla sekme sekmeyi giriş rezervasyon bilet uçak otel sepet ürün sipariş edge chrome web"),
     "plugins": ("eklentiler", ""),
 }
 
@@ -812,7 +811,7 @@ def is_critical(name, args):
 
 
 TOOL_TIMEOUT = {"web_search": 15, "news_search": 12, "read_webpage": 12, "weather": 15, "currency": 15,  # ağ araçları: süre sınırlı
-                "browser_open": 45, "browser_read": 30, "browser_look": 45}
+                "spaceplanner_open": 45, "home_design": 45, "spaceplanner_draw": 30, "browser_open": 45, "browser_read": 30, "browser_look": 45}
 
 
 def _run_limited(fn, args, limit):

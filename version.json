@@ -1,9 +1,9 @@
 {
-  "version": "4.6.32",
+  "version": "4.6.33",
   "date": "2026-11-06",
   "notes": [
-    "🧩 SpacePlanner talimatındaki Python sözdizimi hatası düzeltildi",
-    "🛡️ Güncelleme öncesi tüm core Python dosyaları derleme kontrolünden geçer",
-    "⚡ v4.6.26 eski güncelleyicisiyle tek tuşla güncelleme uyumluluğu korunur"
+    "SpacePlanner aynı kontrollü tarayıcıda açılır; çizim, sürükleme ve kesin ölçü girişi eklendi",
+    "Sürekli dinleme tek komuttan ve geçici kesintilerden sonra geri döner; ses varsayılan açık",
+    "SpacePlanner araç seçimi düzeltildi ve çok adımlı çizim süresi artırıldı"
   ]
 }

@@ -172,6 +172,15 @@
   // ---------- konuşma tanıma ----------
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   let rec = null, recognizing = false, wakeMode = false, awaitingCmd = 0, oneShot = false;
+  let recRetry = null, recFailures = 0, sttHandoff = false;
+  function resumeListening(delay = 250) {
+    clearTimeout(recRetry);
+    if (!wakeMode) return;
+    recRetry = setTimeout(() => { if (wakeMode && !recognizing && !sttHandoff && !(JV.stt && JV.stt.busy())) startRec(false); }, delay);
+  }
+  addEventListener("online", () => resumeListening());
+  addEventListener("focus", () => resumeListening());
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) resumeListening(); });
   const WAKE = {
     jarvis: ["jarvis", "carvis", "cervis", "jarvıs", "çarvis", "jarviz", "jervis", "jarvis'", "javis"],
     friday: ["friday", "fraydey", "fraydi", "frayday", "fırayday", "fridey"],
@@ -208,22 +217,25 @@
 
   function startRec(single) {
     if (!SR) { if (single) recordFallback(); else toast("Sürekli dinleme için Edge veya Chrome gerekli; mikrofon düğmesi bu tarayıcıda kayıt moduyla çalışır."); return; }
+    clearTimeout(recRetry);
     oneShot = !!single;
     if (JV.settings.voice_id || JV.settings.voice_lock) JV.voiceId.start();
-    if (rec) { try { rec.abort(); } catch (e) {} }
+    if (rec) { rec.onend = rec.onerror = rec.onresult = rec.onstart = null; try { rec.abort(); } catch (e) {} }
+    recognizing = false;
     rec = new SR();
     const currentRec = rec;
     rec.lang = (JV.settings.stt_lang) || "tr-TR";
     rec.continuous = !single; rec.interimResults = true;
-    rec.onstart = () => { recognizing = true; if (!busy && !JV.speaking) setStatus("listening"); };
-    rec.onerror = (e) => { if (e.error === "not-allowed" || e.error === "service-not-allowed") { toast("Mikrofon izni verilmedi. Adres çubuğundan mikrofon iznini aç."); wakeMode = false; updateToggles(); }
+    rec.onstart = () => { if (rec !== currentRec) return; recognizing = true; if (!busy && !JV.speaking) setStatus("listening"); };
+    rec.onerror = (e) => { if (rec !== currentRec) return; recFailures = Math.min(recFailures + 1, 5); if (e.error === "not-allowed" || e.error === "service-not-allowed") { toast("Mikrofon izni verilmedi. Adres çubuğundan mikrofon iznini aç."); wakeMode = false; updateToggles(); }
       else if (e.error === "audio-capture") { toast("Mikrofon bulunamadı. Windows giriş aygıtını kontrol et."); wakeMode = false; updateToggles(); } };
-    rec.onend = () => { if (rec !== currentRec) return; recognizing = false; if (!busy && !JV.speaking) setStatus(null); if (wakeMode && !oneShot) setTimeout(() => { if (wakeMode && rec === currentRec) startRec(false); }, 250); };
+    rec.onend = () => { if (rec !== currentRec) return; recognizing = false; if (!busy && !JV.speaking) setStatus(null); resumeListening(Math.min(8000, 250 * Math.pow(2, recFailures))); };
     rec.onresult = (e) => {
       let interim = "", final = "";
       for (let i = e.resultIndex; i < e.results.length; i++) { const r = e.results[i]; (r.isFinal ? (final += r[0].transcript) : (interim += r[0].transcript)); }
       const heard = (final || interim).trim();
       if (!heard) return;
+      recFailures = 0;
       // konuşurken araya girme: uyandırma kelimesi veya "dur"
       if (JV.speaking && (findWake(heard) || STOP.some((s) => heard.toLowerCase().split(/\s+/).includes(s)))) JV.stopSpeaking();
       if (oneShot) { $("#q").value = heard; if (final) { $("#q").value = ""; guardedSend(final); } return; }
@@ -235,9 +247,9 @@
         else { JV.beep(); awaitingCmd = Date.now() + 10000; setStatus("listening", "SİZİ DİNLİYORUM"); }
       } else if (awaitingCmd > Date.now() || ([...document.querySelectorAll(".confirm")].length && /(onayla|reddet)/i.test(final))) { awaitingCmd = 0; guardedSend(final); }
     };
-    try { rec.start(); } catch (e) {}
+    try { rec.start(); } catch (e) { recognizing = false; recFailures = Math.min(recFailures + 1, 5); resumeListening(1000); }
   }
-  function stopRec() { wakeMode = false; if (rec) { try { rec.abort(); } catch (e) {} } recognizing = false; setStatus(null); }
+  function stopRec() { wakeMode = false; clearTimeout(recRetry); if (rec) { try { rec.abort(); } catch (e) {} } recognizing = false; setStatus(null); }
 
   // Web Speech yoksa (Firefox, bazı telefonlar): sesi kaydet → sunucuda Whisper ile yazıya çevir
   let mediaRec = null, chunks = [];
@@ -261,6 +273,10 @@
   }
   // Whisper ile tek komut dinle (Groq anahtarı varsa varsayılan: çok daha doğru tanıma)
   function whisperOnce() {
+    sttHandoff = true;
+    clearTimeout(recRetry);
+    if (rec) { try { rec.abort(); } catch (e) {} }
+    recognizing = false;
     if (JV.settings.voice_id || JV.settings.voice_lock) JV.voiceId.start();
     let lastBar = 0;
     JV.stt.record({
@@ -270,12 +286,12 @@
         const k = Math.round(v * 10); setStatus("listening", "DİNLİYORUM " + "▮".repeat(k) + "▯".repeat(10 - k) + (voice ? "  🎙 ses var" : ""));
       },
       onText: (t, info = {}) => {
-        setStatus(null);
+        sttHandoff = false; setStatus(null); resumeListening();
         if (t) { guardedSend(t); return; }
         if (info.reason === "sessiz") toast(info.level < 0.004 ? "Mikrofondan hiç ses gelmiyor. Ayarlar > SES > Mikrofon'dan doğru mikrofonu seç ya da Windows'ta mikrofon sesini aç." : "Konuşma duyulmadı. Biraz daha yüksek/yakından konuş; Ayarlar > SES > MİKROFON TESTİ ile deneyebilirsin.", 9000);
         else if (info.reason === "anlaşılmadı") toast("Ses geldi ama ne dediğin anlaşılamadı, tekrar söyler misin?", 6000);
       },
-      onError: (e) => { setStatus(null); toast("Konuşma tanınamadı: " + e, 9000); },
+      onError: (e) => { sttHandoff = false; setStatus(null); resumeListening(); toast("Konuşma tanınamadı: " + e, 9000); },
     });
   }
   JV.whisperOnce = whisperOnce;

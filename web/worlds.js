@@ -82,9 +82,7 @@
   const spacePlannerClose = document.getElementById("spaceplanner-close");
   if (spacePlannerClose) spacePlannerClose.onclick = () => JV.setView("core");
   const openSpacePlanner = () => {
-    const win = window.open("https://spaceplanner.co/", "jarvis-spaceplanner", "popup=yes,width=1440,height=920,resizable=yes,scrollbars=yes");
-    if (win) { try { win.focus(); } catch (_) {} }
-    else window.location.href = "https://spaceplanner.co/";
+    if (JV.sendCommand) JV.sendCommand("SpacePlanner'ı spaceplanner_open aracıyla kontrollü tarayıcıda aç; mevcut planı koru.");
   };
   ["spaceplanner-open", "spaceplanner-open-main"].forEach((id) => {
     const button = document.getElementById(id);
