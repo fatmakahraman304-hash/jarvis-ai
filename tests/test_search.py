@@ -100,13 +100,13 @@ orig_get = tools._http_get
 
 def slow_get(url, timeout=12):
     if "bing.com" in url:
-        _t.sleep(30)
+        _t.sleep(4)
     return orig_get(url, timeout)
 
 
 tools._http_get = slow_get
 t0 = _t.time(); r = tools.web_search("yavaş kaynak testi")
-check("takılan kaynak beklenmez: ilk işe yarar sonuç hızlı döner", _t.time() - t0 < 7 and ("sonuçlar" in r or "canlı_cevap" in r), round(_t.time() - t0, 1))
+check("takılan kaynak beklenmez: ilk işe yarar sonuç hızlı döner", _t.time() - t0 < 3 and ("sonuçlar" in r or "canlı_cevap" in r), round(_t.time() - t0, 1))
 tools._http_get = orig_get
 check("news_search aracı var ve tarihli", tools.TOOLS["news_search"][0]("faiz")[0]["kaynak"] == "AA")
 
