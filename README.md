@@ -1,5 +1,11 @@
 # J.A.R.V.I.S. Personal AI
 
+## 4.6.39 — Araçtan sonra devam isteği
+
+Gemini’nin verdiği araç kimliği ve imzalı içerik sonraki isteğe aynen taşınır. Araç turunda model korunur; model değişmesi gerekirse eski imzalar yerine gerçek araç sonuçları metin bağlamına aktarılır. SpacePlanner çizim komutları yalnızca tarayıcı araçlarıyla başlar; ekran/fare veya başka gruplar gerektiğinde açılır.
+
+İletişimde araç satırına tıklayarak sonucu okuyabilirsin. Sağlayıcı isteği reddederse HTTP kodu, model ve gerçek hata ayrıntısı anahtar gizlenerek gösterilir. Testler kimlik/imza doğrulayan yerel model sunucusu ve gerçek Chromium kullanır; kullanıcının API hesabı ve canlı SpacePlanner çizimi bu testlerin kapsamında değildir.
+
 ## 4.6.38 — Metin yerine gerçek araç çalıştırma
 
 “SpacePlanner aç” gibi eylem isteyen komutlarda ilk adım gerçek function/tool call gerektirir. Gemini’de ANY modu kullanılır; araç desteklenmezse araçsız yapılmış gibi cevap üretmek yerine başka araç destekli model denenir veya açık hata gösterilir. [spaceplanner_open] gibi metinler hiçbir zaman komut olarak ayrıştırılıp çalıştırılmaz. Bozuk yanıt en fazla iki kez gerçek araç çağrısı için yeniden istenir.

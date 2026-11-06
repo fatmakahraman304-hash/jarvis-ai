@@ -32,6 +32,8 @@ jobs:
         run: python tests/test_desktop_control.py
       - name: Check native tool execution
         run: python tests/test_tool_execution.py
+      - name: Check Gemini continuation protocol
+        run: python tests/test_gemini_continuation.py
       - name: Check observe-act loop
         run: python tests/test_observe_loop.py
       - name: Check SpacePlanner tools
