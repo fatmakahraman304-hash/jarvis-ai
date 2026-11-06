@@ -340,7 +340,7 @@
       const stroke=i===selected?"#ffe17b":"#102331";
       return '<g class="hd-object" data-index="'+i+'" transform="translate('+q.x+' '+q.y+') rotate('+(Number(o.rotation)||0)+')" style="cursor:move"><rect x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="'+h+'" rx="4" fill="'+color+'" fill-opacity=".92" stroke="'+stroke+'" stroke-width="'+(i===selected?4:2)+'"/><text x="0" y="4" fill="#101b24" text-anchor="middle" font-size="10" pointer-events="none">'+esc(label)+'</text></g>';
     }).join("");
-    const walls=p.walls.map((w,i)=>{const a=xy(w.x1,w.z1),b=xy(w.x2,w.z2);return '<line data-wall="'+i+'" x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+'" stroke="'+(w.color||p.wallColor||"#e4e0d8")+'" stroke-width="'+Math.max(3,Number(w.thickness)||0.12)*Math.min(sx,sy)+'" stroke-linecap="square"/>';}).join("");
+    const walls=p.walls.map((w,i)=>{const a=xy(w.x1,w.z1),b=xy(w.x2,w.z2);return '<line data-wall="'+i+'" x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+'" stroke="'+(w.color||p.wallColor||"#e4e0d8")+'" stroke-width="'+Math.max(0.06,Number(w.thickness)||0.12)*Math.min(sx,sy)+'" stroke-linecap="square"/>';}).join("");
     const dims='<g fill="#bce9f5" font-size="12"><text x="'+(W/2)+'" y="28" text-anchor="middle">'+p.width.toFixed(2)+' m</text><text x="20" y="'+(H/2)+'" transform="rotate(-90 20 '+(H/2)+')" text-anchor="middle">'+p.depth.toFixed(2)+' m</text></g>';
     const opts=["sofa","bed","table","wardrobe","toilet","kitchen","desk","plant","fridge","shower","sink","stairs","pool","tree","fence","gate","light","outlet","switch","radiator"].map(v=>'<option value="'+v+'">'+({sofa:"Koltuk",bed:"Yatak",table:"Masa",wardrobe:"Dolap",toilet:"Klozet",kitchen:"Mutfak tezgâhı",desk:"Çalışma masası",plant:"Bitki",fridge:"Buzdolabı",shower:"Duş",sink:"Lavabo",stairs:"Merdiven",pool:"Havuz",tree:"Ağaç",fence:"Çit",gate:"Bahçe kapısı",light:"Aydınlatma",outlet:"Priz",switch:"Anahtar",radiator:"Petek"}[v])+'</option>').join("");
     const tools='<option value="select">Seç / taşı</option><option value="wall">Serbest duvar çiz</option><option value="door">Kapı</option><option value="window">Pencere</option>'+opts;
@@ -355,7 +355,7 @@
       '<div class="hd-help" id="hd-status">Mobilyayı sürükleyerek taşı. Duvar çizmek için araçtan “Serbest duvar çiz” seç, başlangıç ve bitiş noktalarına tıkla. Öğeyi seçip ölçüsünü, rengini ve yönünü değiştirebilirsin. Ctrl+Z geri al · Ctrl+Y yinele · Delete sil.</div>';
     el.classList.add("open");
     const by=id=>document.getElementById(id), redraw=()=>renderHomePlan(p), snap=Number(by("hd-snap").value);
-    const remember=()=>{try{const key="jarvis.homeDesign.history";const h=JSON.parse(localStorage.getItem(key)||"[]");h.push(JSON.stringify(p));localStorage.setItem(key,JSON.stringify(h.slice(-30)));}catch(e){}};
+    const remember=()=>{try{const key="jarvis.homeDesign.history";const h=JSON.parse(localStorage.getItem(key)||"[]");h.push(JSON.stringify(p));localStorage.setItem(key,JSON.stringify(h.slice(-30)));localStorage.removeItem("jarvis.homeDesign.redo");}catch(e){}};
     const updateObject=fn=>{const o=p.objects[p.selectedObject];if(!o)return;remember();fn(o);redraw();};
     by("hd-close").onclick=()=>el.classList.remove("open");
     by("hd-plan").addEventListener("pointerdown",ev=>{
@@ -410,7 +410,7 @@
       const objects=data.objects.map(o=>{if(!o||!allowed.includes(o.type)||!Number.isFinite(+o.x)||!Number.isFinite(+o.z))throw new Error("object");return {type:o.type,x:Math.max(-data.width/2,Math.min(data.width/2,+o.x)),z:Math.max(-data.depth/2,Math.min(data.depth/2,+o.z)),width:Math.max(.1,Math.min(10,+o.width||.9)),depth:Math.max(.1,Math.min(10,+o.depth||.55)),rotation:Number(o.rotation)||0,label:String(o.label||o.type).slice(0,40),color:/^#[0-9a-f]{6}$/i.test(o.color||"")?o.color:undefined};});
       p=Object.assign({},data,{roomNames,objects,walls:Array.isArray(data.walls)?data.walls.slice(0,500):[],wallHeight:Math.max(2.2,Math.min(5,+data.wallHeight||2.8))});redraw();buildHome3D(p);JV.toast&&JV.toast("Ev projesi içe aktarıldı.");
     }catch(err){JV.toast&&JV.toast("JSON proje dosyası geçersiz veya desteklenmiyor.");}e.target.value="";};
-    window.addEventListener("keydown",function hdKeys(e){if(!el.classList.contains("open"))return;if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="z"){e.preventDefault();by("hd-undo").click();}else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="y"){e.preventDefault();by("hd-redo").click();}else if(e.key==="Delete")by("hd-delete").click();});
+    if(el._hdKeys)window.removeEventListener("keydown",el._hdKeys);el._hdKeys=function(e){if(!el.classList.contains("open"))return;if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="z"){e.preventDefault();by("hd-undo").click();}else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="y"){e.preventDefault();by("hd-redo").click();}else if(e.key==="Delete")by("hd-delete").click();};window.addEventListener("keydown",el._hdKeys);
   }
 
   // ---- yüzen panel ----
