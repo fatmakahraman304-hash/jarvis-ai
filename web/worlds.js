@@ -70,7 +70,7 @@
     view = v; current = W[v] || null;
     const world = v !== "core";
     document.body.classList.toggle("world-mode", world);
-    ["globe", "lab", "science", "space", "city", "graph", "twin", "bio"].forEach((x) => document.body.classList.toggle("view-" + x, v === x));
+    ["globe", "lab", "science", "space", "graph", "twin", "bio"].forEach((x) => document.body.classList.toggle("view-" + x, v === x));
     JV.coreHidden = world;
     U.panel(null); U.caption("");
     document.getElementById("map-panel").classList.add("hidden");
@@ -95,7 +95,6 @@
     if (ui.startsWith("holo") || ui === "chart3d") { JV.setView("lab"); return W.lab.cmd(ui, r, args); }
     if (ui === "sim") { JV.setView("science"); return W.science.cmd(r.kind, r.params || {}, r); }
     if (ui === "space") { JV.setView("space"); return W.space.cmd(r); }
-    if (ui === "city") { JV.setView("city"); return W.city.cmd(r); }
     if (ui === "graph") { JV.setView("graph"); return W.graph.cmd(r); }
     if (ui === "twin") { JV.setView("twin"); return W.twin.cmd(r); }
     if (ui === "bio") { JV.setView("bio"); return W.bio.cmd(r); }
