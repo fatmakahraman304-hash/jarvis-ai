@@ -296,15 +296,22 @@
     addWall("Sağ dış duvar",width/2,0,wall,depth);
     for(let col=1;col<cols;col++) addWall("İç bölme",-width/2+col*cw,0,wall,depth);
     for(let row=1;row<rows;row++) addWall("İç bölme",0,-depth/2+row*ch,width,wall);
-    // Kapı ve pencereler 3D modelde renkli, duvara oturan elemanlar olarak gösterilir.
+    // Serbest çizilen duvarlar, 2D plandaki koordinatlarla aynı ölçekte 3D'ye aktarılır.
+    (p.walls||[]).forEach((w,i)=>{
+      const dx=Number(w.x2)-Number(w.x1),dz=Number(w.z2)-Number(w.z1),len=Math.hypot(dx,dz);
+      if(len<0.08)return;
+      parts.push({name:"Serbest duvar "+(i+1),type:"box",size:[len,height,Math.max(0.06,Number(w.thickness)||wall)],pos:[(Number(w.x1)+Number(w.x2))/2,height/2+0.12,(Number(w.z1)+Number(w.z2))/2],rot:[0,-Math.atan2(dz,dx)/DEG,0],color:w.color||wallColor});
+    });
+    if(p.roofOn) parts.push({name:"Çatı döşemesi",type:"box",size:[width+0.35,0.18,depth+0.35],pos:[0,height+0.21,0],color:p.roofColor||"#596a7b"});
+    // Mobilya ölçüleri ve dönüş açıları 2D editördeki değerlerle eşleşir.
     (p.objects||[]).forEach((o,i)=>{
       const x=Number(o.x)||0,z=Number(o.z)||0;
-      if(o.type==="door") parts.push({name:"Kapı kasası "+(i+1),type:"box",size:[0.07,2.1,0.08],pos:[x-0.46,1.17,z],color:"#80502f"},{name:"Kapı kanadı "+(i+1),type:"box",size:[0.88,2.0,0.045],pos:[x-0.44,1.12,z],color:"#a66b3f",hinge:true});
+      if(o.type==="door") parts.push({name:"Kapı kasası "+(i+1),type:"box",size:[0.07,2.1,0.08],pos:[x-0.46,1.17,z],color:"#80502f"},{name:"Kapı kanadı "+(i+1),type:"box",size:[0.88,2.0,0.045],pos:[x-0.44,1.12,z],rot:[0,-(Number(o.rotation)||0),0],color:o.color||"#a66b3f",hinge:true});
       else if(o.type==="window") { /* Cam ve duvar açıklığı addWall içinde üretilir. */ }
       else {
-        const specs={sofa:[1.9,0.75,0.85,"#657b8d"],bed:[1.6,0.45,2.0,"#b7a0c9"],table:[1.2,0.75,0.8,"#a8794f"],wardrobe:[1.1,2.1,0.6,"#8d735f"],toilet:[0.48,0.42,0.68,"#f0f4f5"],kitchen:[1.8,0.9,0.65,"#777f87"],desk:[1.2,0.75,0.65,"#9b744d"],plant:[0.45,0.9,0.45,"#39875c"]};
-        const s=specs[o.type]||specs.table;
-        parts.push({name:(o.label||o.type)+" "+(i+1),type:"box",size:s.slice(0,3),pos:[x,s[1]/2+0.12,z],color:o.color||s[3]});
+        const specs={sofa:[1.9,0.75,0.85,"#657b8d"],bed:[1.6,0.45,2.0,"#b7a0c9"],table:[1.2,0.75,0.8,"#a8794f"],wardrobe:[1.1,2.1,0.6,"#8d735f"],toilet:[0.48,0.42,0.68,"#f0f4f5"],kitchen:[1.8,0.9,0.65,"#777f87"],desk:[1.2,0.75,0.65,"#9b744d"],plant:[0.45,0.9,0.45,"#39875c"],fridge:[0.7,1.9,0.7,"#c8d2d8"],shower:[0.9,2.0,0.9,"#8acbdc"],sink:[0.6,0.85,0.5,"#e5edf0"],stairs:[1.0,2.8,2.0,"#9d8063"],pool:[3,0.6,2,"#3c9dc4"],tree:[1,2.8,1,"#39875c"],fence:[2,1.2,0.12,"#9b7852"],gate:[1,1.2,0.12,"#a66b3f"],light:[0.25,0.12,0.25,"#ffe08a"],outlet:[0.12,0.12,0.05,"#d9e5ed"],switch:[0.1,0.15,0.04,"#e7e7e7"],radiator:[0.8,0.65,0.15,"#e5edf0"]};
+        const s=specs[o.type]||specs.table,ow=Math.max(.1,Number(o.width)||s[0]),od=Math.max(.1,Number(o.depth)||s[2]);
+        parts.push({name:(o.label||o.type)+" "+(i+1),type:"box",size:[ow,s[1],od],pos:[x,s[1]/2+0.12,z],rot:[0,-(Number(o.rotation)||0),0],color:o.color||s[3]});
       }
     });
     build(parts,"Ev iç mekânı · "+(p.title||"Yeni proje"));
