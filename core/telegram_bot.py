@@ -289,7 +289,7 @@ def broadcast(text):
             print("[telegram]", e)
 
 
-HELP = ("Komutlar:\n/jarvis /friday /ultron — kişilik değiştir\n/ses — sesli cevabı aç/kapat\n"
+HELP = ("Komutlar:\n/jarvis /friday — kişilik değiştir\n/ses — sesli cevabı aç/kapat\n"
         "/onay KOD — kritik işlemi onayla\n/iptal KOD — reddet\n/durum — bilgisayarın durumu\n/dosya YOL — bilgisayardan dosya gönder\n"
         "/kamera — bilgisayar kamerasından fotoğraf (izin açıksa)\n/ekran — ekran görüntüsü\n/panel — düğmeli uzaktan kumanda (kilitle, uyut, ekran…)\n"
         "/kilitle — bilgisayarı kilitle\n/brifing — sabah brifingi\n/dur — ACİL DURDURMA\n"
@@ -298,7 +298,7 @@ HELP = ("Komutlar:\n/jarvis /friday /ultron — kişilik değiştir\n/ses — se
 
 COMMANDS = [("panel", "Düğmeli uzaktan kumanda"), ("ekran", "Ekran görüntüsü"), ("kilitle", "Bilgisayarı kilitle"),
             ("durum", "Bilgisayarın durumu"), ("brifing", "Sabah brifingi"), ("ses", "Sesli cevap aç/kapat"),
-            ("kamera", "Kamera fotoğrafı"), ("jarvis", "JARVIS'e geç"), ("friday", "FRIDAY'e geç"), ("ultron", "ULTRON'a geç"),
+            ("kamera", "Kamera fotoğrafı"), ("jarvis", "JARVIS'e geç"), ("friday", "FRIDAY'e geç"),
             ("dur", "ACİL DURDURMA"), ("yardim", "Komutlar")]
 
 
