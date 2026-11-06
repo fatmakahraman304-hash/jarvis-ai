@@ -1,9 +1,9 @@
 {
-  "version": "4.6.45",
+  "version": "4.6.46",
   "date": "2026-11-06",
   "notes": [
-    "Gemini HTTP 429 kotası dolan modeller soğuma süresince tekrar denenmez",
-    "Gemini 3.5 Flash-Lite genel HTTP 400 durumunda isteği isteğe bağlı düşünme ayarı olmadan en fazla bir kez yeniden dener",
-    "HTTP 400 ve HTTP 429 ayrı raporlanır, kullanıcıya yanlış günlük kota teşhisi verilmez"
+    "Gemini 3.5+ Flash ve Flash-Lite isteklerinde artık kullanılmaması önerilen örnekleme ayarları gönderilmez",
+    "Flash-Lite için isteğe bağlı düşük düşünme ayarı kaldırıldı; varsayılan düşünme düzeyi kullanılır",
+    "HTTP 400 durumunda gizli içerik paylaşmadan istek yapısı günlüğe kaydedilir ve üç aşamalı kullanıcı teşhis aracı eklendi"
   ]
 }
