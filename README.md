@@ -144,6 +144,16 @@ Beyin konuya göre ilgili araçları kendisi seçer; sen sadece ne istediğini s
 
 Sesler ücretsiz Microsoft Neural seslerinden (edge-tts, anahtar gerekmez) ayarlanır ve tarayıcıda kişiliğe özel efekt eklenir: JARVIS'e hafif yankı ve netlik, FRIDAY'e sıcak hafif yankı, ULTRON'a kalın ton, metalik halka modülasyonu, hafif distorsiyon ve uzun yankı. Ses dili Otomatik/Türkçe/İngilizce seçilebilir; İngilizce'de JARVIS İngiliz (Ryan), FRIDAY İrlandalı (Emily) aksanıyla konuşur. Filmdeki oyuncuların seslerinin kopyası **değildir** (gerçek kişilerin sesini izinsiz klonlamak doğru olmaz); film havasına yaklaştıran ayarlardır. Hız/ton sürgüleri Ayarlar → Ses'te.
 
+### Kullanıcıya ait orijinal ses klipleri (Türkçe + İngilizce)
+
+İzinli/sahibi olduğun film ses kayıtlarını kullanmak için:
+1. `data/voice_assets/` klasörünü oluştur.
+2. `voice_assets/manifest.example.json` dosyasını örnek alarak `data/voice_assets/manifest.json` oluştur.
+3. Ses dosyalarını `data/voice_assets/` altına koy. Manifestte her karakter ve dil için **tam cümleyi** anahtar, göreli dosya yolunu değer olarak yaz. Örnek: `"sistemler çevrimiçi, efendim.": "jarvis/tr/greeting.mp3"`.
+4. Karakterin konuşacağı cümle manifestte birebir (büyük/küçük harf ve boşluk farkları yok sayılır) eşleşirse kayıt çalınır. Eşleşme yoksa mevcut Microsoft Neural TTS otomatik kullanılır.
+
+Desteklenen biçimler: MP3, WAV, OGG, M4A ve WebM. Dosyalar yerel `data/` klasöründe kalır; Git'e eklenmez. Bu yöntem kayıtlı replikler içindir; film oyuncusunun sesini sınırsız yeni cümleler için klonlamaz.
+
 ## Proje yapısı
 
 ```
