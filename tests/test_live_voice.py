@@ -13,7 +13,7 @@ class LiveVoiceDefaultsTest(unittest.TestCase):
     def test_uses_mark_live_compatible_voice_defaults(self):
         self.assertEqual(LIVE_MODEL, "gemini-3.1-flash-live-preview")
         self.assertEqual(LIVE_VOICE, "Charon")
-        self.assertEqual(LIVE_VOICES, {"jarvis": "Charon", "friday": "Aoede", "ultron": "Fenrir"})
+        self.assertEqual(LIVE_VOICES, {"jarvis": "Charon", "friday": "Aoede"})
         self.assertEqual(SAMPLE_RATE, 24000)
 
     def test_websocket_handler_is_loaded_lazily(self):
