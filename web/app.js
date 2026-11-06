@@ -382,7 +382,6 @@
   const LIVE_VOICE_OPTIONS = [
     ["Charon", "Charon · tok ve dengeli"],
     ["Aoede", "Aoede · yumuşak ve kadınsı"],
-    ["Fenrir", "Fenrir · derin ve güçlü"],
     ["Puck", "Puck · canlı ve enerjik"],
     ["Kore", "Kore · net ve sıcak"],
     ["Orus", "Orus · otoriter ve tok"],
