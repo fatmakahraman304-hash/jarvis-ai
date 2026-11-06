@@ -1,0 +1,18 @@
+{
+  "jarvis": {
+    "tr": {
+      "sistemler çevrimiçi, efendim.": "jarvis/tr/greeting.mp3"
+    },
+    "en": {
+      "at your service, sir.": "jarvis/en/greeting.mp3"
+    }
+  },
+  "friday": {
+    "tr": {},
+    "en": {}
+  },
+  "ultron": {
+    "tr": {},
+    "en": {}
+  }
+}
