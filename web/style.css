@@ -682,5 +682,11 @@ body.view-design #world{display:none}
 .spaceplanner-bar span{color:#a9bac9;flex:1}
 .spaceplanner-bar a{color:#9ee7ff;text-decoration:none}
 .spaceplanner-bar button{background:#193449;color:#eaf6ff;border:1px solid #3d7898;border-radius:6px;padding:7px 10px;cursor:pointer}
-#spaceplanner-frame{display:block;width:100%;height:calc(100% - 48px);border:0;background:#fff}
+.spaceplanner-launch{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:28px;background:radial-gradient(ellipse at center,#142c40 0%,#0b1119 65%);color:#eaf3fb}
+.spaceplanner-mark{font-size:76px;color:#8fe8ff;text-shadow:0 0 28px #36cfff88}
+.spaceplanner-launch h2{letter-spacing:.18em;color:#9ee7ff;font:600 24px var(--mono,monospace)}
+.spaceplanner-launch p{max-width:560px;color:#b7c8d6;line-height:1.7}
+.spaceplanner-launch button,.spaceplanner-bar #spaceplanner-open{background:#123c55;color:#eafaff;border:1px solid #4aaccb;border-radius:8px;padding:13px 20px;font-weight:700;cursor:pointer;box-shadow:0 0 22px #29b9ef22}
+.spaceplanner-launch button:hover,.spaceplanner-bar #spaceplanner-open:hover{background:#1a5875}
+.spaceplanner-launch small{margin-top:14px;color:#8298aa}
 @media(max-width:700px){.spaceplanner-bar{gap:8px;padding:0 8px;font-size:10px}.spaceplanner-bar span{display:none}.spaceplanner-bar button{padding:6px}}
