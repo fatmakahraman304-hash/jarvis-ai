@@ -186,7 +186,7 @@ _NO_THINK_CFG = set()  # bu ayarı kabul etmeyen modeller
 def _new_flash(model):
     """3.5+ Flash models no longer need the legacy sampling arguments."""
     import re
-    return bool(re.match(r"^gemini-3\\.(?:[5-9]|[1-9][0-9])(?:-|$)", str(model)))
+    return bool(re.match(r"^gemini-3\.(?:[5-9]|[1-9][0-9])(?:-|$)", str(model)))
 
 
 def _shape_summary(body):
