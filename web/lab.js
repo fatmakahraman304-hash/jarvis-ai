@@ -303,7 +303,7 @@
       const x=Math.max(-p.width/2,Math.min(p.width/2,(pt.x-pad)/sx-p.width/2));
       const z=Math.max(-p.depth/2,Math.min(p.depth/2,(pt.y-pad)/sy-p.depth/2));
       const type=document.getElementById("hd-tool").value;
-      if(type==="select"){const near=p.objects.reduce((best,o,i)=>Math.hypot(o.x-x,o.z-z)<(best.d||Infinity)?{i,d:Math.hypot(o.x-x,o.z-z)}:best,null);if(near&&near.d<1.2){p.objects.splice(near.i,1);renderHomePlan(p);}return;}
+      if(type==="select"){const near=p.objects.reduce((best,o,i)=>!best||Math.hypot(o.x-x,o.z-z)<best.d?{i,d:Math.hypot(o.x-x,o.z-z)}:best,null);if(near&&near.d<1.2){p.objects.splice(near.i,1);renderHomePlan(p);}return;}
       p.objects.push({type,x,z,label:type});renderHomePlan(p);
     };
     document.getElementById("hd-floor").onchange=e=>{p.floorColor=e.target.value;renderHomePlan(p);};
