@@ -32,7 +32,7 @@ def main():
     search = llm.ranked_models_for_tier("gemini", "search")
     assert fast[0] == "gemini-3.5-flash-lite", fast
     assert smart[0] == "gemini-3.8-flash", smart
-    assert search[0] == "gemini-3.8-flash", search
+    assert search[0] == "gemini-3.5-flash-lite", search
     assert all(not m.startswith("gemini-2.5-") for tier in (fast, smart, search) for m in tier)
     assert "gemini-3.1-flash-lite" in fast and "gemini-3.7-flash" in smart
     assert llm._gemini_model_restricted("models/gemini-2.5-flash-lite")
@@ -65,7 +65,7 @@ def main():
 
     seen.clear()
     list(llm.route(["gemini"], [{"role": "user", "content": "kaynaklı araştır"}], None, tier="search"))
-    assert seen == [("gemini-3.8-flash", 20)], seen
+    assert seen == [("gemini-3.5-flash-lite", 10)], seen
 
     seen.clear()
 
