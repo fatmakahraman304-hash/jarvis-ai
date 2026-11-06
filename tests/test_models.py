@@ -166,7 +166,7 @@ def all429(pid, model, messages, tools=None, temperature=0.7, timeout=90):
 
 llm.stream_chat = all429; seen.clear()
 evs = list(llm.route(["gemini"], [{"role": "user", "content": "x"}], None))
-check("Gemini hakkı bitince Groq'a GİTMEZ, açıkça söyler", "groq" not in seen and any(k == "error" and "ücretsiz hakkı doldu" in d for k, d in evs), evs[-1:])
+check("Gemini kota/hız sınırında Groq'a GİTMEZ, açıkça söyler", "groq" not in seen and any(k == "error" and "kota" in d for k, d in evs), evs[-1:])
 llm._cooldown.clear()
 _ss({"only_gemini": False}); llm.stream_chat = ok_any; seen.clear()
 os.environ["GEMINI_API_KEY"] = ""
