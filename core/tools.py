@@ -458,7 +458,7 @@ def news_search(query, max_results=8):
     return out or "Haber bulunamadı."
 
 
-def _grounded(query):
+def _grounded(query, timeout=15):
     """Gemini + Google Arama (canlı): kısa güncel cevap + kaynaklar. Ücretsiz kotası dolarsa sessizce atlanır."""
     from . import llm
     if not llm.configured("gemini") or llm.key_bad("gemini"):
@@ -478,7 +478,7 @@ def _grounded(query):
                                      data=json.dumps(body).encode(), method="POST",
                                      headers={"Content-Type": "application/json", "x-goog-api-key": llm._key("gemini")})
         try:
-            with urllib.request.urlopen(req, timeout=15) as r:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
                 data = json.loads(r.read())
         except urllib.error.HTTPError as e:
             b = e.read().decode("utf-8", "ignore")
@@ -567,7 +567,7 @@ def web_search(query, max_results=6, recent=False):
     # Expensive grounded generation is a fallback, not a second mandatory model call.
     if not out:
         try:
-            grounded = _grounded(query)
+            grounded = _grounded(query, timeout=6)
             if grounded:
                 out["canlı_cevap"] = grounded
         except Exception as e:
@@ -810,7 +810,7 @@ def is_critical(name, args):
     return crit(args) if callable(crit) else bool(crit)
 
 
-TOOL_TIMEOUT = {"web_search": 25, "news_search": 15, "read_webpage": 20, "weather": 15, "currency": 15,  # ağ araçları: süre sınırlı
+TOOL_TIMEOUT = {"web_search": 15, "news_search": 12, "read_webpage": 12, "weather": 15, "currency": 15,  # ağ araçları: süre sınırlı
                 "browser_open": 45, "browser_read": 30, "browser_look": 45}
 
 
