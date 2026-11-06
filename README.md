@@ -135,7 +135,7 @@ Beyin konuya göre ilgili araçları kendisi seçer; sen sadece ne istediğini s
 | Nereden | Nasıl |
 |---|---|
 | Bilgisayar | `start.bat` |
-| Telefon (aynı Wi-Fi) | `start-lan.bat` → pencerede yazan `http://192.168…/?token=…` adresini telefonda aç → tarayıcı menüsünden **Ana ekrana ekle**. Uygulama gibi çalışır, sesli konuşur. Telefonda mikrofon/kamera için `start-vr.bat` (şifreli https) kullan. |
+| Telefon (aynı Wi-Fi) | `start-lan.bat` → pencerede yazan `https://192.168…/?token=…` adresini telefonda aç → ilk sertifika uyarısında **Gelişmiş > Devam et** → tarayıcı menüsünden **Ana ekrana ekle**. HTTPS kamera/mikrofonu da destekler. |
 | VR gözlük | `start-vr.bat` → gözlüğün tarayıcısında pencerede yazan `https://…` adresini aç ("Gelişmiş > Devam et") → bir 3D dünya seç → 🥽 VR |
 | Diğer bilgisayarlar | Her birinde `start-lan.bat`; birinde ⌘ KOMUTA → BİLGİSAYARLARIM → AĞI TARA → anahtarı gir → BAĞLA. Uzaktan komut için diğerinde Ayarlar → Bağlantılar → "Ağdaki diğer JARVIS bilgisayarlarından gelen komutlara izin ver" |
 | Telegram (her yerden) | @BotFather → `/newbot` → token'ı `.env`'de `TELEGRAM_BOT_TOKEN`'a yaz, JARVIS'i başlat, bota yaz; bot sana kullanıcı kimliğini söyler → `TELEGRAM_ALLOWED_IDS`'e yaz, yeniden başlat. Komutlar: `/panel` `/ekran` `/kilitle` `/durum` `/brifing` `/ses` `/jarvis` `/friday` `/ultron` `/onay KOD` `/iptal KOD` `/dur` (telefondaki `/` menüsünde de listelenir). Bot senin bilgisayarında çalışan beyne bağlıdır; bilgisayar açık olmalı. |
@@ -170,8 +170,9 @@ tests/               python tests/test_smoke.py · test_skills.py · test_more.p
 - *"Henüz hiçbir model bağlı değil"* → Ayarlar → Modeller'e anahtar gir.
 - Ses çıkmıyor → Ayarlar → Ses'teki nota bak; edge-tts yoksa tarayıcı sesi kullanılır (`.venv\Scripts\pip install edge-tts`).
 - Mikrofon çalışmıyor → Edge/Chrome kullan, adres çubuğundaki mikrofon iznini ver.
-- Telefon bağlanmıyor → Windows Güvenlik Duvarı ilk açılışta soracak, "Özel ağ"a izin ver.
+- Telefon bağlanmıyor → Windows Güvenlik Duvarı ilk açılışta soracak, "Özel ağ"a izin ver. `start-lan.bat` artık otomatik HTTPS açar; telefonda ekranda yazan `https://` adresini kullan.
 - Video araçları "ffmpeg bulunamadı" diyor → bir kez `winget install Gyan.FFmpeg` (ya da JARVIS'e "ffmpeg kur" de), JARVIS'i yeniden başlat.
 - El/kamera algılama, ortam sesi tanıma ilk açılışta internetten model indirir (MediaPipe); sonra tarayıcı önbellekten kullanır.
 - Resim üretimi yanıt vermiyor → Pollinations yoğun olabilir; `.env`'e ücretsiz `HF_TOKEN` ekle (yedek olarak FLUX kullanılır).
 - VR düğmesi görünmüyor → adres `https://` olmalı (`start-vr.bat`) ve tarayıcı WebXR desteklemeli.
+- iPhone kamera açılmıyor → `start-lan.bat` ile JARVIS'i yeniden başlat, konsoldaki yeni `https://` adresini aç ve Safari'de kamera izni ver. `http://172…` gibi IP adresli HTTP bağlantıları kamera API'sini engeller.
