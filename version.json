@@ -1,7 +1,8 @@
 {
-  "version": "4.6.21",
+  "version": "4.6.22",
   "date": "2026-11-06",
   "notes": [
+    "🪜 EV TASARIM PRO: merdivenler artık kat yüksekliğine göre gerçek 3D basamaklar, eğimli korkuluklar ve dikmelerle oluşturulur; genişlik, derinlik ve dönüş açısı planla eşleşir",
     "🏗 EV TASARIM PRO: tüm katları tek 3D yapıda üst üste gösterme, seçilebilir/silinebilir duvarlar ve CAD uyumlu DXF dışa aktarma eklendi",
     "🏠 EV TASARIM PRO: birden fazla kat arasında geçiş, yeni kat ekleme ve fotoğraf/çizim referansını planın altında izleme eklendi",
     "🏠 EV TASARIM PRO: mobilya sürükle-bırak, ölçü/renk/döndür/kopyala/sil, serbest duvar çizimi ve 3D eşleme, ızgara yakalama, oda alanları, kat planı SVG/PDF çıktısı ve çalışan geri al/yinele eklendi",
