@@ -120,6 +120,14 @@ def _bounded_specs(specs, task, manual_groups=(), limit=24):
             score += 20
         if group == "core" and name in {"web_search", "open_app", "open_url"}:
             score += 2
+        # Direct research commands must not get swamped by broad group keywords
+        # such as "internet" (Windows) or "haber" (daily/worldwatch).
+        research_intent = any(word in text for word in
+                              ("araştır", "internette", "güncel", "kaynak", "haber"))
+        if name == "web_search" and research_intent:
+            score += 40
+        if name == "news_search" and ("haber" in text or "gündem" in text):
+            score += 28
         if name == "enable_tools":
             score += 1000
         if name == "task_report":
@@ -127,7 +135,20 @@ def _bounded_specs(specs, task, manual_groups=(), limit=24):
         scored.append((-score, index, spec))
 
     scored.sort(key=lambda item: (item[0], item[1]))
-    chosen = sorted(scored[:limit], key=lambda item: item[1])
+    # Diversity: a loose group match must not occupy the whole request.
+    selected, per_group = [], {}
+    for item in scored:
+        spec = item[2]
+        name = (spec.get("function") or {}).get("name", "")
+        group = tools.TOOL_GROUP.get(name, "core")
+        group_limit = limit if group in manual_groups else (8 if group != "core" else 10)
+        if per_group.get(group, 0) >= group_limit and name not in {"enable_tools", "task_report"}:
+            continue
+        selected.append(item)
+        per_group[group] = per_group.get(group, 0) + 1
+        if len(selected) >= limit:
+            break
+    chosen = sorted(selected, key=lambda item: item[1])
     out = [item[2] for item in chosen]
     print(f"[araç-seçimi] aday={len(specs)} gönderilen={len(out)}")
     return out
