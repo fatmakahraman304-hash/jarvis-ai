@@ -61,6 +61,9 @@ try:
     assert active['url']=='https://spaceplanner.co/'
     assert active['buttons']==1
     assert active['draws']==1
+    frame=browser.spaceplanner_frame()
+    assert frame['active'] and frame['image'].startswith('data:image/jpeg;base64,/9j/')
+    assert browser._call(lambda:browser._state['page'].evaluate('window.draws'))==1
     assert all(req['toolConfig']['functionCallingConfig']['mode']=='ANY' for req in seen if req.get('tools'))
     assert any(e['type']=='tool' and e['name']=='spaceplanner_open' and e['status']=='done' for e in events)
     assert all('[spaceplanner_open]' not in e.get('text','') for e in events if e['type']=='token')

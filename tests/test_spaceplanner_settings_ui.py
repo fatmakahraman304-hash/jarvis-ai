@@ -41,6 +41,18 @@ try:
             p.wait_for_selector('#spaceplanner-open',state='visible')
             assert p.evaluate('JV.getView()')=='design'
             assert p.url.startswith(base)
+            assert p.locator('#spaceplanner-view iframe').count()==0
+            image=p.screenshot(type='jpeg')
+            import base64
+            frame={'active':True,'message':'Chrome · canlı görünüm','image':'data:image/jpeg;base64,'+base64.b64encode(image).decode()}
+            p.route('**/api/spaceplanner/frame',lambda r:r.fulfill(content_type='application/json',body=json.dumps(frame)))
+            p.wait_for_selector('#spaceplanner-frame[src^="data:image/jpeg"]',state='visible')
+            p.wait_for_function("document.querySelector('#spaceplanner-frame').naturalWidth > 0")
+            assert p.locator('.spaceplanner-launch').is_hidden()
+            panel=p.locator('#spaceplanner-view').bounding_box();chat=p.locator('#right').bounding_box()
+            assert panel['x']+panel['width'] <= chat['x']
+            assert p.locator('#mic').is_visible() and p.locator('#send').is_visible()
+
             def sse(events):return ''.join('data: '+json.dumps(e)+'\n\n' for e in events)
             response={'body':sse([{'type':'token','text':'Önceki kısmi yanıt.'},{'type':'error','text':'Gerçek araç çağrısı oluşmadı.'},{'type':'done','text':'Gerçek araç çağrısı oluşmadı.','outcome':'blocked'}])}
             p.route('**/api/chat',lambda r:r.fulfill(content_type='text/event-stream',body=response['body']))

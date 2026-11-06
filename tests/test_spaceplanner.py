@@ -11,6 +11,8 @@ os.environ['JARVIS_DATA'] = tempfile.mkdtemp(prefix='jv_planner_')
 from core import tools
 from core.skills import browser, holo
 
+ORIGINAL_CTX=browser._ctx
+
 class PlannerTests(unittest.TestCase):
     def setUp(self):
         self.page = Mock(url='https://spaceplanner.co/editor')
@@ -29,6 +31,40 @@ class PlannerTests(unittest.TestCase):
         self.assertEqual(holo.home_design('4x3 oda')['sayfa']['adres'],self.page.url)
         self.page.goto.assert_not_called(); self.ctx.new_page.assert_not_called()
         self.page.bring_to_front.assert_called_once()
+
+    def test_live_frame_does_not_launch_or_reload_and_blocks_other_tabs(self):
+        browser._state['ctx']=self.ctx
+        self.page.screenshot.return_value=b'jpeg'
+        frame=browser.spaceplanner_frame()
+        self.assertTrue(frame['active']);self.assertTrue(frame['image'].startswith('data:image/jpeg;base64,'))
+        self.page.goto.assert_not_called();self.ctx.new_page.assert_not_called()
+        self.page.url='https://example.com/private'
+        self.assertFalse(browser.spaceplanner_frame()['active'])
+        self.assertEqual(self.page.screenshot.call_count,1)
+        browser._state['ctx']=None
+        self.assertFalse(browser.spaceplanner_frame()['active'])
+
+    def test_open_marks_embedded_and_returns_ui(self):
+        result=browser.spaceplanner_open()
+        self.assertTrue(browser._state['embedded'])
+        self.assertEqual(result['ui'],'spaceplanner')
+
+    def test_embedded_launch_requires_chrome_without_edge_fallback(self):
+        from playwright import sync_api
+        original=dict(browser._state)
+        try:
+            browser._state.update(ctx=None,page=None,pw=None,embedded=True)
+            chrome=Mock();chrome.launch_persistent_context.side_effect=RuntimeError('Chrome missing')
+            pw=Mock(chromium=chrome)
+            with patch.object(browser,'_ctx',wraps=ORIGINAL_CTX),patch.object(sync_api,'sync_playwright') as factory:
+                factory.return_value.start.return_value=pw
+                with self.assertRaisesRegex(RuntimeError,'Chrome kurulu'):
+                    browser._ctx()
+            self.assertEqual(chrome.launch_persistent_context.call_count,1)
+            options=chrome.launch_persistent_context.call_args.kwargs
+            self.assertEqual(options['channel'],'chrome');self.assertTrue(options['headless'])
+        finally:
+            browser._state.clear();browser._state.update(original)
 
     def test_precise_room_drag(self):
         browser.spaceplanner_draw([{'x':200,'y':200},{'x':500,'y':400}],size='400x300')
@@ -55,6 +91,31 @@ class PlannerTests(unittest.TestCase):
         with patch.object(browser, '_label_of', return_value='Room'):
             self.assertFalse(browser._click_crit({'target':'10'}))
         self.assertTrue(browser._fill_crit({'field':'10','value':'x','submit':True}))
+
+    def test_frame_endpoint_is_not_cached_and_requires_remote_token(self):
+        from starlette.testclient import TestClient
+        from core import server
+        with patch.object(browser,'spaceplanner_frame',return_value={'active':False}) as frame:
+            with TestClient(server.app) as client:
+                response=client.get('/api/spaceplanner/frame')
+                self.assertEqual(response.status_code,200)
+                self.assertEqual(response.headers['cache-control'],'no-store')
+            frame.reset_mock()
+            with patch.object(server,'TOKEN','test-secret'),TestClient(server.app,client=('198.51.100.2',1234)) as remote:
+                self.assertEqual(remote.get('/api/spaceplanner/frame').status_code,401)
+            frame.assert_not_called()
+
+    def test_windows_app_uses_chrome_and_never_default_browser(self):
+        import run
+        with patch.object(run.sys,'platform','win32'),patch.object(run.time,'sleep'),patch.object(run.shutil,'which',return_value='C:/Chrome/chrome.exe'),patch.object(Path,'is_file',return_value=True),patch.object(run.subprocess,'Popen') as launch,patch.object(run.webbrowser,'open') as fallback:
+            run.open_window('http://127.0.0.1:8765')
+            self.assertEqual(launch.call_args.args[0][0],'C:/Chrome/chrome.exe')
+            self.assertIn('--app=http://127.0.0.1:8765',launch.call_args.args[0])
+            self.assertNotIn('shell',launch.call_args.kwargs)
+            fallback.assert_not_called()
+        with patch.object(run.sys,'platform','win32'),patch.object(run.time,'sleep'),patch.object(run.shutil,'which',return_value=None),patch.object(Path,'is_file',return_value=False),patch.object(run.webbrowser,'open') as fallback,patch('builtins.print'):
+            run.open_window('http://127.0.0.1:8765')
+            fallback.assert_not_called()
 
     def test_routing(self):
         for text in ['SpacePlanner aç', 'ev tasarımı', '4 metre oda çiz', 'kapı ekle']:

@@ -705,3 +705,13 @@ html[data-theme="light"] .s-tabs button.active{background:#076d9b;color:#fff}
 #task-state[data-state=blocked],#task-state[data-state=paused],#task-state[data-state=needs_confirmation]{color:#e5a54c}
 .tool-result{white-space:pre-wrap;overflow-wrap:anywhere;max-height:200px;overflow:auto;font:11px var(--mono);line-height:1.5;margin:8px 0}
 details.msg.tool summary{cursor:pointer}
+
+/* Controlled Chrome live view, with JARVIS voice/chat still accessible. */
+#spaceplanner-live{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#08101a;overflow:hidden}
+#spaceplanner-live[hidden],.spaceplanner-launch[hidden]{display:none}
+#spaceplanner-frame{width:100%;min-height:0;flex:1;object-fit:contain}
+#spaceplanner-live-status{font:11px var(--mono);color:#9ee7ff;padding:7px;margin:0}
+body.view-design #spaceplanner-view{inset:100px 400px 48px 20px}
+body.view-design #log,body.view-design #right{visibility:visible}
+@media(max-width:1400px){body.view-design #spaceplanner-view{left:20px;right:400px}}
+@media(max-width:850px){body.view-design #spaceplanner-view{inset:95px 8px max(280px, calc(30vh + 190px))}.spaceplanner-bar span{display:none}}

@@ -56,6 +56,15 @@ def _sse(gen):
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
+async def spaceplanner_frame_api(request):
+    from .skills import browser
+    try:
+        frame = await asyncio.to_thread(browser.spaceplanner_frame)
+        return JSONResponse(frame, headers={"Cache-Control": "no-store"})
+    except Exception as exc:
+        return JSONResponse({"active": False, "message": "Canlı Chrome görüntüsü alınamadı: " + str(exc)}, headers={"Cache-Control": "no-store"})
+
+
 async def index(request):
     # Google OAuth dönüşü (yönlendirme adresi kök dizin)
     code, st = request.query_params.get("code"), request.query_params.get("state")
@@ -1038,6 +1047,7 @@ routes = [
     Route("/", index),
     Route("/manifest.json", manifest),
     Route("/api/state", state),
+    Route("/api/spaceplanner/frame", spaceplanner_frame_api),
     Route("/api/chat", chat, methods=["POST"]),
     Route("/api/confirm", confirm, methods=["POST"]),
     Route("/api/tts", tts),
