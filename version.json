@@ -1,9 +1,10 @@
 {
-  "version": "4.6.10",
+  "version": "4.6.11",
   "date": "2026-11-06",
   "notes": [
-    "🧪 GÜNCELLE test hatası düzeltildi: 503 modelinin yeniden denenmesini bekleyen eski test güncellendi",
-    "⚡ 503/504 alan model aynı istekte tekrar bekletilmeden sonraki modele geçer",
-    "⏱ 503/504 alan model 30 dakika dinlendirilir; sonraki istek doğrudan sağlıklı modele gider"
+    "⚡ SEARCH görevleri artık Gemini 3.5 Flash-Lite ile başlar; 10 saniyelik sınırla Flash yedeklerine geçer",
+    "🔎 Web araması tüm motorlarda paralel başlar ve ilk işe yarar sonuçta döner; haber araması yalnızca gerektiğinde yapılır",
+    "🧠 Bir başarılı web aramasından sonra aynı istekte yeni arama araçları kaldırılır; en fazla bir kaynak sayfası okunur",
+    "🛡 Araştırma turu dört model adımıyla sınırlandırıldı; normal görevlerin adım bütçesi korunur"
   ]
 }
