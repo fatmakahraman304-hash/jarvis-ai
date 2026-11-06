@@ -1,10 +1,9 @@
 {
-  "version": "4.6.28",
+  "version": "4.6.29",
   "date": "2026-11-06",
   "notes": [
-    "🔎 Güncelleme testi sırasında her testin adı ve ilerlemesi ekranda gösterilir",
-    "⏱️ 10 dakikayı aşan test açık hata verir; güncelleme uygulanmadan durur",
-    "🧹 Test geçici dosyaları başarılı veya başarısız her durumda temizlenir",
-    "🛡️ Testler tamamlanmadan mevcut JARVIS dosyalarına dokunulmaz"
+    "📦 Windows için Inno Setup kurulum paketi GitHub Actions üzerinden üretilir",
+    "🛡️ Mevcut .env, data ve plugins klasörleri kurulum sırasında korunur",
+    "🔄 Kurulum kullanıcı profiline yapılır; Python 3.10–3.13 start.bat tarafından hazırlanır"
   ]
 }
