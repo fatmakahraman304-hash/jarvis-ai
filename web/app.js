@@ -770,12 +770,13 @@
     box.append(d);
     const s = JV.settings;
     $("#o-guest").checked = !!s.guest_mode; $("#o-rcam").checked = !!s.allow_remote_camera; $("#o-rscr").checked = s.allow_remote_screen !== false; $("#o-rcmd").checked = !!s.allow_remote_commands; $("#o-rport").value = s.robot_port || ""; $("#o-rurl").value = s.robot_url || "";
-    $("#o-auto").checked = !!s.auto_control; $("#o-mail").checked = s.email_watch !== false; $("#o-meet").checked = s.meeting_alerts !== false; $("#o-city").value = s.city || "";
+    $("#o-browser-auto").checked = s.routine_browser_auto !== false; $("#o-auto").checked = !!s.auto_control; $("#o-mail").checked = s.email_watch !== false; $("#o-meet").checked = s.meeting_alerts !== false; $("#o-city").value = s.city || "";
   }
   $("#links-save").onclick = async () => {
     const k = {}; document.querySelectorAll('section[data-tab=links] .prov input[data-env]').forEach((i) => i.value.trim() && (k[i.dataset.env] = i.value.trim()));
     const r = await JV.api("/api/keys", { body: k }); toast(r.ok ? "Kaydedildi." : (r.error || "Kaydedilemedi"));
   };
+  $("#o-browser-auto").onchange = (e) => { saveSettings({ routine_browser_auto: e.target.checked }); };
   $("#o-auto").onchange = (e) => { saveSettings({ auto_control: e.target.checked }); if (e.target.checked) toast("Dikkat: JARVIS artık ekranda onaysız tıklayıp yazabilir."); };
   $("#o-mail").onchange = (e) => saveSettings({ email_watch: e.target.checked });
   $("#o-meet").onchange = (e) => saveSettings({ meeting_alerts: e.target.checked });
