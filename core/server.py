@@ -975,6 +975,8 @@ def _scheduler():
 MODEL_MIGRATIONS = [  # (bayrak, eski model kalıbı, .env anahtarları) — her biri yalnızca bir kez çalışır
     ("3.5.1", r"^(models/)?gemini-(1|2)\.", ("GEMINI_MODEL", "GEMINI_VISION_MODEL")),
     ("3.5.3-groq", r"^(llama-3\.3-70b|llama-3\.1-8b|moonshotai/kimi-k2|mixtral|gemma2|llama3-)", ("GROQ_MODEL",)),
+    # Clear the stale 3.3 pin; 4.6.7 now selects Gemini by FAST/SMART/SEARCH job tier.
+    ("4.6.7-tier-routing", r"^(models/)?gemini-3\.3-", ("GEMINI_MODEL", "GEMINI_VISION_MODEL")),
 ]
 
 
