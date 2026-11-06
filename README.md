@@ -1,6 +1,11 @@
 # J.A.R.V.I.S. Personal AI
 
-## 4.6.13 — Mark LVI tarzı canlı ses
+## 4.6.13 — JARVIS / FRIDAY / ULTRON ayrı ses profilleri
+
+- JARVIS varsayılan olarak **Charon**, FRIDAY **Aoede** (yumuşak kadınsı ton), ULTRON **Fenrir** (derin ve güçlü ton) Gemini Live seslerini kullanır.
+- **Ayarlar → SES → SES KARAKTERLERİ** bölümünden üç kişiliğin Live sesini ayrı ayrı değiştirebilirsin. Değişiklik bir sonraki konuşmada etkinleşir.
+- Gemini Live çalışmazsa her kişilik kendi Microsoft Neural yedek sesine döner: JARVIS Ahmet/Ryan, FRIDAY Emel/Emily, ULTRON daha düşük perdeli Ahmet/Christopher.
+- Ses Laboratuvarı, önizleme modülü, ses listeleme API'si ve ona ait stiller kaldırıldı. Mikrofon, konuşma tanıma, sesli yanıt, efektler ve ses kimliği korunur.
 
 - Ayarlar → **SES** bölümündeki **Mark LVI tarzı Gemini Live sesi (Charon)** seçeneğiyle JARVIS yanıtlarını Gemini Live'ın Charon sesiyle dinleyebilirsin.
 - Yanıtı hâlâ JARVIS'in kendi beyni üretir; web araması, araçlar, hafıza, kritik işlem onayı ve mevcut konuşma akışı korunur. Gemini Live yalnızca metni sese dönüştürür.
