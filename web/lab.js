@@ -298,9 +298,14 @@
     for(let row=1;row<rows;row++) addWall("İç bölme",0,-depth/2+row*ch,width,wall);
     // Serbest çizilen duvarlar, 2D plandaki koordinatlarla aynı ölçekte 3D'ye aktarılır.
     (p.walls||[]).forEach((w,i)=>{
-      const dx=Number(w.x2)-Number(w.x1),dz=Number(w.z2)-Number(w.z1),len=Math.hypot(dx,dz);
-      if(len<0.08)return;
-      parts.push({name:"Serbest duvar "+(i+1),type:"box",size:[len,height,Math.max(0.06,Number(w.thickness)||wall)],pos:[(Number(w.x1)+Number(w.x2))/2,height/2+0.12,(Number(w.z1)+Number(w.z2))/2],rot:[0,-Math.atan2(dz,dx)/DEG,0],color:w.color||wallColor});
+      const thickness=Math.max(0.06,Number(w.thickness)||wall),steps=w.cx!=null&&w.cz!=null?16:1;
+      let prev={x:Number(w.x1),z:Number(w.z1)};
+      for(let j=1;j<=steps;j++){
+        const t=j/steps,point=w.cx!=null&&w.cz!=null?{x:(1-t)*(1-t)*Number(w.x1)+2*(1-t)*t*Number(w.cx)+t*t*Number(w.x2),z:(1-t)*(1-t)*Number(w.z1)+2*(1-t)*t*Number(w.cz)+t*t*Number(w.z2)}:{x:Number(w.x2),z:Number(w.z2)};
+        const dx=point.x-prev.x,dz=point.z-prev.z,len=Math.hypot(dx,dz);
+        if(len>=0.04)parts.push({name:"Serbest duvar "+(i+1)+" · "+j,type:"box",size:[len,height,thickness],pos:[(prev.x+point.x)/2,height/2+0.12,(prev.z+point.z)/2],rot:[0,-Math.atan2(dz,dx)/DEG,0],color:w.color||wallColor});
+        prev=point;
+      }
     });
     if(p.roofOn) parts.push({name:"Çatı döşemesi",type:"box",size:[width+0.35,0.18,depth+0.35],pos:[0,height+0.21,0],color:p.roofColor||"#596a7b"});
     // Mobilya ölçüleri ve dönüş açıları 2D editördeki değerlerle eşleşir.
@@ -376,10 +381,10 @@
       const stroke=i===selected?"#ffe17b":"#102331";
       return '<g class="hd-object" data-index="'+i+'" transform="translate('+q.x+' '+q.y+') rotate('+(Number(o.rotation)||0)+')" style="cursor:move"><rect x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="'+h+'" rx="4" fill="'+color+'" fill-opacity=".92" stroke="'+stroke+'" stroke-width="'+(i===selected?4:2)+'"/><text x="0" y="4" fill="#101b24" text-anchor="middle" font-size="10" pointer-events="none">'+esc(label)+'</text></g>';
     }).join("");
-    const walls=p.walls.map((w,i)=>{const a=xy(w.x1,w.z1),b=xy(w.x2,w.z2);return '<line data-wall="'+i+'" x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+'" stroke="'+(i===selectedWall?"#ffd66b":(w.color||p.wallColor||"#e4e0d8"))+'" stroke-width="'+Math.max(0.06,Number(w.thickness)||0.12)*Math.min(sx,sy)+'" stroke-linecap="square" style="cursor:pointer"/>';}).join("");
+    const walls=p.walls.map((w,i)=>{const a=xy(w.x1,w.z1),b=xy(w.x2,w.z2),stroke=i===selectedWall?"#ffd66b":(w.color||p.wallColor||"#e4e0d8"),width=Math.max(0.06,Number(w.thickness)||0.12)*Math.min(sx,sy);if(w.cx!=null&&w.cz!=null){const q=xy(w.cx,w.cz);return '<path data-wall="'+i+'" d="M '+a.x+' '+a.y+' Q '+q.x+' '+q.y+' '+b.x+' '+b.y+'" fill="none" stroke="'+stroke+'" stroke-width="'+width+'" stroke-linecap="round" style="cursor:pointer"/>';}return '<line data-wall="'+i+'" x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+'" stroke="'+stroke+'" stroke-width="'+width+'" stroke-linecap="square" style="cursor:pointer"/>';}).join("");
     const dims='<g fill="#bce9f5" font-size="12"><text x="'+(W/2)+'" y="28" text-anchor="middle">'+p.width.toFixed(2)+' m</text><text x="20" y="'+(H/2)+'" transform="rotate(-90 20 '+(H/2)+')" text-anchor="middle">'+p.depth.toFixed(2)+' m</text></g>';
     const opts=["sofa","bed","table","wardrobe","toilet","kitchen","desk","plant","fridge","shower","sink","stairs","pool","tree","fence","gate","light","outlet","switch","radiator"].map(v=>'<option value="'+v+'">'+({sofa:"Koltuk",bed:"Yatak",table:"Masa",wardrobe:"Dolap",toilet:"Klozet",kitchen:"Mutfak tezgâhı",desk:"Çalışma masası",plant:"Bitki",fridge:"Buzdolabı",shower:"Duş",sink:"Lavabo",stairs:"Merdiven",pool:"Havuz",tree:"Ağaç",fence:"Çit",gate:"Bahçe kapısı",light:"Aydınlatma",outlet:"Priz",switch:"Anahtar",radiator:"Petek"}[v])+'</option>').join("");
-    const tools='<option value="select">Seç / taşı</option><option value="wall">Serbest duvar çiz</option><option value="door">Kapı</option><option value="window">Pencere</option>'+opts;
+    const tools='<option value="select">Seç / taşı</option><option value="wall">Düz duvar çiz</option><option value="curve">Eğri duvar çiz</option><option value="door">Kapı</option><option value="window">Pencere</option>'+opts;
     const area=p.width*p.depth;
     el.innerHTML='<style>#home-plan{position:fixed;inset:3vh 3vw;z-index:10020;background:#101d29;color:#eaf6ff;border:1px solid #3a6075;border-radius:16px;padding:14px;overflow:auto;box-shadow:0 20px 80px #000b;font:13px system-ui}#home-plan .hd-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}#home-plan .hd-head b{font-size:18px;letter-spacing:.08em}#home-plan small{display:block;color:#9db7c8;margin-top:4px}#home-plan .hd-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}#home-plan label{display:inline-flex;align-items:center;gap:5px;color:#c8dce8}#home-plan button,#home-plan select,#home-plan input{background:#203747;color:#eaf6ff;border:1px solid #45677a;border-radius:7px;padding:7px}#home-plan input[type=color]{width:38px;height:30px;padding:2px}#home-plan input[type=number]{width:76px}#home-plan svg{display:block;width:100%;max-height:66vh;background:#142534;border:1px solid #34556a;border-radius:10px;touch-action:none}#home-plan .hd-help{color:#9bb6c7;font-size:12px;margin:8px 2px}#home-plan .hd-side{display:flex;gap:8px;flex-wrap:wrap;align-items:center}#home-plan .hd-selected{border-color:#e9c66c!important}#home-plan .hd-hidden{display:none}</style>'+
       '<div class="hd-head"><div><b>EV TASARIM STÜDYOSU · PRO</b><small>'+esc(p.title||"Yeni proje")+' · '+p.width.toFixed(2)+' × '+p.depth.toFixed(2)+' m · '+area.toFixed(1)+' m² brüt alan · '+p.objects.length+' öğe</small></div><button id="hd-close">KAPAT ✕</button></div>'+
@@ -411,8 +416,13 @@
       if(wallTarget){p.selectedWall=Number(wallTarget.dataset.wall);p.selectedObject=-1;redraw();return;}
       const type=by("hd-tool").value;
       if(type==="wall"){
-        if(!p._wallStart){p._wallStart={x,z};by("hd-status").textContent="Duvarın bitiş noktasını seç.";}
+        if(!p._wallStart){p._wallStart={x,z};by("hd-status").textContent="Düz duvarın bitiş noktasını seç.";}
         else{remember();p.walls.push({x1:p._wallStart.x,z1:p._wallStart.z,x2:x,z2:z,thickness:.12});delete p._wallStart;redraw();}return;
+      }
+      if(type==="curve"){
+        if(!p._curveStart){p._curveStart={x,z};by("hd-status").textContent="Eğri duvarın kontrol noktasını seç.";}
+        else if(!p._curveControl){p._curveControl={x,z};by("hd-status").textContent="Eğri duvarın bitiş noktasını seç.";}
+        else{remember();p.walls.push({x1:p._curveStart.x,z1:p._curveStart.z,cx:p._curveControl.x,cz:p._curveControl.z,x2:x,z2:z,thickness:.12});delete p._curveStart;delete p._curveControl;redraw();}return;
       }
       if(type==="select"){p.selectedObject=-1;redraw();return;}
       remember();const defaults={door:[.9,.12],window:[1.3,.12],sofa:[1.9,.85],bed:[1.6,2],table:[1.2,.8],wardrobe:[1.1,.6],toilet:[.48,.68],kitchen:[1.8,.65],desk:[1.2,.65],plant:[.45,.45],fridge:[.7,.7],shower:[.9,.9],sink:[.6,.5],stairs:[1,2],pool:[3,2],tree:[1,1],fence:[2,.12],gate:[1,.12],light:[.2,.2],outlet:[.12,.08],switch:[.12,.08],radiator:[.8,.15]};
@@ -425,8 +435,8 @@
     by("hd-labels").onchange=e=>{p.showLabels=e.target.checked;redraw();};
     by("hd-dims").onchange=e=>{p.showDimensions=e.target.checked;redraw();};
     by("hd-furniture").onchange=e=>{p.showFurniture=e.target.checked;redraw();};
-    by("hd-undo").onclick=()=>{const h=JSON.parse(localStorage.getItem("jarvis.homeDesign.history")||"[]");if(h.length){p=Object.assign(p,JSON.parse(h.pop()));localStorage.setItem("jarvis.homeDesign.history",JSON.stringify(h));redraw();}};
-    by("hd-redo").onclick=()=>JV.toast&&JV.toast("Yineleme geçmişi bir sonraki sürümde etkinleştirilecek.");
+    by("hd-undo").onclick=()=>{const h=JSON.parse(localStorage.getItem("jarvis.homeDesign.history")||"[]");if(h.length){const r=JSON.parse(localStorage.getItem("jarvis.homeDesign.redo")||"[]");r.push(JSON.stringify(p));localStorage.setItem("jarvis.homeDesign.redo",JSON.stringify(r.slice(-30)));p=Object.assign(p,JSON.parse(h.pop()));localStorage.setItem("jarvis.homeDesign.history",JSON.stringify(h));redraw();buildHome3D(p);}};
+    by("hd-redo").onclick=()=>{const key="jarvis.homeDesign.redo",r=JSON.parse(localStorage.getItem(key)||"[]");if(!r.length)return;const h=JSON.parse(localStorage.getItem("jarvis.homeDesign.history")||"[]");h.push(JSON.stringify(p));localStorage.setItem("jarvis.homeDesign.history",JSON.stringify(h.slice(-30)));p=Object.assign(p,JSON.parse(r.pop()));localStorage.setItem(key,JSON.stringify(r));redraw();buildHome3D(p);};
     by("hd-duplicate").onclick=()=>updateObject(o=>{const n=Object.assign({},o,{x:o.x+.4,z:o.z+.4});p.objects.push(n);p.selectedObject=p.objects.length-1;});
     by("hd-rotate").onclick=()=>updateObject(o=>o.rotation=((Number(o.rotation)||0)+90)%360);
     by("hd-delete").onclick=()=>{if(p.selectedObject>=0){remember();p.objects.splice(p.selectedObject,1);p.selectedObject=-1;redraw();}};
