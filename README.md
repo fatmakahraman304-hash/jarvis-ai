@@ -163,18 +163,13 @@ FAST ve SEARCH isteklerinde 10 saniye, SMART isteklerinde 20 saniye model sını
 
 **Ses motoru notu:** Mark LVI'nin ana konuşması Gemini 3.1 Flash Live ile çift yönlü ses oturumu kullanır. Bu JARVIS arayüzü hâlâ tarayıcı konuşma tanıma + Edge TTS kullanır; ancak metin akışı cümlelere bölünerek cevap tamamlanmadan ses kuyruğuna verilir. Live ses oturumu henüz web konuşma hattına taşınmadı.
 
-## Gemini erişimi ve 4.6.8 model sırası
+## Gemini 2.5 erişim kısıtları (4.6.8)
 
-Google, Gemini 2.5 modellerine yeni projelerde erişimi kısıtladığından JARVIS bu modelleri varsayılan ve yedek sıralarından çıkarır.
+Google, Gemini 2.5 modellerini yeni API projelerinde kısıtladığından JARVIS bu modelleri varsayılan/yedek sıralarından çıkarmıştır. Eski `GEMINI_MODEL`, `GEMINI_VISION_MODEL` ve kişilik model sabitlemelerindeki 2.5 değerleri açılış geçişinde temizlenir. Erişim hatası (404) alan model altı saat dinlendirilir.
 
-- **FAST:** Gemini 3.5 Flash-Lite → 3.1 Flash-Lite → 3.8 Flash → 3.6 Flash → 3.5 Flash.
-- **SMART:** Gemini 3.8 Flash → 3.7 Flash → 3.6 Flash → 3.5 Flash → Flash-Lite yedekleri.
-- **SEARCH:** Gemini 3.8 Flash → 3.6 Flash → 3.5 Flash → Flash-Lite yedekleri.
-- 404 döndüren model altı saat beklemeye alınır; sonraki isteklerde yeniden denenmez.
-- Açılış geçişi, kişiliklerdeki veya `.env` dosyasındaki eski Gemini 2.5 model sabitlemelerini temizler.
+Güncel FAST / SMART / SEARCH modeli sırası için yukarıdaki **Model dağılımı ve hız (v4.6.11)** bölümüne bak.
 
-Kaynak: Google Gemini API model kataloğu ve yeni projeler için 2.5 erişim notu: https://ai.google.dev/gemini-api/docs/models
-
+Kaynak: Google Gemini API model kataloğu: https://ai.google.dev/gemini-api/docs/models
 
 ## Windows 4.6.9 bağlantı kapanışı
 
