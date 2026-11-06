@@ -83,6 +83,30 @@ PROVIDERS = {
     },
 }
 
+# Gemini model roles mirrored from Mark LVI's measured FAST / SMART / SEARCH ladders.
+# This web build uses browser speech recognition + Edge TTS; Gemini Live audio
+# sessions are not sent through the text/tool endpoint.
+GEMINI_LADDERS = {
+    "fast": (
+        "gemini-2.5-flash-lite", "gemini-3.5-flash-lite",
+        "gemini-3.1-flash-lite", "gemini-flash-lite-latest",
+        "gemini-2.5-flash", "gemini-3.5-flash",
+        "gemini-3.6-flash", "gemini-3-flash-preview",
+    ),
+    "smart": (
+        "gemini-2.5-flash", "gemini-3.5-flash",
+        "gemini-2.5-flash-lite", "gemini-3.5-flash-lite",
+        "gemini-3.1-flash-lite", "gemini-3.6-flash",
+        "gemini-3-flash-preview", "gemini-flash-latest",
+    ),
+    "search": (
+        "gemini-2.5-flash", "gemini-3.5-flash",
+        "gemini-2.5-flash-lite", "gemini-flash-latest",
+    ),
+}
+GEMINI_TIMEOUTS = {"fast": 10, "smart": 20, "search": 20, "legacy": 20}
+
+
 
 class ProviderError(Exception):
     def __init__(self, provider, status, body):
