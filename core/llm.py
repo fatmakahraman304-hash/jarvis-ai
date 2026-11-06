@@ -389,7 +389,7 @@ def cooling(pid, model):
 
 
 def pick_model(pid, override=""):
-    if override:
+    if override and not (pid == "gemini" and _gemini_model_restricted(override)):
         return override
     envm = env(f"{pid.upper()}_MODEL")
     if envm and not (pid == "gemini" and _gemini_model_restricted(envm)):
@@ -566,7 +566,10 @@ def vision(prompt, image_bytes, mime="image/png", system="", light=False):
     for pid in VISION_ORDER:
         if not configured(pid) or not allowed(pid) or key_bad(pid):
             continue
-        model = env(f"{pid.upper()}_VISION_MODEL") or ((light and light_model(pid)) or (pick_model_for_tier(pid, "smart") if pid == "gemini" else (pick_model(pid) if pid in ("xai", "custom") else VISION_DEFAULTS.get(pid, ""))))
+        vision_pin = env(f"{pid.upper()}_VISION_MODEL")
+        if pid == "gemini" and _gemini_model_restricted(vision_pin):
+            vision_pin = ""
+        model = vision_pin or ((light and light_model(pid)) or (pick_model_for_tier(pid, "smart") if pid == "gemini" else (pick_model(pid) if pid in ("xai", "custom") else VISION_DEFAULTS.get(pid, ""))))
         tried = []
         while model and len(tried) < 3:
             tried.append(model)
