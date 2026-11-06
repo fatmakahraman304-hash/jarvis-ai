@@ -41,7 +41,7 @@ Bir sorun olursa aynı pencerede **↶ ÖNCEKİ SÜRÜME DÖN**. JARVIS ayrıca 
 ## Kullanım
 
 - **Yaz** ya da **mikrofon düğmesine bas** (klavyede **Boşluk**). **Esc** konuşmayı keser.
-- **👂 UYANDIRMA** açıkken sürekli dinler: *"JARVIS, hava nasıl?"*, *"FRIDAY bilgisayarımın durumu"*, **. İsim söylemek kişiliği de değiştirir. Sadece "JARVIS" dersen bip sesinden sonra 8 sn komut bekler. O konuşurken "dur"/"sus" ya da ismini söylersen susar.
+- **👂 UYANDIRMA** açıkken sürekli dinler: *"JARVIS, hava nasıl?"* veya *"FRIDAY bilgisayarımın durumu"*. İsim söylemek kişiliği de değiştirir. Sadece "JARVIS" ya da "FRIDAY" dersen bip sesinden sonra 10 sn komut bekler. O konuşurken "dur"/"sus" ya da ismini söylersen susar.
 - **◉ KÜRE / ☺ YÜZ**: dönen nokta küresi ya da 3D hologram yüz. İkisi de sesle birlikte titreşir, yüzün çenesi konuşurken açılır.
 - Konuşma tanıma için **Edge veya Chrome** kullan (start.bat zaten Edge'de açar).
 
