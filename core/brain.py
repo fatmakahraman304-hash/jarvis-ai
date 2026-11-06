@@ -173,6 +173,8 @@ def _system_prompt(persona, source):
         f"{persona['prompt']}\n{personas.COMMON_RULES}\n{lessons}"
         f"Şu an: {tools.get_time()}. {platform_note}\n"
         f"Araç grupların konuya göre açılır; gereken araç elinde yoksa enable_tools ile aç.\n"
+        "HIZLI ARAŞTIRMA: web_search tek çağrıda Bing, DuckDuckGo ve gerektiğinde haber kaynaklarını paralel tarar. "
+        "Başarılı sonuçtan sonra yeniden web_search/news_search çağırma. Yalnızca cevap için kritik bir ayrıntı eksikse tek read_webpage çağır; ardından sentezle. Aynı konuyu art arda farklı kelimelerle arama.\n"
         f"KULLANICI HAKKINDA BİLDİKLERİN:\n{fact_txt}"
     )
 
@@ -284,7 +286,8 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
     research_search_attempts = 0
     research_search_done = False
     research_page_reads = 0
-    for _step in range(MAX_STEPS):
+    step_budget = min(MAX_STEPS, 4) if tier == "search" else MAX_STEPS
+    for _step in range(step_budget):
         if time.time() - turn_t0 > TURN_BUDGET:
             print(f"[beyin] {TURN_BUDGET} sn doldu, eldeki bilgiyle cevaplanıyor")
             break
