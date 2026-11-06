@@ -1,9 +1,9 @@
 {
-  "version": "4.6.30",
+  "version": "4.6.31",
   "date": "2026-11-06",
   "notes": [
-    "⚡ Güncelleme kontrolleri en fazla 90 saniye sürer; takılan testte işlem güvenle durur",
-    "🧪 Uzun açılış testi kullanıcı bilgisayarında değil GitHub Actions üzerinde doğrulanır",
-    "📦 Windows kurulum paketi üretimindeki Inno Setup yolu düzeltildi"
+    "🧰 v4.6.26 ve eski güncelleyiciler için ilk kurulum uyumluluğu düzeltildi",
+    "⚡ Güncelleme öncesi yerel testler kısa ve sınırlı; uzun açılış testi GitHub Actions'ta çalışır",
+    "🛡️ .env, data ve plugins klasörlerini koruma davranışı aynen sürer"
   ]
 }
