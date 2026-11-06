@@ -173,6 +173,7 @@ def _system_prompt(persona, source):
         f"{persona['prompt']}\n{personas.COMMON_RULES}\n{lessons}"
         f"Şu an: {tools.get_time()}. {platform_note}\n"
         f"Araç grupların konuya göre açılır; gereken araç elinde yoksa enable_tools ile aç.\n"
+        "EKRAN VE FARE: Ekranı analiz etmen istendiğinde screen_look, yazı için read_screen_text kullan. Bir öğeyi kontrol etmeden önce screen_find ile güncel gerçek masaüstü koordinatını bul; küçültülmüş görüntüden doğrudan tıklama koordinatı uydurma. Fareyi mouse_move ile taşı, mouse_click ile tıkla, mouse_drag ile tutup sürükle, mouse_scroll ile kaydır. Gerekirse list_windows/window_control ile doğru pencereyi öne getir. Her etkileşimden sonra ekranı yeniden gör ve sonucu doğrula; işlem yapılmadan yapıldı deme. Ekran değiştiyse eski koordinatları kullanma. Kritik eylemlerin mevcut onay sistemini koru.\n"
         "HIZLI ARAŞTIRMA: web_search tek çağrıda Bing, DuckDuckGo ve gerektiğinde haber kaynaklarını paralel tarar. "
         "Başarılı sonuçtan sonra yeniden web_search/news_search çağırma. Yalnızca cevap için kritik bir ayrıntı eksikse tek read_webpage çağır; ardından sentezle. Aynı konuyu art arda farklı kelimelerle arama.\n"
         "SPACEPLANNER UZMANI: Ev/oda/kat planı isteğinde spaceplanner_open ile aynı kontrollü plan sekmesini aç veya yeniden kullan. Kullanıcının tarifini uygula; eksik temel ölçüleri sor, pikselden metre uydurma. Gerçek araçları browser_read ile öğren, gerektiğinde resmi https://spaceplanner.co/docs sayfalarını ayrı sekmede oku, sonra browser_tabs ile plana geri dön. browser_look ile tuvali ve CSS piksel koordinatlarını gör. DOM kontrolleri için browser_click/browser_fill, kısayollar için browser_press, çizim ve yerleştirme için spaceplanner_draw kullan. Resmi başlangıç: R oda aracı, dikdörtgeni drag ile çiz; mevcut birim cm ise 4x3 metre için size=400x300 gir (birimi önce kontrol et). D kapı, N pencere; aracı seçip duvara click ile yerleştir. B mobilya kütüphanesi; gerçek öğeyi seçip tuvale click ile yerleştir. 2D/3D ve diğer özellikleri gerçek arayüzden öğren. Her çizim sonrası browser_look ile geometriyi, browser_read ile ölçüleri doğrula; doğrulanmadan tamamlandı deme. Giriş/hesap, ücretli render, paylaşım, dışa aktarma ve silme onay ister. Mevcut çizimi koru; ayrı kontrollü profildeki oturumu kullanırsın. İş bitmediyse kalan adımları açıkça belirt.\n"
@@ -290,7 +291,9 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
     step_budget = min(MAX_STEPS, 4) if tier == "search" else MAX_STEPS
     if "browser" in groups and tier != "search":
         step_budget = max(step_budget, 32)
-    turn_budget = 300 if "browser" in groups and tier != "search" else TURN_BUDGET
+    if "computer" in groups and tier != "search":
+        step_budget = max(step_budget, 24)
+    turn_budget = (300 if "browser" in groups else 180 if "computer" in groups else TURN_BUDGET) if tier != "search" else TURN_BUDGET
     for _step in range(step_budget):
         if time.time() - turn_t0 > turn_budget:
             print(f"[beyin] {turn_budget} sn doldu, eldeki bilgiyle cevaplanıyor")

@@ -30,7 +30,7 @@ jobs:
         shell: pwsh
         run: |
           $release = Get-Content version.json | ConvertFrom-Json
-          if ($release.version -ne "4.6.33") { throw "Unexpected version: $($release.version)" }
+          if ($release.version -ne "4.6.34") { throw "Unexpected version: $($release.version)" }
           python -m compileall -q run.py core
           if (Test-Path "tests/test_smoke.py") { throw "Legacy updater runs test_smoke.py before updating; keep the long smoke test named test_ci_smoke.py." }
           if (-not (Test-Path "tests/test_ci_smoke.py")) { throw "CI smoke test is missing." }
@@ -47,6 +47,7 @@ jobs:
             "tests/test_research_budget.py",
             "tests/test_live_voice.py"
             "tests/test_spaceplanner.py"
+            "tests/test_desktop_control.py"
           )
           foreach ($test in $tests) {
             python $test
@@ -69,11 +70,11 @@ jobs:
           if (-not $compiler) { throw "ISCC.exe not found. Checked: $($candidates -join '; ')" }
           & $compiler "packaging\windows.iss"
           if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed: $LASTEXITCODE" }
-          if (-not (Test-Path "packaging\dist\JARVIS-Setup-4.6.33.exe")) { throw "Installer EXE was not created." }
+          if (-not (Test-Path "packaging\dist\JARVIS-Setup-4.6.34.exe")) { throw "Installer EXE was not created." }
       - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
-          name: JARVIS-Windows-Setup-v4.6.33
-          path: packaging/dist/JARVIS-Setup-4.6.33.exe
+          name: JARVIS-Windows-Setup-v4.6.34
+          path: packaging/dist/JARVIS-Setup-4.6.34.exe
           if-no-files-found: error
           retention-days: 30

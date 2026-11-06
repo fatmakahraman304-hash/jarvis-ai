@@ -4,9 +4,13 @@ Fare ve klavye işlemleri varsayılan olarak onay ister. Ayarlar > Genel > "Ekra
 açılırsa JARVIS bilgisayarı kendi başına kullanabilir.
 """
 import io
+import ctypes
+from ctypes import wintypes
 import json
+import math
 import re
 import sys
+import threading
 import time
 
 from .. import llm
@@ -15,10 +19,9 @@ from ..tools import N, S, _schema
 
 IS_WIN = sys.platform.startswith("win")
 _last_shot = {"scale": 1.0, "ox": 0, "oy": 0, "w": 0, "h": 0}
+_input_lock = threading.RLock()
 
 if IS_WIN:
-    import ctypes
-    from ctypes import wintypes
     try:
         ctypes.windll.shcore.SetProcessDpiAwareness(2)
     except Exception:
@@ -35,11 +38,11 @@ def _need_win():
 
 
 # ===================== ekran =====================
-def _grab(max_w=1600):
+def _grab(max_w=1600, with_meta=False):
     try:
         from PIL import ImageGrab
     except ImportError:
-        raise RuntimeError("Ekranı görmek için 'pillow' gerekli (requirements-extra.txt).")
+        raise RuntimeError("Ekranı görmek için Pillow gerekli; requirements.txt paketlerini yeniden kur.")
     img = ImageGrab.grab(all_screens=True)
     ox = oy = 0
     if IS_WIN:
@@ -48,20 +51,22 @@ def _grab(max_w=1600):
     if img.width > max_w:
         scale = img.width / max_w
         img = img.resize((max_w, int(img.height / scale)))
-    _last_shot.update(scale=scale, ox=ox, oy=oy, w=img.width, h=img.height)
+    meta = dict(scale=scale, ox=ox, oy=oy, w=img.width, h=img.height)
+    _last_shot.update(meta)
     buf = io.BytesIO()
     img.convert("RGB").save(buf, "JPEG", quality=80)
-    return buf.getvalue()
+    return (buf.getvalue(), meta) if with_meta else buf.getvalue()
 
 
 def screen_look(question="Ekranda ne var? Açık pencereleri, önemli yazıları ve hata mesajlarını anlat."):
-    img = _grab()
-    return llm.vision(question + "\nKısa ve net Türkçe cevap ver.", img, "image/jpeg")
+    img, meta = _grab(with_meta=True)
+    return llm.vision(question + f"\nGörüntü {meta['w']}x{meta['h']} piksel. Kısa ve net Türkçe cevap ver. "
+                      "Fare işlemi için screen_find gerçek masaüstü koordinatlarını verir; görüntü koordinatlarını doğrudan kullanma.", img, "image/jpeg")
 
 
 def screen_find(target):
-    img = _grab()
-    prompt = (f"Bu ekran görüntüsü {_last_shot['w']}x{_last_shot['h']} piksel. '{target}' öğesinin (buton, yazı, ikon) "
+    img, shot = _grab(with_meta=True)
+    prompt = (f"Bu ekran görüntüsü {shot['w']}x{shot['h']} piksel. '{target}' öğesinin (buton, yazı, ikon) "
               "merkezinin piksel koordinatını bul. SADECE şu JSON'u yaz: {\"x\": sayı, \"y\": sayı, \"bulundu\": true/false, \"not\": \"kısa\"}")
     ans = llm.vision(prompt, img, "image/jpeg")
     m = re.search(r"\{.*\}", ans, re.S)
@@ -71,10 +76,18 @@ def screen_find(target):
         d = json.loads(m.group(0))
     except Exception:
         return f"Konum çıkarılamadı: {ans[:200]}"
-    if not d.get("bulundu", True):
+    if not isinstance(d, dict):
+        return "Geçerli konum bulunamadı; ekranı yeniden analiz et."
+    if d.get("bulundu") is not True:
         return f"'{target}' ekranda bulunamadı. {d.get('not', '')}"
-    sx = int(float(d["x"]) * _last_shot["scale"] + _last_shot["ox"])
-    sy = int(float(d["y"]) * _last_shot["scale"] + _last_shot["oy"])
+    try:
+        x, y = float(d["x"]), float(d["y"])
+        if not (0 <= x < shot["w"] and 0 <= y < shot["h"]):
+            raise ValueError("Görüntü sınırları dışında")
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return "Geçerli konum bulunamadı; ekranı yeniden analiz et."
+    sx = int(x * shot["scale"] + shot["ox"])
+    sy = int(y * shot["scale"] + shot["oy"])
     return {"x": sx, "y": sy, "not": d.get("not", ""), "ipucu": "mouse_click ile bu koordinata tıklayabilirsin"}
 
 
@@ -84,26 +97,99 @@ def read_screen_text():
 
 
 # ===================== fare / klavye =====================
+def screen_info():
+    """Negatif koordinatlı ikinci monitörler dahil sanal masaüstü."""
+    _need_win()
+    pos = wintypes.POINT()
+    if not U32.GetCursorPos(ctypes.byref(pos)):
+        raise RuntimeError("Fare konumu okunamadı.")
+    return {"x": U32.GetSystemMetrics(76), "y": U32.GetSystemMetrics(77),
+            "width": U32.GetSystemMetrics(78), "height": U32.GetSystemMetrics(79),
+            "mouse_x": pos.x, "mouse_y": pos.y, "birim": "masaüstü pikseli"}
+
+
+def _point(x, y):
+    x, y = float(x), float(y)
+    left, top = U32.GetSystemMetrics(76), U32.GetSystemMetrics(77)
+    width, height = U32.GetSystemMetrics(78), U32.GetSystemMetrics(79)
+    if not (math.isfinite(x) and math.isfinite(y) and left <= x < left + width and top <= y < top + height):
+        raise ValueError("Koordinat masaüstü sınırları dışında; screen_info veya screen_find kullan.")
+    return int(x), int(y)
+
+
+def _check_stop():
+    from .control import ESTOP
+    if ESTOP.is_set():
+        raise RuntimeError("Acil durdurma etkin; fare kontrolü durduruldu.")
+
+
+def _move_to(x, y, duration=0):
+    x, y = _point(x, y)
+    duration = float(duration)
+    if not math.isfinite(duration) or not 0 <= duration <= 3:
+        raise ValueError("Hareket süresi 0–3 saniye olmalı.")
+    _check_stop()
+    pos = wintypes.POINT()
+    if not U32.GetCursorPos(ctypes.byref(pos)):
+        raise RuntimeError("Fare konumu okunamadı.")
+    steps = max(1, int(duration * 60))
+    for i in range(1, steps + 1):
+        _check_stop()
+        k = i / steps
+        if not U32.SetCursorPos(round(pos.x + (x - pos.x) * k), round(pos.y + (y - pos.y) * k)):
+            raise RuntimeError("Fare taşınamadı; Windows masaüstü erişimini kontrol et.")
+        if duration:
+            time.sleep(duration / steps)
+
+
+def _buttons(button):
+    flags = {"left": (0x0002, 0x0004), "right": (0x0008, 0x0010), "middle": (0x0020, 0x0040)}
+    if button not in flags:
+        raise ValueError("Fare düğmesi left/right/middle olmalı.")
+    return flags[button]
+
+
 def mouse_click(x, y, button="left", double=False):
     _need_win()
-    U32.SetCursorPos(int(x), int(y))
-    time.sleep(0.05)
-    down, up = (0x0008, 0x0010) if button == "right" else (0x0002, 0x0004)
-    for _ in range(2 if double else 1):
-        U32.mouse_event(down, 0, 0, 0, 0)
-        U32.mouse_event(up, 0, 0, 0, 0)
-        time.sleep(0.08)
+    down, up = _buttons(button)
+    with _input_lock:
+        _move_to(x, y)
+        for _ in range(2 if double else 1):
+            _check_stop()
+            U32.mouse_event(down, 0, 0, 0, 0)
+            U32.mouse_event(up, 0, 0, 0, 0)
+            time.sleep(0.08)
     return f"{'Çift ' if double else ''}tıklandı ({x},{y})."
 
 
-def mouse_move(x, y):
+def mouse_move(x, y, duration=0.35):
     _need_win()
-    U32.SetCursorPos(int(x), int(y))
+    with _input_lock:
+        _move_to(x, y, duration)
     return f"Fare ({x},{y}) konumunda."
+
+
+def mouse_drag(x1, y1, x2, y2, duration=0.7, button="left"):
+    _need_win()
+    down, up = _buttons(button)
+    with _input_lock:
+        _point(x2, y2)
+        duration = float(duration)
+        if not math.isfinite(duration) or not 0 <= duration <= 3:
+            raise ValueError("Hareket süresi 0–3 saniye olmalı.")
+        _move_to(x1, y1)
+        _check_stop()
+        U32.mouse_event(down, 0, 0, 0, 0)
+        try:
+            _move_to(x2, y2, duration)
+        finally:
+            U32.mouse_event(up, 0, 0, 0, 0)
+    return f"Sürüklendi: ({x1},{y1}) → ({x2},{y2})."
 
 
 def mouse_scroll(amount=-5):
     _need_win()
+    _check_stop()
     U32.mouse_event(0x0800, 0, 0, int(amount) * 120, 0)
     return "Kaydırıldı."
 
@@ -313,14 +399,16 @@ def _control_crit(_a):
 
 
 TOOLS = {
+    "screen_info": (screen_info, _schema("Masaüstü sınırlarını ve fare konumunu verir; çoklu monitörde negatif koordinatlar olabilir.", {}), False),
     "screen_look": (screen_look, _schema("Ekranı GÖRÜR ve soruyu cevaplar (ne açık, hata ne diyor, ne yapmalıyım).",
                                          {"question": S("ekran hakkında soru")}), False),
     "screen_find": (screen_find, _schema("Ekranda bir buton/yazı/ikonun koordinatını bulur.",
                                          {"target": S("bulunacak öğe, örn 'Gönder butonu'")}, ["target"]), False),
     "read_screen_text": (read_screen_text, _schema("Ekrandaki tüm yazıyı okur (OCR)."), False),
     "mouse_click": (mouse_click, _schema("Ekranda koordinata tıklar.", {"x": N("x"), "y": N("y"),
-                    "button": {"type": "string", "enum": ["left", "right"]}, "double": {"type": "boolean"}}, ["x", "y"]), _control_crit),
-    "mouse_move": (mouse_move, _schema("Fareyi taşır.", {"x": N("x"), "y": N("y")}, ["x", "y"]), False),
+                    "button": {"type": "string", "enum": ["left", "right", "middle"]}, "double": {"type": "boolean"}}, ["x", "y"]), _control_crit),
+    "mouse_move": (mouse_move, _schema("Fareyi gerçek masaüstü koordinatına yumuşak hareketle taşır; önce screen_find kullan.", {"x": N("x"), "y": N("y"), "duration": N("saniye, 0–3")}, ["x", "y"]), False),
+    "mouse_drag": (mouse_drag, _schema("Fareyle tutup sürükler; pencere, dosya veya çizim nesnesini taşır. Koordinatları güncel screen_find sonucundan al.", {"x1": N("başlangıç x"), "y1": N("başlangıç y"), "x2": N("bitiş x"), "y2": N("bitiş y"), "duration": N("saniye, 0–3"), "button": {"type": "string", "enum": ["left", "right", "middle"]}}, ["x1", "y1", "x2", "y2"]), _control_crit),
     "mouse_scroll": (mouse_scroll, _schema("Sayfayı kaydırır (eksi aşağı).", {"amount": N("adım")}), False),
     "key_press": (key_press, _schema("Tuş/kısayol basar: 'enter', 'ctrl+s', 'alt+tab', 'win+d', 'ctrl+shift+esc'.",
                                      {"keys": S("tuşlar")}, ["keys"]), _control_crit),
