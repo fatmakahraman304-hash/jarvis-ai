@@ -22,6 +22,7 @@ const context = vm.createContext({
 vm.runInContext(speech + `\nthis.test = {
   enable() { wakeMode=true; startRec(false); }, single() { startRec(true); },
   stop: stopRec, enabled: () => wakeMode, active: () => recognizing
+  , handoff(value) { sttHandoff=value; }
 };`, context);
 function tick() { const work=[...pending.values()]; pending.clear(); work.forEach(f=>f()); }
 const t = context.test;
@@ -32,6 +33,9 @@ assert.equal(instances.at(-1).continuous,true, 'single command must return to co
 instances.at(-1).onerror({error:'network'}); instances.at(-1).onend(); tick(); assert(t.active());
 context.JV.stt.busy=()=>true; instances.at(-1).onend(); tick(); assert(!t.active());
 context.JV.stt.busy=()=>false; listeners.focus(); tick(); assert(t.active());
+t.handoff(true); instances.at(-1).onend(); tick(); assert(!t.active());
+listeners.focus(); tick(); assert(!t.active(), 'do not restart during microphone permission request');
+t.handoff(false); listeners.focus(); tick(); assert(t.active());
 const before=instances.length; t.stop(); listeners.focus(); tick(); assert.equal(instances.length,before);
 t.enable(); instances.at(-1).onerror({error:'not-allowed'}); instances.at(-1).onend(); tick(); assert(!t.enabled());
 console.log('Continuous listening: restart, one-shot, network, STT handoff, manual stop and permission checks passed.');

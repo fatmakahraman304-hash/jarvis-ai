@@ -172,11 +172,11 @@
   // ---------- konuşma tanıma ----------
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   let rec = null, recognizing = false, wakeMode = false, awaitingCmd = 0, oneShot = false;
-  let recRetry = null, recFailures = 0;
+  let recRetry = null, recFailures = 0, sttHandoff = false;
   function resumeListening(delay = 250) {
     clearTimeout(recRetry);
     if (!wakeMode) return;
-    recRetry = setTimeout(() => { if (wakeMode && !recognizing && !(JV.stt && JV.stt.busy())) startRec(false); }, delay);
+    recRetry = setTimeout(() => { if (wakeMode && !recognizing && !sttHandoff && !(JV.stt && JV.stt.busy())) startRec(false); }, delay);
   }
   addEventListener("online", () => resumeListening());
   addEventListener("focus", () => resumeListening());
@@ -273,6 +273,10 @@
   }
   // Whisper ile tek komut dinle (Groq anahtarı varsa varsayılan: çok daha doğru tanıma)
   function whisperOnce() {
+    sttHandoff = true;
+    clearTimeout(recRetry);
+    if (rec) { try { rec.abort(); } catch (e) {} }
+    recognizing = false;
     if (JV.settings.voice_id || JV.settings.voice_lock) JV.voiceId.start();
     let lastBar = 0;
     JV.stt.record({
@@ -282,19 +286,19 @@
         const k = Math.round(v * 10); setStatus("listening", "DİNLİYORUM " + "▮".repeat(k) + "▯".repeat(10 - k) + (voice ? "  🎙 ses var" : ""));
       },
       onText: (t, info = {}) => {
-        setStatus(null); resumeListening();
+        sttHandoff = false; setStatus(null); resumeListening();
         if (t) { guardedSend(t); return; }
         if (info.reason === "sessiz") toast(info.level < 0.004 ? "Mikrofondan hiç ses gelmiyor. Ayarlar > SES > Mikrofon'dan doğru mikrofonu seç ya da Windows'ta mikrofon sesini aç." : "Konuşma duyulmadı. Biraz daha yüksek/yakından konuş; Ayarlar > SES > MİKROFON TESTİ ile deneyebilirsin.", 9000);
         else if (info.reason === "anlaşılmadı") toast("Ses geldi ama ne dediğin anlaşılamadı, tekrar söyler misin?", 6000);
       },
-      onError: (e) => { setStatus(null); resumeListening(); toast("Konuşma tanınamadı: " + e, 9000); },
+      onError: (e) => { sttHandoff = false; setStatus(null); resumeListening(); toast("Konuşma tanınamadı: " + e, 9000); },
     });
   }
   JV.whisperOnce = whisperOnce;
   $("#mic").onclick = () => {
     JV.unlockAudio();
     if (JV.speaking) JV.stopSpeaking();
-    if (JV.stt && JV.stt.available()) { if (JV.stt.busy()) JV.stt.stop(); else { if (rec) { try { rec.abort(); } catch (e) {} } recognizing = false; whisperOnce(); } return; }
+    if (JV.stt && JV.stt.available()) { if (JV.stt.busy()) JV.stt.stop(); else whisperOnce(); return; }
     if (!SR) { recordFallback(); return; }
     if (recognizing && oneShot) { try { rec.stop(); } catch (e) {} return; }
     startRec(true);
