@@ -97,12 +97,14 @@ GEMINI_LADDERS = {
         "gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash",
         "gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite",
     ),
+    # Search calls mainly choose and synthesize web tools. Start with the
+    # same measured lightweight models as FAST; keep full Flash as fallback.
     "search": (
-        "gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash",
         "gemini-3.5-flash-lite", "gemini-3.1-flash-lite",
+        "gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash",
     ),
 }
-GEMINI_TIMEOUTS = {"fast": 10, "smart": 20, "search": 20, "legacy": 20}
+GEMINI_TIMEOUTS = {"fast": 10, "smart": 20, "search": 10, "legacy": 20}
 
 
 

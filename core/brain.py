@@ -122,6 +122,36 @@ def _conversation_tier(text, groups=None):
 
 
 
+_SEARCH_TOOL_NAMES = {"web_search", "news_search"}
+
+
+def _research_tool_specs(specs, search_done=False, search_attempts=0, page_reads=0):
+    """Keep the model from serially repeating searches and page fetches in one turn."""
+    out = []
+    for spec in specs or ():
+        fn = (spec.get("function") or {}) if isinstance(spec, dict) else {}
+        name = fn.get("name", "")
+        if name in _SEARCH_TOOL_NAMES and (search_done or search_attempts >= 2):
+            continue
+        if name == "read_webpage" and page_reads >= 1:
+            continue
+        out.append(spec)
+    return out
+
+
+def _search_result_usable(name, result):
+    """A successful search returns at least one grounded answer or source list."""
+    try:
+        payload = json.loads(result) if isinstance(result, str) else result
+    except Exception:
+        return False
+    if name == "web_search" and isinstance(payload, dict):
+        return bool(payload.get("canlı_cevap") or payload.get("sonuçlar") or payload.get("haberler"))
+    if name == "news_search":
+        return isinstance(payload, list) and bool(payload)
+    return False
+
+
 def _system_prompt(persona, source):
     facts = memory.facts(60)
     fact_txt = "\n".join(f"- {f['fact']}" for f in facts) or "- (henüz kayıtlı bilgi yok)"
@@ -143,6 +173,8 @@ def _system_prompt(persona, source):
         f"{persona['prompt']}\n{personas.COMMON_RULES}\n{lessons}"
         f"Şu an: {tools.get_time()}. {platform_note}\n"
         f"Araç grupların konuya göre açılır; gereken araç elinde yoksa enable_tools ile aç.\n"
+        "HIZLI ARAŞTIRMA: web_search tek çağrıda Bing, DuckDuckGo ve gerektiğinde haber kaynaklarını paralel tarar. "
+        "Başarılı sonuçtan sonra yeniden web_search/news_search çağırma. Yalnızca cevap için kritik bir ayrıntı eksikse tek read_webpage çağır; ardından sentezle. Aynı konuyu art arda farklı kelimelerle arama.\n"
         f"KULLANICI HAKKINDA BİLDİKLERİN:\n{fact_txt}"
     )
 
@@ -248,7 +280,14 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
 
     turn_t0 = time.time()
     seen_calls = {}
-    for _step in range(MAX_STEPS):
+    # One successful federated search is normally enough: web_search already
+    # queries Google/Bing/DuckDuckGo/news in parallel. Allow one alternate
+    # wording only when the first search returned no usable sources.
+    research_search_attempts = 0
+    research_search_done = False
+    research_page_reads = 0
+    step_budget = min(MAX_STEPS, 4) if tier == "search" else MAX_STEPS
+    for _step in range(step_budget):
         if time.time() - turn_t0 > TURN_BUDGET:
             print(f"[beyin] {TURN_BUDGET} sn doldu, eldeki bilgiyle cevaplanıyor")
             break
@@ -257,7 +296,13 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
             break
         final = None
         step_text = ""
-        for ev in llm.route(pconf.get("providers", []), messages, tools.specs(groups), pconf.get("model", ""), tier=tier):
+        available_tools = _research_tool_specs(
+            tools.specs(groups),
+            search_done=research_search_done,
+            search_attempts=research_search_attempts,
+            page_reads=research_page_reads,
+        )
+        for ev in llm.route(pconf.get("providers", []), messages, available_tools, pconf.get("model", ""), tier=tier):
             kind, data = ev
             if kind == "provider":
                 used = {"provider": data["provider"], "model": data["model"]}
@@ -286,6 +331,12 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
                 req = {g.strip() for g in str(args.get("groups", "")).split(",") if g.strip() in tools.GROUP_INFO}
                 groups |= req
                 result = f"Açıldı: {', '.join(sorted(req)) or 'yok'}. Şimdi bu araçları kullanabilirsin."
+            elif name in _SEARCH_TOOL_NAMES and research_search_done:
+                result = "Bu istek için canlı web araması zaten yapıldı. İlk arama sonuçları yeterli; yeni arama başlatma, mevcut kaynakları sentezleyip cevap ver."
+            elif name in _SEARCH_TOOL_NAMES and research_search_attempts >= 2:
+                result = "Bu istekte iki arama denemesi tamamlandı. Yeni arama yapma; elindeki kaynaklarla cevap ver."
+            elif name == "read_webpage" and research_page_reads >= 1:
+                result = "Bu istekte bir kaynak sayfası zaten okundu. Yeni sayfa açma; arama sonuçları ve okunan sayfayla cevap ver."
             elif name not in tools.TOOLS:
                 result = f"Bilinmeyen araç: {name}"
             elif guest and (tools.is_critical(name, args) or tools.TOOL_GROUP.get(name) in GUEST_BLOCKED):
@@ -302,7 +353,14 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
             else:
                 yield {"type": "tool", "name": name, "args": args, "status": "running"}
                 t1 = time.time()
+                if name in _SEARCH_TOOL_NAMES:
+                    research_search_attempts += 1
+                elif name == "read_webpage":
+                    research_page_reads += 1
                 result = tools.execute(name, args)
+                if name in _SEARCH_TOOL_NAMES:
+                    if _search_result_usable(name, result) or research_search_attempts >= 2:
+                        research_search_done = True
                 print(f"[araç] {name} {time.time() - t1:.1f} sn")
                 seen_calls[(name, json.dumps(args, sort_keys=True, ensure_ascii=False))] = result[:4000]
                 yield {"type": "tool", "name": name, "args": args, "status": "done",

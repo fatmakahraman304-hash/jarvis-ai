@@ -394,7 +394,7 @@ def _bing_url(href):
 
 
 def _search_bing(query, n):
-    page = _http_get("https://www.bing.com/search?" + urllib.parse.urlencode({"q": query, "setlang": "tr", "cc": "TR", "count": 15}))
+    page = _http_get("https://www.bing.com/search?" + urllib.parse.urlencode({"q": query, "setlang": "tr", "cc": "TR", "count": 15}), timeout=5.5)
     out = []
     for blk in re.findall(r'<li class="b_algo"(.*?)</li>', page, re.S):
         m = re.search(r'<h2[^>]*>\s*<a[^>]+href="([^"]+)"[^>]*>(.*?)</a>', blk, re.S)
@@ -410,7 +410,7 @@ def _search_bing(query, n):
 def _search_ddg(query, n):
     req = urllib.request.Request("https://html.duckduckgo.com/html/", data=urllib.parse.urlencode({"q": query, "kl": "tr-tr"}).encode(),
                                  headers={"User-Agent": UA, "Accept-Language": "tr,en;q=0.8", "Content-Type": "application/x-www-form-urlencoded"})
-    with urllib.request.urlopen(req, timeout=12) as r:
+    with urllib.request.urlopen(req, timeout=5.5) as r:
         page = r.read(2_000_000).decode("utf-8", "ignore")
     if "anomaly" in page and "result__a" not in page:
         raise RuntimeError("DuckDuckGo robot doğrulaması istedi")
@@ -427,7 +427,7 @@ def _search_ddg(query, n):
 
 
 def _search_ddg_lite(query, n):
-    page = _http_get("https://lite.duckduckgo.com/lite/?" + urllib.parse.urlencode({"q": query, "kl": "tr-tr"}))
+    page = _http_get("https://lite.duckduckgo.com/lite/?" + urllib.parse.urlencode({"q": query, "kl": "tr-tr"}), timeout=5.5)
     links = re.findall(r"<a[^>]+href=\"([^\"]+)\"[^>]*class=['\"]result-link['\"][^>]*>(.*?)</a>", page, re.S)
     snips = re.findall(r"class=['\"]result-snippet['\"][^>]*>(.*?)</td>", page, re.S)
     out = []
@@ -458,7 +458,7 @@ def news_search(query, max_results=8):
     return out or "Haber bulunamadı."
 
 
-def _grounded(query):
+def _grounded(query, timeout=15):
     """Gemini + Google Arama (canlı): kısa güncel cevap + kaynaklar. Ücretsiz kotası dolarsa sessizce atlanır."""
     from . import llm
     if not llm.configured("gemini") or llm.key_bad("gemini"):
@@ -478,7 +478,7 @@ def _grounded(query):
                                      data=json.dumps(body).encode(), method="POST",
                                      headers={"Content-Type": "application/json", "x-goog-api-key": llm._key("gemini")})
         try:
-            with urllib.request.urlopen(req, timeout=15) as r:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
                 data = json.loads(r.read())
         except urllib.error.HTTPError as e:
             b = e.read().decode("utf-8", "ignore")
@@ -503,50 +503,81 @@ _NEWSY = re.compile(r"haber|son dakika|bugün|dün|şu an|şimdi|güncel|en son|
 
 
 def web_search(query, max_results=6, recent=False):
-    """Canlı web araması — tüm kaynaklar AYNI ANDA sorulur, en fazla ~12 sn beklenir:
-    Gemini+Google (canlı cevap), Bing, DuckDuckGo, DuckDuckGo Lite, Google Haberler."""
-    from concurrent.futures import ThreadPoolExecutor, wait
-    n = int(max_results)
+    """Fast federated search: return the first usable search engine result, then enrich briefly.
+
+    Bing / DuckDuckGo / Lite run in parallel. News RSS is only requested for news-like queries.
+    Gemini grounding is a fallback only when ordinary web engines return nothing, so the
+    model does not pay for a second Gemini generation on every successful web search.
+    """
+    from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
+    n = max(1, min(8, int(max_results)))
     want_news = recent or bool(_NEWSY.search(query))
-    jobs = {"canlı": lambda: _grounded(query), "bing": lambda: _search_bing(query, n),
-            "duckduckgo": lambda: _search_ddg(query, n), "duckduckgo-lite": lambda: _search_ddg_lite(query, n),
-            "haberler": lambda: news_search(query, 6)}
+    jobs = {
+        "bing": lambda: _search_bing(query, n),
+        "duckduckgo": lambda: _search_ddg(query, n),
+        "duckduckgo-lite": lambda: _search_ddg_lite(query, n),
+    }
+    if want_news:
+        jobs["haberler"] = lambda: news_search(query, 6)
+
     ex = ThreadPoolExecutor(max_workers=len(jobs))
     futs = {ex.submit(fn): name for name, fn in jobs.items()}
-    t0 = time.time()
-    done, _ = wait(futs, timeout=6)
-    have_web = lambda: any(futs_name in ("bing", "duckduckgo", "duckduckgo-lite") and f.done() and not f.exception() and f.result()
-                           for f, futs_name in futs.items())
-    # canlı Google cevabı birkaç saniye daha sürebilir; web sonucu yoksa ya da canlı cevap bekleniyorsa biraz daha bekle
-    if time.time() - t0 < 12:
-        pending = [f for f in futs if not f.done() and (futs[f] == "canlı" or not have_web())]
-        if pending:
-            wait(pending, timeout=12 - (time.time() - t0))
-    ex.shutdown(wait=False, cancel_futures=True)
+    web_names = {"bing", "duckduckgo", "duckduckgo-lite"}
+    deadline = time.monotonic() + 4.5
+
+    def usable_web_future():
+        return any(
+            name in web_names and future.done() and not future.exception() and future.result()
+            for future, name in futs.items()
+        )
+
+    # Wait only until the first useful result; do not wait for every engine to finish.
+    while not usable_web_future() and time.monotonic() < deadline:
+        pending = [future for future, name in futs.items() if name in web_names and not future.done()]
+        if not pending:
+            break
+        wait(pending, timeout=max(0.0, deadline - time.monotonic()), return_when=FIRST_COMPLETED)
+
+    # For an explicit news query, give RSS a short chance to add dated headlines.
+    news_future = next((future for future, name in futs.items() if name == "haberler"), None)
+    if news_future is not None and not news_future.done():
+        wait([news_future], timeout=0.8)
+
     res, errors = {}, []
-    for f, name in futs.items():
-        if not f.done():
+    for future, name in futs.items():
+        if not future.done():
             errors.append(f"{name}: zaman aşımı")
             continue
-        if f.exception():
-            errors.append(f"{name}: {str(f.exception())[:60]}")
+        if future.exception():
+            errors.append(f"{name}: {str(future.exception())[:60]}")
             continue
-        res[name] = f.result()
+        value = future.result()
+        if value:
+            res[name] = value
+    ex.shutdown(wait=False, cancel_futures=True)
+
     out = {}
-    if res.get("canlı"):
-        out["canlı_cevap"] = res["canlı"]
     for name in ("bing", "duckduckgo", "duckduckgo-lite"):
         if res.get(name):
             out["motor"], out["sonuçlar"] = name, res[name]
             break
-    if isinstance(res.get("haberler"), list) and res["haberler"] and (want_news or "sonuçlar" not in out):
+    if isinstance(res.get("haberler"), list) and res["haberler"]:
         out["haberler"] = res["haberler"]
+
+    # Expensive grounded generation is a fallback, not a second mandatory model call.
+    if not out:
+        try:
+            grounded = _grounded(query, timeout=6)
+            if grounded:
+                out["canlı_cevap"] = grounded
+        except Exception as e:
+            errors.append(f"Google: {str(e)[:60]}")
+
     if not out:
         return "Arama yapılamadı (" + "; ".join(errors) + "). İnternet bağlantısını kontrol et."
     out["not"] = (f"Bugün {time.strftime('%d.%m.%Y')}. Bu sonuçlar CANLI; kendi eski bilginle çelişirse bunlara güven. "
-                  "Cevap için genelde bu yeterli; gerekmedikçe başka arama yapma ya da sayfa açma.")
+                  "Genelde bu tek arama yeterlidir; gerekmedikçe tekrar arama ya da sayfa açma.")
     return out
-
 
 def read_webpage(url, max_chars=7000):
     try:
@@ -779,7 +810,7 @@ def is_critical(name, args):
     return crit(args) if callable(crit) else bool(crit)
 
 
-TOOL_TIMEOUT = {"web_search": 25, "news_search": 15, "read_webpage": 20, "weather": 15, "currency": 15,  # ağ araçları: süre sınırlı
+TOOL_TIMEOUT = {"web_search": 15, "news_search": 12, "read_webpage": 12, "weather": 15, "currency": 15,  # ağ araçları: süre sınırlı
                 "browser_open": 45, "browser_read": 30, "browser_look": 45}
 
 

@@ -144,31 +144,32 @@ Mark-LVI'den ilham alan iki sohbet iyileştirmesi:
 Yeni sürüm, Ayarlar > **GÜNCELLE** üzerinden version.json sürümü görüldüğünde kurulabilir.
 
 
-## Model dağılımı ve hız (v4.6.7)
+## Model dağılımı ve hız (v4.6.11)
 
-JARVIS artık Mark LVI'nin görev bazlı Gemini model sırasını izler:
+JARVIS, Mark LVI'nin görev bazlı model sıralamasını mevcut tarayıcı konuşma hattına uyarlar:
 
-- **FAST:** kısa komutlar ve araç seçimi — Gemini 2.5 Flash-Lite → 3.5 Flash-Lite → 3.1 Flash-Lite → Flash-Lite Latest; gerekirse normal Flash modelleri.
-- **SMART:** uzun/karmaşık işler, planlama, kod ve görüntü muhakemesi — Gemini 2.5 Flash → 3.5 Flash → ardından Lite ve yedek Flash modelleri.
-- **SEARCH:** kaynaklı araştırma — Gemini 2.5 Flash → 3.5 Flash → Flash-Lite yedeği.
+- **FAST:** kısa komutlar — Gemini 3.5 Flash-Lite → 3.1 Flash-Lite → 3.8 Flash → 3.6 Flash → 3.5 Flash.
+- **SMART:** uzun/karmaşık işler, planlama, kod ve görüntü muhakemesi — Gemini 3.8 Flash → 3.7 Flash → 3.6 Flash → 3.5 Flash → Flash-Lite yedekleri.
+- **SEARCH:** arama aracı seçimi ve kaynaklı araştırma — Gemini 3.5 Flash-Lite → 3.1 Flash-Lite → 3.8 Flash → 3.6 Flash → 3.5 Flash.
 
-FAST isteklerinde ilk model için 10 saniye, SMART/SEARCH isteklerinde 20 saniye sınırı kullanılır. Zaman aşımına uğrayan model sonraki isteği bekletmemesi için geçici olarak kenara alınır. Eski gemini-3.3-flash sabitlemesi bir kez temizlenir; açıkça seçilmiş diğer model ayarları korunur.
+FAST ve SEARCH isteklerinde 10 saniye, SMART isteklerinde 20 saniye model sınırı kullanılır. 503/504 alan model 30 dakika dinlendirilir ve aynı istekte yeniden denenmez.
 
-**Ses motoru notu:** Mark LVI'nin ana konuşması Gemini 3.1 Flash Live (yedek: Gemini 2.5 Native Audio) ile tam çift yönlü ses oturumudur. Bu JARVIS arayüzü ise tarayıcı konuşma tanıma + Edge TTS kullanıyor; Live ses oturumu henüz bu web konuşma hattına bağlı değildir. Bu sürüm aynı FAST/SMART/SEARCH metin modeli dağılımını ve hızlı yedeklemeyi getirir.
+### Hızlı araştırma akışı (4.6.11)
 
+- Bing, DuckDuckGo ve DuckDuckGo Lite paralel aranır; ilk işe yarar sonuçta dönülür.
+- Google Haberler yalnızca haber/güncel sorgularında eklenir. Google Grounding normal web sonuçları bulunamadığında yedek olarak çağrılır.
+- Bir sohbet turunda başarılı web aramasından sonra yeni web_search/news_search araçları modelden kaldırılır. Sonuç için gerçekten gerekliyse en fazla bir read_webpage çağrısı yapılır.
+- Araştırma model turu dört adımla sınırlıdır; normal görevlerin adım bütçesi korunur.
 
-## Gemini erişimi ve 4.6.8 model sırası
+**Ses motoru notu:** Mark LVI'nin ana konuşması Gemini 3.1 Flash Live ile çift yönlü ses oturumu kullanır. Bu JARVIS arayüzü hâlâ tarayıcı konuşma tanıma + Edge TTS kullanır; ancak metin akışı cümlelere bölünerek cevap tamamlanmadan ses kuyruğuna verilir. Live ses oturumu henüz web konuşma hattına taşınmadı.
 
-Google, Gemini 2.5 modellerine yeni projelerde erişimi kısıtladığından JARVIS bu modelleri varsayılan ve yedek sıralarından çıkarır.
+## Gemini 2.5 erişim kısıtları (4.6.8)
 
-- **FAST:** Gemini 3.5 Flash-Lite → 3.1 Flash-Lite → 3.8 Flash → 3.6 Flash → 3.5 Flash.
-- **SMART:** Gemini 3.8 Flash → 3.7 Flash → 3.6 Flash → 3.5 Flash → Flash-Lite yedekleri.
-- **SEARCH:** Gemini 3.8 Flash → 3.6 Flash → 3.5 Flash → Flash-Lite yedekleri.
-- 404 döndüren model altı saat beklemeye alınır; sonraki isteklerde yeniden denenmez.
-- Açılış geçişi, kişiliklerdeki veya `.env` dosyasındaki eski Gemini 2.5 model sabitlemelerini temizler.
+Google, Gemini 2.5 modellerini yeni API projelerinde kısıtladığından JARVIS bu modelleri varsayılan/yedek sıralarından çıkarmıştır. Eski `GEMINI_MODEL`, `GEMINI_VISION_MODEL` ve kişilik model sabitlemelerindeki 2.5 değerleri açılış geçişinde temizlenir. Erişim hatası (404) alan model altı saat dinlendirilir.
 
-Kaynak: Google Gemini API model kataloğu ve yeni projeler için 2.5 erişim notu: https://ai.google.dev/gemini-api/docs/models
+Güncel FAST / SMART / SEARCH modeli sırası için yukarıdaki **Model dağılımı ve hız (v4.6.11)** bölümüne bak.
 
+Kaynak: Google Gemini API model kataloğu: https://ai.google.dev/gemini-api/docs/models
 
 ## Windows 4.6.9 bağlantı kapanışı
 
