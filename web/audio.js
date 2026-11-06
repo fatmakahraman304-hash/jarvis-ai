@@ -227,6 +227,11 @@
     liveQueue = task.catch(() => null);
     return task;
   }
+  JV.resetLiveVoice = function () {
+    const previous = liveSocket;
+    liveSocket = null; liveConnect = null; liveReady = false; liveVoicePersona = "";
+    try { previous && previous.close(); } catch (_) {}
+  };
   addEventListener("pagehide", () => { try { liveSocket && liveSocket.close(); } catch (_) {} });
 
   function browserSpeak(text, persona, forceLang) {
