@@ -34,7 +34,7 @@ class ExecutionTests(unittest.TestCase):
             {'content':'Efendim başlıyorum.[spaceplanner_open] [browser_look]'},
             {'calls':[call('spaceplanner_open')]},
             {'calls':[call('spaceplanner_draw',points=[{'x':100,'y':100},{'x':500,'y':400}],size='400x300')]},
-            {'content':'Oda çizimi ekranda doğrulandı.'}])
+            {'calls':[call('task_report',status='finished',summary='Oda çizimi ekranda doğrulandı.',remaining='')]}])
         self.assertEqual(executed,['spaceplanner_open','browser_observe','spaceplanner_draw','browser_observe'])
         text=''.join(e.get('text','') for e in events if e['type']=='token')
         self.assertNotIn('[spaceplanner_open]',text);self.assertNotIn('başlıyorum',text)
@@ -50,20 +50,56 @@ class ExecutionTests(unittest.TestCase):
         self.assertFalse(any('[spaceplanner_open]' in e.get('text','') for e in events if e['type']=='token'))
 
     def test_future_promise_after_open_must_continue(self):
-        executed,_,_=self.run_brain([{'calls':[call('spaceplanner_open')]},{'content':'Şimdi çizmeye başlıyorum.'},{'calls':[call('spaceplanner_draw',points=[{'x':1,'y':1},{'x':2,'y':2}])]},{'content':'Sonuç doğrulandı.'}])
+        executed,_,_=self.run_brain([{'calls':[call('spaceplanner_open')]},{'content':'Şimdi çizmeye başlıyorum.'},{'calls':[call('spaceplanner_draw',points=[{'x':1,'y':1},{'x':2,'y':2}])]},{'calls':[call('task_report',status='finished',summary='Sonuç doğrulandı.',remaining='')]}])
         self.assertIn('spaceplanner_draw',executed)
 
     def test_actual_tool_failure_remains_blocked(self):
-        executed,_,events=self.run_brain([{'calls':[call('spaceplanner_open')]},{'content':'Tarayıcı açılamadı. Playwright gerekli.'}],failure='spaceplanner_open')
+        executed,_,events=self.run_brain([{'calls':[call('spaceplanner_open')]},{'calls':[call('task_report',status='blocked',summary='Tarayıcı açılamadı. Playwright gerekli.',remaining='Ev çizilmedi.')]}],failure='spaceplanner_open')
         self.assertEqual(events[-1]['outcome'],'blocked')
         self.assertIn('Playwright',events[-1]['text'])
+
+    def test_every_design_turn_requires_real_call_and_report(self):
+        _,requests,events=self.run_brain([
+            {'calls':[call('spaceplanner_open')]},
+            {'calls':[call('browser_click',target='start')]},
+            {'calls':[call('spaceplanner_draw',points=[{'x':1,'y':1},{'x':2,'y':2}])]},
+            {'calls':[call('task_report',status='paused',summary='Bir oda çizildi.',remaining='Diğer odalar ve mobilyalar.')]}
+        ])
+        self.assertTrue(all(k.get('require_tools') for _,k in requests))
+        self.assertIn('task_report',{s['function']['name'] for s in requests[1][0][2]})
+        self.assertEqual(events[-1]['outcome'],'paused')
+        self.assertIn('Diğer odalar',events[-1]['text'])
+
+    def test_start_button_is_not_drawing_completion(self):
+        executed,_,events=self.run_brain([
+            {'calls':[call('spaceplanner_open')]},
+            {'calls':[call('browser_click',target='start')]},
+            {'calls':[call('task_report',status='finished',summary='Ev bitti.',remaining='')]},
+            {'calls':[call('task_report',status='blocked',summary='Çizim tuvali yüklenmedi.',remaining='Ev çizilmedi.')]}
+        ])
+        self.assertNotIn('spaceplanner_draw',executed)
+        self.assertEqual(events[-1]['outcome'],'blocked')
+        self.assertNotIn('Ev bitti.',events[-1]['text'])
+        self.assertIn('tuvali yüklenmedi',events[-1]['text'])
+
+    def test_successful_action_resets_consecutive_prose_repairs(self):
+        executed,_,events=self.run_brain([
+            {'content':'[spaceplanner_open]'},
+            {'content':'Açıyorum.'},
+            {'calls':[call('spaceplanner_open')]},
+            {'content':'Çizeceğim.'},
+            {'calls':[call('spaceplanner_draw',points=[{'x':1,'y':1},{'x':2,'y':2}])]},
+            {'calls':[call('task_report',status='finished',summary='Oda ekranda doğrulandı.',remaining='')]}
+        ])
+        self.assertIn('spaceplanner_draw',executed)
+        self.assertEqual(events[-1]['outcome'],'finished')
 
     def test_command_example_is_not_forced_to_execute(self):
         executed,requests,events=self.run_brain([{'content':'Örnek: [spaceplanner_open]'}],text='SpacePlanner aç komutunu örnek olarak açıkla')
         self.assertFalse(executed);self.assertNotIn('require_tools',requests[0][1])
 
     def test_continue_retains_action_contract(self):
-        executed,requests,_=self.run_brain([{'calls':[call('browser_read')]},{'calls':[call('spaceplanner_draw',points=[{'x':1,'y':1},{'x':2,'y':2}])]},{'content':'Sonuç doğrulandı.'}],text='devam et',history=[{'role':'user','content':'SpacePlanner aç ve oda çiz'}])
+        executed,requests,_=self.run_brain([{'calls':[call('browser_read')]},{'calls':[call('spaceplanner_draw',points=[{'x':1,'y':1},{'x':2,'y':2}])]},{'calls':[call('task_report',status='finished',summary='Sonuç doğrulandı.',remaining='')]}],text='devam et',history=[{'role':'user','content':'SpacePlanner aç ve oda çiz'}])
         self.assertTrue(requests[0][1]['require_tools']);self.assertIn('spaceplanner_draw',executed)
 
     def test_shortcut_and_typo_route(self):

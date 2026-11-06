@@ -80,6 +80,15 @@ def _focused_specs(specs, manual_groups):
     return out
 
 
+_TASK_REPORT = {"type": "function", "function": {
+    "name": "task_report", "description": "SpacePlanner çizim görevini bitirmek veya gerçek bir engelde durmak için tek başına çağır. finished yalnızca tüm istekler son ekranda doğrulandıysa; blocked gerçek engel varsa; paused kalan iş varsa. Metinle yapacağım deme; işlem sürüyorsa çizim araçlarını çağır.",
+    "parameters": {"type": "object", "properties": {
+        "status": {"type": "string", "enum": ["finished", "blocked", "paused"]},
+        "summary": {"type": "string", "description": "Son ekranda doğrulanan sonuç veya somut engel"},
+        "remaining": {"type": "string", "description": "Yapılmayan adımlar; hepsi bittiyse boş"}
+    }, "required": ["status", "summary", "remaining"]}}}
+
+
 def _observer_for(name):
     if name in _BROWSER_ACTIONS:
         return "browser_observe"
@@ -376,6 +385,7 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
     focused_browser = ui_task and _spaceplanner_start(task_goal) and "browser" in groups
     if focused_browser:
         groups = {"core", "browser"}
+    drawing_task = focused_browser and bool(re.search(r"\b(çiz|tasarla|draw|design)\b", task_goal.casefold()))
     manual_groups = set()
 
     # Speak immediately while the web/phone model request is starting.
@@ -397,6 +407,8 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
     performed_tools = set()
     repair_attempts = 0
     force_next_tool = False
+    drawing_verified = False
+    report_finished = False
     task_outcome = "finished"
     stop_reason = ""
     step_budget = min(MAX_STEPS, 4) if tier == "search" else MAX_STEPS
@@ -424,8 +436,10 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
         )
         if focused_browser:
             available_tools = _focused_specs(available_tools, manual_groups)
+        if drawing_task and performed_tools:
+            available_tools.append(_TASK_REPORT)
         route_options = {"tier": tier}
-        require_call = ui_task and task_outcome != "needs_confirmation" and (not performed_tools or force_next_tool)
+        require_call = ui_task and task_outcome != "needs_confirmation" and (drawing_task or not performed_tools or force_next_tool)
         if require_call:
             route_options["require_tools"] = True
             if not performed_tools and _spaceplanner_start(text):
@@ -461,7 +475,7 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
             response = step_text or final.get("content") or ""
             promise = bool(re.search(r"başlıyorum|devam ediyorum|çizeceğim|yerleştireceğim|açıyorum|yapacağım", response.casefold()))
             unfinished_drawing = bool(re.search(r"\b(çiz|tasarla)\b", task_goal.casefold())) and not (performed_tools & {"spaceplanner_draw", "browser_click", "browser_fill", "browser_press", "mouse_click", "mouse_drag", "key_press", "type_text"})
-            if ui_task and task_outcome != "needs_confirmation" and (_text_tool_markers(response) or not performed_tools or promise or (unfinished_drawing and task_outcome != "blocked")):
+            if ui_task and task_outcome != "needs_confirmation" and (drawing_task or _text_tool_markers(response) or not performed_tools or promise or (unfinished_drawing and task_outcome != "blocked")):
                 if repair_attempts < 2:
                     repair_attempts += 1
                     messages.append(_model_turn(final, [], used))
@@ -469,7 +483,7 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
                     force_next_tool = True
                     yield {"type": "progress", "text": "Model yanıtı gerçek araç çağrısı için yeniden doğrulanıyor."}
                     continue
-                full_text = "Model gerçek araç çağrısıyla göreve devam edemedi. İstenen işlem tamamlanmadı; metindeki araç adları çalıştırılmadı."
+                full_text = "Model gerçek araç çağrısıyla göreve devam edemedi. İstenen işlem tamamlanmadı. Modelin son yanıtı: " + (response[:1500] or "Boş yanıt.")
                 task_outcome = "blocked"
                 yield {"type": "error", "text": full_text}
                 break
@@ -484,7 +498,23 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
         for call in calls:
             name = call["function"]["name"]
             args = _parse_args(call["function"].get("arguments"))
-            if name == "enable_tools":
+            if name == "task_report" and drawing_task:
+                status = args.get("status")
+                summary = str(args.get("summary") or "").strip()
+                remaining = str(args.get("remaining") or "").strip()
+                if len(calls) != 1:
+                    result = "Rapor YAPILMADI: önce diğer araçların yeni gözlemlerini değerlendir, sonra task_report tek başına çağır."
+                elif status not in {"finished", "blocked", "paused"} or not summary:
+                    result = "Rapor YAPILMADI: geçerli status ve son gözlemden somut summary gerekli."
+                elif status == "finished" and (not drawing_verified or remaining or task_outcome == "blocked"):
+                    result = "Tamamlandı kabul edilmedi: başarılı çizim ve son ekran doğrulaması gerekli; kalan iş varsa paused, engel varsa blocked bildir."
+                else:
+                    task_outcome = status
+                    full_text = summary + ("\nKalan işler: " + remaining if remaining else "")
+                    result = full_text
+                    report_finished = True
+                    yield {"type": "token", "text": full_text}
+            elif name == "enable_tools":
                 req = {g.strip() for g in str(args.get("groups", "")).split(",") if g.strip() in tools.GROUP_INFO or g.strip() == "core"}
                 groups |= req
                 manual_groups |= req
@@ -545,6 +575,8 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
                 result = tools.execute(name, args)
                 performed_tools.add(name)
                 failed = result.startswith(("Hata:", "Parametre hatası:", "Araç ", "Bilinmeyen araç:"))
+                if not failed:
+                    repair_attempts = 0  # only consecutive prose failures count
                 if ui_task and failed:
                     task_outcome = "blocked"
                 observer = _observer_for(name)
@@ -568,11 +600,15 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
                 if name in _SEARCH_TOOL_NAMES:
                     if _search_result_usable(name, result) or research_search_attempts >= 2:
                         research_search_done = True
+                if drawing_task and name in {"spaceplanner_draw", "mouse_drag"} and not failed:
+                    drawing_verified = _observation_ready(result)
                 print(f"[araç] {name} {time.time() - t1:.1f} sn")
                 seen_calls[(name, json.dumps(args, sort_keys=True, ensure_ascii=False))] = result[:4000]
                 yield {"type": "tool", "name": name, "args": args, "status": "done",
                        "result": result[:30000] if (result.startswith('{') and '"ui": "' in result[:30000]) else result[:600]}
             messages.append({"role": "tool", "tool_call_id": call["id"], "name": name, "content": result})
+        if report_finished:
+            break
         if full_text and not full_text.endswith((" ", "\n")):
             full_text += " "
             yield {"type": "token", "text": " "}

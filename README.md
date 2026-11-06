@@ -1,5 +1,11 @@
 # J.A.R.V.I.S. Personal AI
 
+## 4.6.40 — Çizim boyunca gerçek araç çağrısı
+
+SpacePlanner çizim görevinde ilk açılışla sınırlı kalmadan her model turunda gerçek araç çağrısı gerekir. Model işi sürdürecekse aracı kullanır; duracaksa task_report ile son ekranda gördüğü sonucu/engeli ve kalan işleri bildirir. Yalnızca başlangıç düğmesine basmak tamamlanmış çizim sayılmaz: finished raporu için başarılı tuval çizimi veya masaüstü sürüklemesi ve işlem sonrası gözlem gerekir. Bu asgari kontrol tüm odaların doğruluğunu tek başına kanıtlamaz; son ekranı model değerlendirir.
+
+Başarılı adım önceki metin yanıtlarının sayacını sıfırlar. Adım/süre sınırı ve acil durdurma korunur. Yerel HTTP model sunucusu ve gerçek Chromium testi açılış → çizim → yeni gözlem → rapor akışını sınar; kullanıcının canlı SpacePlanner hesabı burada doğrulanmaz.
+
 ## 4.6.39 — Araçtan sonra devam isteği
 
 Gemini’nin verdiği araç kimliği ve imzalı içerik sonraki isteğe aynen taşınır. Araç turunda model korunur; model değişmesi gerekirse eski imzalar yerine gerçek araç sonuçları metin bağlamına aktarılır. SpacePlanner çizim komutları yalnızca tarayıcı araçlarıyla başlar; ekran/fare veya başka gruplar gerektiğinde açılır.
