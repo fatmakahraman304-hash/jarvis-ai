@@ -69,7 +69,7 @@ def main():
         evs = post_sse(base + "/api/chat", {"text": "saat kaç", "persona": "jarvis", "session": "test"})
         check("araç çağrısı (get_time)", any(e["type"] == "tool" and e["name"] == "get_time" for e in evs))
         check("akışlı cevap", any(e["type"] == "token" for e in evs) and evs[-1]["type"] == "done")
-        evs = post_sse(base + "/api/chat", {"text": "dosyayı sil", "persona": "ultron", "session": "test"})
+        evs = post_sse(base + "/api/chat", {"text": "dosyayı sil", "persona": "jarvis", "session": "test"})
         conf = [e for e in evs if e["type"] == "confirm"]
         check("kritik işlem onaya düştü", bool(conf))
         evs = post_sse(base + "/api/confirm", {"id": conf[0]["id"], "approve": False})
