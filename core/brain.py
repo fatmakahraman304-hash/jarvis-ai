@@ -284,7 +284,6 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
     research_search_attempts = 0
     research_search_done = False
     research_page_reads = 0
-    cached_search_result = ""
     for _step in range(MAX_STEPS):
         if time.time() - turn_t0 > TURN_BUDGET:
             print(f"[beyin] {TURN_BUDGET} sn doldu, eldeki bilgiyle cevaplanıyor")
@@ -357,7 +356,6 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
                     research_page_reads += 1
                 result = tools.execute(name, args)
                 if name in _SEARCH_TOOL_NAMES:
-                    cached_search_result = result[:4000]
                     if _search_result_usable(name, result) or research_search_attempts >= 2:
                         research_search_done = True
                 print(f"[araç] {name} {time.time() - t1:.1f} sn")
