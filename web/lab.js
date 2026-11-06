@@ -389,6 +389,8 @@
       U.tween(700,e=>camera.position.lerpVectors(from,to,e));
       if(controls&&controls.target){controls.target.set(0,0.8,0);controls.update();}
       U.caption("İç mekân görünümü · fareyle bakış yönünü değiştir");
+    } else if (a === "walk_exit") { walkMode=false; walkKeys=Object.create(null); controls.minDistance=2; U.caption("Gezinti modu kapatıldı");
+    } else if (a === "door_toggle") { const near=doorParts.reduce((best,d)=>{const dist=d.getWorldPosition(new T.Vector3()).distanceTo(camera.position);return !best||dist<best.dist?{door:d,dist}:best;},null); if(near&&near.dist<2.4)near.door.userData.doorOpen=!near.door.userData.doorOpen; else U.caption("Yakında açılabilir kapı yok");
     } else if (a === "explode") explodeTarget = v ? +v : 1;
     else if (a === "assemble") explodeTarget = 0;
     else if (a === "rotate") autoRotate = v === "" || v == null ? !autoRotate : /on|aç|true|1/.test(v);
@@ -432,7 +434,7 @@
     action,
   };
 
-  window.addEventListener("keydown", e => { if (!walkMode) return; if (["KeyW","KeyA","KeyS","KeyD","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.code)) { walkKeys[e.code]=true; e.preventDefault(); } if (e.code==="Escape") walkMode=false; });
+  window.addEventListener("keydown",e=>{if(!walkMode)return;if(["KeyW","KeyA","KeyS","KeyD","ArrowUp","ArrowDown","ArrowLeft","ArrowRight","ShiftLeft"].includes(e.code)){walkKeys[e.code]=true;e.preventDefault();}if(e.code==="KeyE")action("door_toggle");if(e.code==="Escape")action("walk_exit");});
   window.addEventListener("keyup", e => { if (walkMode) walkKeys[e.code]=false; });
   window.addEventListener("blur", () => { walkKeys=Object.create(null); });
 
@@ -446,6 +448,7 @@
     },
     exit() { walkMode=false; walkKeys=Object.create(null); document.getElementById("holo-panel").classList.add("hidden"); },
     update(dt, t) {
+      doorParts.forEach(d=>{const target=d.userData.doorOpen?Math.PI/2:0;d.rotation.y+=(target-d.rotation.y)*Math.min(1,dt*7);});
       if (walkMode) {
         const forward = new T.Vector3(); camera.getWorldDirection(forward); forward.y = 0; forward.normalize();
         const right = new T.Vector3().crossVectors(forward, new T.Vector3(0,1,0)).normalize();
@@ -454,7 +457,13 @@
         if (walkKeys.KeyS || walkKeys.ArrowDown) move.sub(forward);
         if (walkKeys.KeyD || walkKeys.ArrowRight) move.add(right);
         if (walkKeys.KeyA || walkKeys.ArrowLeft) move.sub(right);
-        if (move.lengthSq()) { move.normalize().multiplyScalar(dt * 1.8); camera.position.add(move); if (controls.target) controls.target.add(move); camera.position.y = 0.85; if (controls.target) controls.target.y = 0.8; }
+        if (move.lengthSq()) {
+          move.normalize().multiplyScalar(dt*(walkKeys.ShiftLeft?3.2:1.8));
+          const next=camera.position.clone().add(move);
+          if(model&&model.userData.size){const hw=Math.max(.8,model.userData.size.x*.43),hd=Math.max(.8,model.userData.size.z*.43);next.x=Math.max(-hw,Math.min(hw,next.x));next.z=Math.max(-hd,Math.min(hd,next.z));}
+          next.y=.85;const delta=next.clone().sub(camera.position);camera.position.copy(next);
+          if(controls.target){controls.target.add(delta);controls.target.y=.8;}
+        }
       }
       rings[0].rotation.z += dt * 0.3; rings[1].rotation.z -= dt * 0.2;
       beam.material.opacity = 0.03 + 0.015 * Math.sin(t * 2);
