@@ -63,7 +63,7 @@ def main():
             ok = ok and cond
 
         st = json.loads(get(base + "/api/state")[1])
-        check("durum + 3 kişilik", len(st["personas"]) == 3)
+        check("durum + JARVIS/FRIDAY", {p.get("id") for p in st["personas"]} == {"jarvis", "friday"})
         check("arayüz açılıyor", get(base + "/")[0] == 200)
         check("three.js gömülü", get(base + "/static/vendor/three.min.js")[0] == 200)
         evs = post_sse(base + "/api/chat", {"text": "saat kaç", "persona": "jarvis", "session": "test"})

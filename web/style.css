@@ -671,3 +671,12 @@ body.ar-on #holobook.open{background:rgba(0,8,14,.35)}
 @media (max-width:800px){#chips{display:none}#hdr-extra{display:none}}
 .msg .body:empty~.msg-copy{display:none}
 @media (hover:none){.msg-copy{opacity:.6}}
+
+/* EV TASARIM çalışma alanı */
+#home-plan{display:none;position:fixed;z-index:24;left:50%;top:110px;transform:translateX(-50%);width:min(560px,92vw);padding:14px;background:rgba(3,15,25,.96);border:1px solid #36cfff;border-radius:12px;box-shadow:0 0 30px #0af5;color:#dff}
+#home-plan.open{display:block}
+#home-plan header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-family:var(--mono);font-size:12px}
+#home-plan header span{flex:1;color:#9bd3e5}
+#home-plan button{background:#102b3a;border:1px solid #36cfff;border-radius:6px;padding:6px 10px;cursor:pointer}
+#home-plan svg{display:block;width:100%;max-height:52vh;margin-top:12px;background:#07131e;border-radius:8px}
+#home-plan p{font-size:13px;color:#9bd3e5;margin:8px 2px 0}

@@ -37,6 +37,15 @@ def holo_design(kind, params="{}"):
     return {"ui": "holo_design", "kind": k, "params": p}
 
 
+def home_design(description, params="{}"):
+    """Ev tasarımını 2D kat planı ve 3D model olarak arayüzde açar."""
+    try:
+        p = json.loads(params) if isinstance(params, str) else (params or {})
+    except Exception:
+        p = {}
+    return {"ui": "home_design", "title": description[:100], "params": p}
+
+
 def holo_scene(title, parts):
     """Serbest 3D tasarım. parts: JSON liste; her parça
     {"name":"gövde","type":"box|sphere|cylinder|cone|torus|wedge","size":[...],"pos":[x,y,z],"rot":[derece x,y,z],"color":"#38d6ff"}"""
@@ -156,6 +165,7 @@ TOOLS = {
                                        {"name": S("panel"), "open": {"type": "boolean"}}, ["name"]), False),
     "holo_design": (holo_design, _schema("Hologram atölyesinde hazır parametrik 3D tasarım oluşturur: building, house, car, robot, arm, rover, rocket, bridge, table, drone.",
                                          {"kind": S("tür"), "params": S('JSON, örn {"floors":12} veya {"type":"sport","color":"#ff3030"}')}, ["kind"]), False),
+    "home_design": (home_design, _schema("EV TASARIM alanını açar; doğal dilde isteği 2D ölçülü kat planı ve 3D ev modeline dönüştür. width/depth metre, rooms oda sayısı, style ve roof parametreleri.", {"description": S("kullanıcının ev tasarım isteği"), "params": S('JSON, örn {"width":12,"depth":10,"rooms":5,"style":"modern"}')}, ["description"]), False),
     "holo_scene": (holo_scene, _schema("Hologram atölyesinde parçalardan ÖZEL 3D model kurar (her şeyi tasarlayabilirsin: makine, mobilya, uzay gemisi...). "
                                        "Her parça: name, type (box|sphere|cylinder|cone|torus|wedge), size (box:[en,boy,derinlik], sphere:[yarıçap], cylinder/cone:[yarıçap,yükseklik], torus:[yarıçap,kalınlık]), pos [x,y,z] (metre, y yukarı, zemin 0), rot [derece], color. 6-40 parça kullan.",
                                        {"title": S("model adı"), "parts": S("JSON parça listesi")}, ["title", "parts"]), False),

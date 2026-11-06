@@ -68,9 +68,10 @@
     if (v === view && (v === "core" || current)) return;
     if (current && current.exit) current.exit();
     view = v; current = W[v] || null;
+    if (v === "design") current = W.lab || null;
     const world = v !== "core";
     document.body.classList.toggle("world-mode", world);
-    ["globe", "lab", "science", "space", "graph", "twin", "bio"].forEach((x) => document.body.classList.toggle("view-" + x, v === x));
+    ["globe", "lab", "design", "science", "space", "graph", "twin", "bio"].forEach((x) => document.body.classList.toggle("view-" + x, v === x));
     JV.coreHidden = world;
     U.panel(null); U.caption("");
     document.getElementById("map-panel").classList.add("hidden");
@@ -92,6 +93,7 @@
     if (ui === "command") return JV.command && (r.open === false ? JV.command.close() : JV.command.open());
     if (ui === "panel") return JV.openPanel && JV.openPanel(r.panel, r.open);
     if (ui.startsWith("globe") || ui === "map") { JV.setView("globe"); return W.globe.cmd(ui, r, args); }
+    if (ui === "home_design") { JV.setView("design"); return W.lab && W.lab.cmd("home_design", r, args || {}); }
     if (ui.startsWith("holo") || ui === "chart3d") { JV.setView("lab"); return W.lab.cmd(ui, r, args); }
     if (ui === "sim") { JV.setView("science"); return W.science.cmd(r.kind, r.params || {}, r); }
     if (ui === "space") { JV.setView("space"); return W.space.cmd(r); }
