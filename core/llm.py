@@ -24,9 +24,9 @@ PROVIDERS = {
         "label": "Google Gemini",
         "base": "https://generativelanguage.googleapis.com/v1beta/openai",
         "key_env": "GEMINI_API_KEY",
-        "prefer": ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-flash-latest", "gemini-3.5-flash-lite", "gemini-2.5-flash", "gemini-2.5-flash-lite"],
+        "prefer": ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
         # arka plan işleri (brifing, özet, çeviri…) için: ücretsiz kotası geniş hafif modeller → 3.8'in günlük hakkı sohbete kalır
-        "light": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-flash-lite-latest", "gemini-2.5-flash-lite"],
+        "light": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
         "free": True,
     },
     "groq": {
@@ -297,7 +297,7 @@ def is_chat_model(m):
 def ranked_models(pid):
     """Tercih sırasına göre bu hesapta GERÇEKTEN açık olan sohbet modelleri (en iyisi başta)."""
     prefer = PROVIDERS[pid]["prefer"]
-    available = [m for m in list_models(pid) if is_chat_model(m)]
+    available = [m for m in list_models(pid) if is_chat_model(m) and not (pid == "gemini" and _gemini_model_restricted(m))]
     out = []
     for p in prefer:
         for m in available:  # önce birebir ad, sonra aynı ailenin tarihli sürümleri (gemini-3.8-flash-001 gibi)
@@ -392,9 +392,9 @@ def pick_model(pid, override=""):
     if override:
         return override
     envm = env(f"{pid.upper()}_MODEL")
-    if envm:
+    if envm and not (pid == "gemini" and _gemini_model_restricted(envm)):
         return envm
-    prefer = PROVIDERS[pid]["prefer"]
+    prefer = [m for m in PROVIDERS[pid]["prefer"] if not (pid == "gemini" and _gemini_model_restricted(m))]
     if list_models(pid):
         r = ranked_models(pid)
         ready = [m for m in r if not cooling(pid, m)]
