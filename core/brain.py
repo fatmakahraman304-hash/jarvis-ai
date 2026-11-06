@@ -28,6 +28,83 @@ NO_PROVIDER_MSG = (
     "İnternetsiz çalışmak için Ollama kurabilirsiniz."
 )
 
+# Mark-LVI-inspired low-latency conversation layer.
+MAX_HISTORY_CHARS = 24_000  # rolling prompt window; SQLite keeps the full archive
+
+_TURKISH_MARKERS = {
+    "bana", "benim", "lütfen", "lutfen", "nedir", "nasil", "nasıl",
+    "nerede", "bugun", "bugün", "yarin", "yarın", "dosya", "dosyaları",
+    "bilgisayar", "ekran", "arastir", "araştır", "goster", "göster",
+    "hazirla", "hazırla", "oku", "yaz", "sil", "kur", "ac", "aç",
+    "kapat", "olustur", "oluştur", "cevir", "çevir", "hatirla",
+    "hatırla", "saat", "hava", "durumu", "ozetle", "özetle",
+    "kontrol", "indir", "gonder", "gönder", "guncelle", "güncelle",
+    "bul", "dosyayi", "dosyayı", "ben", "şunu", "sunu", "bunu",
+}
+
+
+def _history_window(rows, max_chars=MAX_HISTORY_CHARS):
+    """Keep the newest conversation context within a predictable prompt budget.
+
+    The full transcript remains in SQLite. Only the model request is compacted,
+    newest-first, so long old replies cannot slow every later turn.
+    """
+    budget = max(1, int(max_chars))
+    kept = []
+    used = 0
+    for item in reversed(rows or []):
+        role = item.get("role")
+        content = str(item.get("content") or "")
+        if role not in ("user", "assistant") or not content:
+            continue
+        room = budget - used
+        if len(content) > room:
+            if not kept and room > 0:
+                kept.append({"role": role, "content": content[-room:]})
+            break
+        kept.append({"role": role, "content": content})
+        used += len(content)
+    kept.reverse()
+    return kept
+
+
+def _quick_ack(text, groups):
+    """Return a short local acknowledgement for work that needs a tool group.
+
+    No extra model request is made: this is emitted before the first provider
+    round-trip, while the real streamed answer is being generated.
+    """
+    active = set(groups or ()) - {"core", "plugins", "semantic"}
+    if not active:
+        return ""
+
+    tokens = set(re.findall(r"[^\\W\\d_]+", (text or "").casefold(), flags=re.UNICODE))
+    is_turkish = (
+        any(ch in (text or "") for ch in "çğıöşüÇĞİÖŞÜ")
+        or bool(tokens & _TURKISH_MARKERS)
+    )
+
+    research = active & {"browser", "geo", "space", "worldwatch", "translate", "internet", "knowledge"}
+    computer = active & {"computer", "windows", "control", "cams", "screens"}
+    prepare = active & {"office", "team", "studio", "automation", "life", "daily"}
+
+    if is_turkish:
+        if research:
+            return "Hemen araştırıyorum, efendim."
+        if computer:
+            return "Bilgisayarı kontrol ediyorum, efendim."
+        if prepare:
+            return "Hemen hazırlıyorum, efendim."
+        return "Hemen ilgileniyorum, efendim."
+    if research:
+        return "I'm looking into that now."
+    if computer:
+        return "I'm checking your system now."
+    if prepare:
+        return "I'll prepare that now."
+    return "On it. I'll take care of that."
+
+
 
 def _system_prompt(persona, source):
     facts = memory.facts(60)
@@ -131,9 +208,8 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
     if extra_system:
         sp = extra_system + "\n\n" + sp
     messages = [{"role": "system", "content": sp}]
-    for h in hist:
-        if h["role"] in ("user", "assistant") and h["content"]:
-            messages.append({"role": h["role"], "content": h["content"]})
+    for h in _history_window(hist):
+        messages.append({"role": h["role"], "content": h["content"]})
     messages.append({"role": "user", "content": text})
 
     full_text = ""
@@ -145,6 +221,12 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
     groups -= off_groups - {"core"}
     if guest:
         groups -= GUEST_BLOCKED
+
+    # Speak immediately while the web/phone model request is starting.
+    if not hidden and source in ("web", "phone"):
+        ack = _quick_ack(text, groups)
+        if ack:
+            yield {"type": "ack", "text": ack}
 
     turn_t0 = time.time()
     seen_calls = {}
