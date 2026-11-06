@@ -1,9 +1,9 @@
 {
-  "version": "4.6.9",
+  "version": "4.6.10",
   "date": "2026-11-06",
   "notes": [
-    "🛠 Windows Proactor bağlantı kapanışında gelen WinError 10054 artık yalnızca bu beklenen durumda sessiz ele alınır",
-    "🔒 Diğer asyncio hataları normal şekilde loglanmaya devam eder",
-    "🧪 Windows bağlantı reseti için regresyon testi eklendi ve GÜNCELLE ön kontrolüne bağlandı"
+    "🧪 GÜNCELLE test hatası düzeltildi: 503 modelinin yeniden denenmesini bekleyen eski test güncellendi",
+    "⚡ 503/504 alan model aynı istekte tekrar bekletilmeden sonraki modele geçer",
+    "⏱ 503/504 alan model 30 dakika dinlendirilir; sonraki istek doğrudan sağlıklı modele gider"
   ]
 }
