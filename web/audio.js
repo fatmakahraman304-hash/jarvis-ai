@@ -93,10 +93,23 @@
     return "";
   }
 
-  async function fetchTTS(text, persona, myGen, lang, opts) {
-    if (!JV.state || !JV.state.tts) return null;
+  async function fetchTTS(text, persona, myGen, lang, opts, useOriginal = false) {
     try {
       const o = opts || {};
+      // Original clips are optional, exact-phrase matches only. The regular
+      // Neural TTS path remains the fallback for every unrecorded sentence.
+      if (useOriginal && !o.voice) {
+        const clipLang = (lang && lang !== "auto") ? lang :
+          (/[çğıöşüÇĞİÖŞÜ]/.test(text) ? "tr" : (JV.settings.voice_lang === "en" ? "en" : "tr"));
+        const clip = await JV.api("/api/original-voice?persona=" + encodeURIComponent(persona) +
+          "&lang=" + encodeURIComponent(clipLang) + "&text=" + encodeURIComponent(text), { raw: true });
+        if (clip.ok) {
+          const bytes = await clip.arrayBuffer();
+          if (myGen !== gen) return null;
+          return await ensureCtx().decodeAudioData(bytes);
+        }
+      }
+      if (!JV.state || !JV.state.tts) return null;
       const extra = (o.voice ? "&voice=" + encodeURIComponent(o.voice) : "") + (o.rate != null ? "&rate=" + o.rate : "") + (o.pitch != null ? "&pitch=" + o.pitch : "");
       const r = await JV.api(`/api/tts?persona=${persona}&mood=${mood(text)}${lang ? "&lang=" + lang : ""}${extra}&text=${encodeURIComponent(text)}`, { raw: true });
       if (!r.ok) return null;
@@ -166,7 +179,7 @@
     if (JV.quiet && !force) return; // sessiz mod
     ensureCtx();
     const myGen = gen;
-    queue.push({ text, persona, lang, promise: fetchTTS(text, persona, myGen, lang) });
+    queue.push({ text, persona, lang, promise: fetchTTS(text, persona, myGen, lang, null, true) });
     pump();
   };
 
