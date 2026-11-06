@@ -641,7 +641,6 @@ def route(order, messages, tools, model_override="", light=False, tier="legacy",
             continue
         use_tools = tools
         used = []
-        busy_retried = set()
         for attempt in range(7):
             emitted = False
             try:
@@ -672,12 +671,7 @@ def route(order, messages, tools, model_override="", light=False, tier="legacy",
                 if e.status == 429:
                     mark_exhausted(pid, model, e.body)
                 if e.status in (500, 502, 503, 504):
-                    # Google'da model geçici yoğun (UNAVAILABLE/overloaded): bir kez kısa bekleyip aynı modeli dene,
-                    # yine olmazsa bu modeli 2 dk kenara al ve aynı sağlayıcının sıradaki modeline geç
-                    if e.status != 504 and model not in busy_retried:
-                        busy_retried.add(model)
-                        time.sleep(1.5)
-                        continue
+                    # Mirror Mark LVI: rest unavailable models, then advance the ladder immediately.
                     _cooldown[(pid, model)] = time.time() + (30 * 60 if e.status in (503, 504) else 120)
                 if e.status in (403, 404, 429, 500, 502, 503, 504) and len(used) < 3:
                     # bu model kotada/erişilemez: aynı sağlayıcının bir sonraki en iyi modeline geç (ör. 3.8 → 3.6)
