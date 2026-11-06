@@ -1,7 +1,8 @@
 {
-  "version": "4.6.16",
+  "version": "4.6.17",
   "date": "2026-11-06",
   "notes": [
+    "🚶 EV TASARIM: 3D iç mekânda WASD/ok tuşlarıyla birinci şahıs gezinti ve JSON proje içe aktarma eklendi",
     "🏠 Gelişmiş EV TASARIM: etkileşimli 2D kat planı, gerçek duvar açıklıklı kapı/pencere geometrisi, mobilya yerleşimi, oda adlarını düzenleme, duvar yüksekliği ve yüzey renkleri, 3D iç mekân/gezinti, tarayıcıda kaydet-yükle ve JSON dışa aktar",
     "👥 Yalnızca JARVIS ve FRIDAY kaldı; kaldırılan kişiliğin ses, model, Telegram, makro ve kayıtlı ayarları temizlenir",
     "🎙 Uyandırma varsayılan açık: sistem başlatma tıklamasından sonra JARVIS veya FRIDAY kelimesini bekleyerek sürekli dinler",
