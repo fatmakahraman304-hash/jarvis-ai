@@ -280,3 +280,31 @@ body.scrrole #stage-host .sg-bar{position:absolute;top:0;left:0;right:0;z-index:
 .ph-row{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap}.ph-row select,.ph-row input{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:var(--r);color:#fff;padding:8px}.ph-row input{flex:1;min-width:200px}
 .ph-acts .mini{padding:6px 10px}
 #ph-out{min-height:1.4em;margin-top:6px;color:#cfe3f5}
+
+
+/* ---------- AI model chip selector ---------- */
+#model-badge{pointer-events:auto;cursor:pointer;background:transparent;border:0;padding:7px 10px;color:var(--dim);font:600 11px var(--mono);letter-spacing:.22em;border-bottom:1px solid var(--line);transition:.2s}
+#model-badge:hover{color:var(--c);border-color:var(--c);text-shadow:var(--glow)}
+#ai-model-picker{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:20px;background:rgba(0,0,0,.86);backdrop-filter:blur(7px)}
+#ai-model-picker.hidden{display:none}
+.ai-model-card{width:min(1016px,96vw);min-height:560px;padding:36px 40px 34px;border:1px solid rgba(56,214,255,.28);border-radius:20px;background:radial-gradient(ellipse at 50% 48%,rgba(18,55,68,.2),transparent 58%),linear-gradient(145deg,#081017,#030608 72%);box-shadow:0 25px 90px #000,0 0 35px rgba(56,214,255,.08);color:#eaf7ff}
+.ai-model-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+.ai-model-head h2{margin:0;font:800 28px var(--head);letter-spacing:.24em;color:#f4f8fb}
+.ai-model-head p{margin:10px 0 0;color:#a8bbc7;font-size:17px}
+#ai-model-close{width:46px;height:46px;border:1px solid #38d6ff;border-radius:13px;background:#0b1a22;color:#eaf7ff;font-size:30px;line-height:1;cursor:pointer}
+#ai-model-close:hover{background:#12303b;box-shadow:0 0 18px rgba(56,214,255,.25)}
+.ai-model-options{display:flex;justify-content:center;align-items:flex-end;gap:42px;margin:44px auto 0;max-width:760px;min-height:320px}
+.ai-chip{--chip:#38d6ff;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;width:210px;height:300px;padding:16px 15px 12px;border:1px solid rgba(255,255,255,.1);border-radius:15px 15px 13px 13px;background:linear-gradient(145deg,#252b30,#080b0d 68%);box-shadow:0 12px 30px #000, inset 0 1px 0 rgba(255,255,255,.12);cursor:pointer;transition:transform .22s,border-color .22s,box-shadow .22s;color:#fff}
+.ai-chip:before,.ai-chip:after{content:"";position:absolute;top:24px;bottom:30px;width:8px;border-radius:5px;background:var(--chip);opacity:.75;box-shadow:0 0 12px var(--chip)}
+.ai-chip:before{left:6px}.ai-chip:after{right:6px}
+.ai-chip:hover{transform:translateY(-9px);border-color:var(--chip);box-shadow:0 18px 40px #000,0 0 25px color-mix(in srgb,var(--chip) 28%,transparent)}
+.ai-chip.active{transform:translateY(-10px);border-color:var(--chip);box-shadow:0 18px 45px #000,0 0 30px color-mix(in srgb,var(--chip) 35%,transparent)}
+.ai-chip-label{z-index:1;display:grid;place-items:center;width:100%;height:70px;margin:0 0 14px;border-radius:3px;background:linear-gradient(110deg,#e9e6df,#c9c6bf);color:#111;font:italic 500 30px 'Chakra Petch',sans-serif;letter-spacing:.02em;box-shadow:0 3px 7px #000}
+.ai-chip-circuit{position:relative;display:block;width:100%;height:145px;overflow:hidden;border:1px solid color-mix(in srgb,var(--chip) 65%,#fff);border-radius:7px;background-color:color-mix(in srgb,var(--chip) 43%,#07121b);background-image:linear-gradient(135deg,transparent 44%,rgba(255,255,255,.8) 45%,transparent 46%),linear-gradient(45deg,transparent 60%,rgba(255,255,255,.65) 61%,transparent 62%),repeating-linear-gradient(90deg,transparent 0 24px,rgba(255,255,255,.14) 25px 26px,transparent 27px 49px),repeating-linear-gradient(0deg,transparent 0 29px,rgba(255,255,255,.12) 30px 31px,transparent 32px 58px);box-shadow:inset 0 0 24px rgba(255,255,255,.18),0 0 22px color-mix(in srgb,var(--chip) 35%,transparent)}
+.ai-chip-circuit:before,.ai-chip-circuit:after{content:"";position:absolute;inset:12px;background:linear-gradient(90deg,transparent 0 22%,#fff 22.5% 23%,transparent 23.5% 70%,#fff 70.5% 71%,transparent 71.5%),linear-gradient(0deg,transparent 0 30%,rgba(255,255,255,.85) 30.5% 31%,transparent 31.5% 65%,rgba(255,255,255,.7) 65.5% 66%,transparent 66.5%);opacity:.65}
+.ai-chip-circuit:after{inset:25px 18px;transform:rotate(32deg);border:1px solid rgba(255,255,255,.6);border-left:0;border-bottom:0}
+.ai-chip-pins{display:flex;gap:5px;margin-top:14px}
+.ai-chip-pins i{display:block;width:12px;height:25px;border-radius:1px;background:linear-gradient(90deg,#9b8148,#f4d78a,#a88b4c);box-shadow:0 2px 4px #000}
+.ai-chip-state{margin-top:10px;color:var(--chip);font:11px var(--mono);letter-spacing:.25em}
+.ai-model-rail{height:28px;margin:0 auto;width:min(780px,100%);border-radius:7px;background:linear-gradient(180deg,#151a1d,#030506 60%,#111719);box-shadow:0 8px 18px #000,inset 0 1px 2px rgba(255,255,255,.12)}
+@media(max-width:720px){.ai-model-card{min-height:0;padding:24px 18px;border-radius:14px}.ai-model-head h2{font-size:21px}.ai-model-options{gap:12px;align-items:center;margin:30px auto 14px;min-height:0}.ai-chip{width:31%;height:220px;padding:12px 10px 8px}.ai-chip-label{height:52px;font-size:clamp(13px,4vw,22px)}.ai-chip-circuit{height:95px}.ai-chip-pins{gap:2px}.ai-chip-pins i{width:7px;height:17px}.ai-chip-state{font-size:9px}}
