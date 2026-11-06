@@ -86,22 +86,20 @@ PROVIDERS = {
 # Gemini model roles mirrored from Mark LVI's measured FAST / SMART / SEARCH ladders.
 # This web build uses browser speech recognition + Edge TTS; Gemini Live audio
 # sessions are not sent through the text/tool endpoint.
+# Gemini 2.5 models are excluded from new-project defaults: Google now limits
+# them to projects that actively used them before. Use current stable models.
 GEMINI_LADDERS = {
     "fast": (
-        "gemini-2.5-flash-lite", "gemini-3.5-flash-lite",
-        "gemini-3.1-flash-lite", "gemini-flash-lite-latest",
-        "gemini-2.5-flash", "gemini-3.5-flash",
-        "gemini-3.6-flash", "gemini-3-flash-preview",
+        "gemini-3.5-flash-lite", "gemini-3.1-flash-lite",
+        "gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash",
     ),
     "smart": (
-        "gemini-2.5-flash", "gemini-3.5-flash",
-        "gemini-2.5-flash-lite", "gemini-3.5-flash-lite",
-        "gemini-3.1-flash-lite", "gemini-3.6-flash",
-        "gemini-3-flash-preview", "gemini-flash-latest",
+        "gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash",
+        "gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite",
     ),
     "search": (
-        "gemini-2.5-flash", "gemini-3.5-flash",
-        "gemini-2.5-flash-lite", "gemini-flash-latest",
+        "gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash",
+        "gemini-3.5-flash-lite", "gemini-3.1-flash-lite",
     ),
 }
 GEMINI_TIMEOUTS = {"fast": 10, "smart": 20, "search": 20, "legacy": 20}
@@ -311,12 +309,22 @@ def ranked_models(pid):
     return out + [m for m in available if m not in out]
 
 
+def _gemini_model_restricted(model):
+    """Models restricted to projects with prior usage, not suitable as new-project defaults."""
+    model = str(model or "").removeprefix("models/")
+    return model.startswith("gemini-2.5-")
+
 def ranked_models_for_tier(pid, tier="smart"):
     """Rank one provider for the requested job; Gemini follows Mark LVI's tiers."""
     if pid != "gemini" or tier not in GEMINI_LADDERS:
         return ranked_models(pid)
     prefer = GEMINI_LADDERS[tier]
-    available = [m for m in list_models(pid) if is_chat_model(m)]
+    # Some Google accounts still list 2.5 in /models even when generateContent
+    # rejects it for new projects. Never re-add those IDs as late fallbacks.
+    available = [
+        m for m in list_models(pid)
+        if is_chat_model(m) and not _gemini_model_restricted(m)
+    ]
     if not available:
         return list(prefer)
     out = []
@@ -328,15 +336,15 @@ def ranked_models_for_tier(pid, tier="smart"):
             if model not in out and (model.startswith(wanted + "-") or model.startswith(wanted + ":")):
                 out.append(model)
     # Keep not-yet-listed chat models as last-resort fallbacks, never ahead of the measured ladder.
-    return out + [m for m in ranked_models(pid) if m not in out]
+    return out + [m for m in ranked_models(pid) if m not in out and not _gemini_model_restricted(m)]
 
 
 def pick_model_for_tier(pid, tier="smart", override=""):
     """Honor an explicit pin; otherwise select the measured task-specific ladder."""
-    if override:
+    if override and not (pid == "gemini" and _gemini_model_restricted(override)):
         return override
     env_model = env(f"{pid.upper()}_MODEL")
-    if env_model:
+    if env_model and not (pid == "gemini" and _gemini_model_restricted(env_model)):
         return env_model
     models = ranked_models_for_tier(pid, tier)
     ready = [m for m in models if not cooling(pid, m)]
@@ -576,6 +584,8 @@ def vision(prompt, image_bytes, mime="image/png", system="", light=False):
                     break
                 if e.status == 429:
                     mark_exhausted(pid, model, e.body)
+                elif e.status == 404:
+                    _cooldown[(pid, model)] = time.time() + 6 * 60 * 60
                 elif e.status in (500, 502, 503, 504):
                     _cooldown[(pid, model)] = time.time() + (30 * 60 if e.status in (503, 504) else 120)
                 if e.status not in (404, 429, 500, 502, 503, 504) or not PROVIDERS[pid].get("prefer"):
@@ -671,8 +681,11 @@ def route(order, messages, tools, model_override="", light=False, tier="legacy",
                 if use_tools and _tools_unsupported(e) and attempt == 0:
                     use_tools = None
                     continue
-                if e.status == 404 and attempt == 0:
-                    list_models(pid, refresh=True)  # model adı eskimiş olabilir: listeyi yenile
+                if e.status == 404:
+                    # Model ID may still appear in /models while this project is blocked from generateContent.
+                    _cooldown[(pid, model)] = time.time() + 6 * 60 * 60
+                    if attempt == 0:
+                        list_models(pid, refresh=True)  # model adı eskimiş olabilir: listeyi yenile
                 if e.status == 429:
                     mark_exhausted(pid, model, e.body)
                 if e.status in (500, 502, 503, 504):
