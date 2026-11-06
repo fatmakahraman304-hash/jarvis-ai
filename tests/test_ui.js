@@ -139,6 +139,13 @@ const check = (name, cond, extra = "") => { console.log((cond ? "  ✓ " : "  �
     check("telefon kamera sayfası (sade, diğer arayüz gizli)", role.node, JSON.stringify(role));
     check("kamera sayfası kare gönderiyor", camList.cams.some((c) => c.name === "CAM-02" && c.loc === "Salon" && c.online), JSON.stringify(camList));
     await cp.close();
+    const cp2 = await b.newPage({ viewport: { width: 400, height: 800 } });
+    await cp2.goto(`http://127.0.0.1:${sp}/?rol=kamera`); await wait(400);
+    await cp2.evaluate(() => Object.defineProperty(navigator, "mediaDevices", { value: undefined, configurable: true }));
+    await cp2.click("#cn-start");
+    const camHelp = await cp2.textContent("#cn-note");
+    check("kamera API'si HTTP'de yoksa anlaşılır HTTPS yönergesi", camHelp.includes("start-lan.bat") && camHelp.includes("https://"), camHelp);
+    await cp2.close();
     console.log("ODA TARAMA + HOLOGRAM + VÜCUT + AR EKSTRA");
     await p.route("**/api/scene/room*", (r) => r.fulfill({ json: { nesneler: [{ ad: "Kahve fincanı", tür: "mutfak", box: [0.15, 0.3, 0.38, 0.7], not: "beyaz" }, { ad: "Kumanda", tür: "elektronik", box: [0.55, 0.6, 0.7, 0.8] }] } }));
     await p.route("**/api/scene/object*", (r) => r.fulfill({ json: { ad: "Kahve fincanı", ne: "Porselen fincan.", ipucu: "Elde yıka.", arama: "porselen fincan" } }));
