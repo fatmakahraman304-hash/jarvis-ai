@@ -218,6 +218,7 @@ def _system_prompt(persona, source):
         "EKRAN VE FARE: Ekranı analiz etmen istendiğinde screen_look, yazı için read_screen_text kullan. Bir öğeyi kontrol etmeden önce screen_find ile güncel gerçek masaüstü koordinatını bul; küçültülmüş görüntüden doğrudan tıklama koordinatı uydurma. Fareyi mouse_move ile taşı, mouse_click ile tıkla, mouse_drag ile tutup sürükle, mouse_scroll ile kaydır. Gerekirse list_windows/window_control ile doğru pencereyi öne getir. Her etkileşimden sonra ekranı yeniden gör ve sonucu doğrula; işlem yapılmadan yapıldı deme. Ekran değiştiyse eski koordinatları kullanma. Kritik eylemlerin mevcut onay sistemini koru.\n"
         "HIZLI ARAŞTIRMA: web_search tek çağrıda Bing, DuckDuckGo ve gerektiğinde haber kaynaklarını paralel tarar. "
         "Başarılı sonuçtan sonra yeniden web_search/news_search çağırma. Yalnızca cevap için kritik bir ayrıntı eksikse tek read_webpage çağır; ardından sentezle. Aynı konuyu art arda farklı kelimelerle arama.\n"
+        "EV TASARIMI HEDEFİ: Ev/oda/kat planı çizimi yalnızca SpacePlanner sitesinde yapılır. Yerel plan editörü veya bağımsız mimari çalışma alanı oluşturma/açma. Kullanıcının tarifini kontrollü SpacePlanner sekmesinde uygulayıp her adımda yeniden gözlemle.\n"
         "SPACEPLANNER UZMANI: Ev/oda/kat planı isteğinde spaceplanner_open ile aynı kontrollü plan sekmesini aç veya yeniden kullan. Kullanıcının tarifini uygula; eksik temel ölçüleri sor, pikselden metre uydurma. Gerçek araçları browser_read ile öğren, gerektiğinde resmi https://spaceplanner.co/docs sayfalarını ayrı sekmede oku, sonra browser_tabs ile plana geri dön. browser_look ile tuvali ve CSS piksel koordinatlarını gör. DOM kontrolleri için browser_click/browser_fill, kısayollar için browser_press, çizim ve yerleştirme için spaceplanner_draw kullan. Resmi başlangıç: R oda aracı, dikdörtgeni drag ile çiz; mevcut birim cm ise 4x3 metre için size=400x300 gir (birimi önce kontrol et). D kapı, N pencere; aracı seçip duvara click ile yerleştir. B mobilya kütüphanesi; gerçek öğeyi seçip tuvale click ile yerleştir. 2D/3D ve diğer özellikleri gerçek arayüzden öğren. Her çizim sonrası browser_look ile geometriyi, browser_read ile ölçüleri doğrula; doğrulanmadan tamamlandı deme. Giriş/hesap, ücretli render, paylaşım, dışa aktarma ve silme onay ister. Mevcut çizimi koru; ayrı kontrollü profildeki oturumu kullanırsın. İş bitmediyse kalan adımları açıkça belirt.\n"
         f"KULLANICI HAKKINDA BİLDİKLERİN:\n{fact_txt}"
     )
@@ -250,7 +251,7 @@ def describe(name, args):
     return f"{name}({', '.join(f'{k}={v!r}' for k, v in args.items())})"
 
 
-GUEST_BLOCKED = {"operations", "integrations", "architecture", "reasoning", "google", "vault", "habits", "selfdev", "automation", "control", "windows", "voiceid", "semantic"}
+GUEST_BLOCKED = {"operations", "integrations", "reasoning", "google", "vault", "habits", "selfdev", "automation", "control", "windows", "voiceid", "semantic"}
 
 
 def _estop():

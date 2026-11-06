@@ -1,6 +1,6 @@
-# Özellik ilerlemesi — v4.6.36
+# Özellik durumu — v4.6.37
 
-Gönderilen listede 71 numaralı madde var (başlıktaki 82 sayısı değil). Kısmi ve kurulum gerektiren maddeler tamamlandı sayılmaz.
+Ev tasarımı yalnızca SpacePlanner sitesinde yapılır. Yerel mimari editör ve PLAN / ARAÇLAR sekmesi kullanıcı isteğiyle kodlarıyla birlikte kaldırıldı.
 
 | No | İstenen özellik | Durum | Gerçek kapsam / eksik |
 |---|---|---|---|
@@ -15,33 +15,33 @@ Gönderilen listede 71 numaralı madde var (başlıktaki 82 sayısı değil). K�
 | 25 | Gelişmiş yanlış bilgi önleme | Bekliyor | Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez. |
 | 67 | Eksiksiz tarayıcı dosya aktarımı | Kısmi | File input yükleme ve indirme olayını yakalama eklendi. Özel dropzone/yerel dosya diyalogu gibi tüm türler kapsanmaz. |
 | 68 | Bağımsız otomatik bilgi doğrulama | Bekliyor | Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez. |
-| 94 | Eksiksiz duvar çizme/düzenleme | Kısmi | Yerel oda poligonları ve SpacePlanner tuval araçları mevcut; tam duvar editörü değil. |
-| 95 | Otomatik kapı/pencere yerleştirme | Kısmi | SpacePlanner arayüzü üzerinden yerleştirme hattı mevcut; bütün planlarda otomatik sonuç doğrulanmadı. |
-| 96 | Eksiksiz mobilya yerleştirme | Kısmi | Yerel katalog nesneleri konumlandırılabilir; sınırlı 2D ölçü/dönüş desteği. |
-| 97 | Yerel mimari mobilya kütüphanesi | Uygulandı | 12 ölçülü yerel mobilya/ıslak hacim/merdiven nesnesi kataloğu. |
-| 98 | Profesyonel ölçülü mimari plan | Bekliyor | Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez. |
-| 99 | Otomatik metrekare hesabı | Uygulandı | Poligon alanı ve çevre hesabı eklendi. Örtüşen oda alanları toplamdan düşülmez. |
-| 100 | Tam kat planı editörü | Kısmi | Yerel oda ekleme, şematik önizleme ve sürüm kaydı var; tam CAD editörü değil. |
-| 101 | Merdiven/balkon/teras editörü | Kısmi | Ölçülü merdiven katalog nesnesi var; parametrik merdiven/balkon/teras editörü yok. |
-| 102 | Özel mutfak/banyo tasarımı | Kısmi | Tezgâh, lavabo, duş ve klozet katalog öğeleri var; tam mutfak/banyo tasarım sistemi yok. |
-| 103 | Mimari malzeme/kaplama kataloğu | Kısmi | Temel malzeme birimleri var; kapsamlı gerçek malzeme/doku kataloğu yok. |
-| 104 | Fotogerçekçi mimari ışıklandırma | Bekliyor | Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez. |
-| 105 | Güneş/gölge analizi | Bekliyor | Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez. |
-| 106 | 3D ev içinde gezinti | Bekliyor | Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez. |
-| 107 | Mobilya çakışma kontrolü | Kısmi | Kat bazlı 2D eksen hizalı mobilya kutusu çakışması eklendi. 3D mesh/ergonomi kontrolü değil. |
-| 108 | Otomatik oda yerleşimi | Kısmi | Dikdörtgenin eşit oda bölümlerine ayrılması var; kısıtlı otomatik yerleşim. |
-| 109 | Fotoğraftan ölçekli plan | Bekliyor | Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez. |
-| 110 | DWG/DXF/OBJ/GLB/PDF aktarımının tamamı | Kısmi | SVG/JSON/DXF oda çizgileri ve basit OBJ duvar yüzeyleri mevcut. DWG/GLB/PDF tam seti yok. |
-| 111 | Fotogerçekçi render | Bekliyor | Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez. |
-| 112 | Sesle tüm mimariyi güvenilir değiştirme | Kısmi | Sesli araç çağrısı ve her adımda gözlem var; tüm mimari değişikliklerde güvenilirlik garantisi yok. |
-| 113 | Alternatif ev planları | Kısmi | Dikdörtgen için iki şematik alternatif üretilir; profesyonel plan alternatifleri değil. |
-| 114 | Elektrik/tesisat planlama | Bekliyor | Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez. |
-| 115 | Malzeme metrajı/maliyet | Kısmi | Zemin/brüt duvar metrajı ve kullanıcının birim fiyatlarıyla maliyet. Ortak duvar/boşluk/tesisat düşümü yok. |
-| 116 | Tam yerel proje kayıt/sürüm sistemi | Kısmi | Yerel değişmez JSON sürümleri, geçmişten açma ve yeni sürüme kaydetme var; plan veri modeli sınırlı. |
-| 117 | SpacePlanner seviyesinde bağımsız editör | Kısmi | Yerel şematik çalışma alanı eklendi. SpacePlanner özellik eşitliği yok. |
+| 94 | Eksiksiz duvar çizme/düzenleme | Kısmi | İşlemler yalnızca kontrollü SpacePlanner sitesinin gerçek arayüzünden yapılır; tüm tasarımlar canlı olarak doğrulanmadı. Yerel mimari editör kullanıcı isteğiyle kaldırıldı. |
+| 95 | Otomatik kapı/pencere yerleştirme | Kısmi | İşlemler yalnızca kontrollü SpacePlanner sitesinin gerçek arayüzünden yapılır; tüm tasarımlar canlı olarak doğrulanmadı. Yerel mimari editör kullanıcı isteğiyle kaldırıldı. |
+| 96 | Eksiksiz mobilya yerleştirme | Kısmi | İşlemler yalnızca kontrollü SpacePlanner sitesinin gerçek arayüzünden yapılır; tüm tasarımlar canlı olarak doğrulanmadı. Yerel mimari editör kullanıcı isteğiyle kaldırıldı. |
+| 97 | Yerel mimari mobilya kütüphanesi | Bekliyor | Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz. |
+| 98 | Profesyonel ölçülü mimari plan | Bekliyor | Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz. |
+| 99 | Otomatik metrekare hesabı | Bekliyor | Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz. |
+| 100 | Tam kat planı editörü | Kısmi | İşlemler yalnızca kontrollü SpacePlanner sitesinin gerçek arayüzünden yapılır; tüm tasarımlar canlı olarak doğrulanmadı. Yerel mimari editör kullanıcı isteğiyle kaldırıldı. |
+| 101 | Merdiven/balkon/teras editörü | Kısmi | İşlemler yalnızca kontrollü SpacePlanner sitesinin gerçek arayüzünden yapılır; tüm tasarımlar canlı olarak doğrulanmadı. Yerel mimari editör kullanıcı isteğiyle kaldırıldı. |
+| 102 | Özel mutfak/banyo tasarımı | Kısmi | İşlemler yalnızca kontrollü SpacePlanner sitesinin gerçek arayüzünden yapılır; tüm tasarımlar canlı olarak doğrulanmadı. Yerel mimari editör kullanıcı isteğiyle kaldırıldı. |
+| 103 | Mimari malzeme/kaplama kataloğu | Bekliyor | Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz. |
+| 104 | Fotogerçekçi mimari ışıklandırma | Bekliyor | Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz. |
+| 105 | Güneş/gölge analizi | Bekliyor | Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz. |
+| 106 | 3D ev içinde gezinti | Kısmi | İşlemler yalnızca kontrollü SpacePlanner sitesinin gerçek arayüzünden yapılır; tüm tasarımlar canlı olarak doğrulanmadı. Yerel mimari editör kullanıcı isteğiyle kaldırıldı. |
+| 107 | Mobilya çakışma kontrolü | Bekliyor | Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz. |
+| 108 | Otomatik oda yerleşimi | Bekliyor | Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz. |
+| 109 | Fotoğraftan ölçekli plan | Bekliyor | Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz. |
+| 110 | DWG/DXF/OBJ/GLB/PDF aktarımının tamamı | Bekliyor | Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz. |
+| 111 | Fotogerçekçi render | Bekliyor | Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz. |
+| 112 | Sesle tüm mimariyi güvenilir değiştirme | Kısmi | İşlemler yalnızca kontrollü SpacePlanner sitesinin gerçek arayüzünden yapılır; tüm tasarımlar canlı olarak doğrulanmadı. Yerel mimari editör kullanıcı isteğiyle kaldırıldı. |
+| 113 | Alternatif ev planları | Bekliyor | Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz. |
+| 114 | Elektrik/tesisat planlama | Bekliyor | Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz. |
+| 115 | Malzeme metrajı/maliyet | Bekliyor | Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz. |
+| 116 | Tam yerel proje kayıt/sürüm sistemi | Bekliyor | Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz. |
+| 117 | SpacePlanner seviyesinde bağımsız editör | Bekliyor | Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz. |
 | 133 | Kapsamlı güvenlik açığı tarayıcısı | Kısmi | Sezgisel Python AST kaynak denetimi eklendi; tam CVE/dinamik zafiyet tarayıcısı değil. |
 | 134 | Genel veritabanı yönetim paneli | Kısmi | Salt okunur SQLite tablo/satır inceleme aracı var; genel veritabanı yönetim paneli yok. |
-| 148 | Her güncelleme hatasını otomatik tekrar deneme | Kısmi | Geçici HTTP/ağ hataları ve paket kurulumları sınırlı sayıda yeniden denenir. Kalıcı test/yetki/sözdizimi hataları körlemesine tekrar edilmez. |
+| 148 | Her güncelleme hatasını otomatik tekrar deneme | Kısmi | Geçici HTTP/ağ hatalarında üç indirme denemesi, paket kurulumunda iki sınırlı deneme ve süre sınırı eklendi. Yetki/sözdizimi/kalıcı test hataları körlemesine tekrar edilmez. |
 | 149 | Kriptografik güncelleme imzası | Bekliyor | Güvenilen yayın imzalama anahtarı, imzalı paket üretimi ve güncelleyiciye zorunlu doğrulama hattı kurulmadı. |
 | 164 | Ayrıntılı enerji analizi | Kısmi | Watt/zaman örneklerinden kWh, ortalama/tepe güç ve maliyet hesaplanır. Sensör veri toplama/enerji dashboardu yok. |
 | 165 | Doğrudan MQTT istemcisi | Kurulum/canlı test gerekli | MQTT QoS1 yayın ve tek mesaj okuma istemcisi eklendi; broker/adres/yetki ve canlı broker testi gerekir. |

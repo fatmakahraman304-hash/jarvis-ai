@@ -1,5 +1,5 @@
 {
-  "version": "4.6.36",
+  "version": "4.6.37",
   "requested_label": "82 özellik",
   "actual_listed_count": 71,
   "features": [
@@ -73,145 +73,145 @@
       "id": 94,
       "feature": "Eksiksiz duvar çizme/düzenleme",
       "status": "partial",
-      "detail": "Yerel oda poligonları ve SpacePlanner tuval araçları mevcut; tam duvar editörü değil."
+      "detail": "İşlemler yalnızca kontrollü SpacePlanner sitesinin gerçek arayüzünden yapılır; tüm tasarımlar canlı olarak doğrulanmadı. Yerel mimari editör kullanıcı isteğiyle kaldırıldı."
     },
     {
       "id": 95,
       "feature": "Otomatik kapı/pencere yerleştirme",
       "status": "partial",
-      "detail": "SpacePlanner arayüzü üzerinden yerleştirme hattı mevcut; bütün planlarda otomatik sonuç doğrulanmadı."
+      "detail": "İşlemler yalnızca kontrollü SpacePlanner sitesinin gerçek arayüzünden yapılır; tüm tasarımlar canlı olarak doğrulanmadı. Yerel mimari editör kullanıcı isteğiyle kaldırıldı."
     },
     {
       "id": 96,
       "feature": "Eksiksiz mobilya yerleştirme",
       "status": "partial",
-      "detail": "Yerel katalog nesneleri konumlandırılabilir; sınırlı 2D ölçü/dönüş desteği."
+      "detail": "İşlemler yalnızca kontrollü SpacePlanner sitesinin gerçek arayüzünden yapılır; tüm tasarımlar canlı olarak doğrulanmadı. Yerel mimari editör kullanıcı isteğiyle kaldırıldı."
     },
     {
       "id": 97,
       "feature": "Yerel mimari mobilya kütüphanesi",
-      "status": "implemented",
-      "detail": "12 ölçülü yerel mobilya/ıslak hacim/merdiven nesnesi kataloğu."
+      "status": "pending",
+      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
     },
     {
       "id": 98,
       "feature": "Profesyonel ölçülü mimari plan",
       "status": "pending",
-      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
     },
     {
       "id": 99,
       "feature": "Otomatik metrekare hesabı",
-      "status": "implemented",
-      "detail": "Poligon alanı ve çevre hesabı eklendi. Örtüşen oda alanları toplamdan düşülmez."
+      "status": "pending",
+      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
     },
     {
       "id": 100,
       "feature": "Tam kat planı editörü",
       "status": "partial",
-      "detail": "Yerel oda ekleme, şematik önizleme ve sürüm kaydı var; tam CAD editörü değil."
+      "detail": "İşlemler yalnızca kontrollü SpacePlanner sitesinin gerçek arayüzünden yapılır; tüm tasarımlar canlı olarak doğrulanmadı. Yerel mimari editör kullanıcı isteğiyle kaldırıldı."
     },
     {
       "id": 101,
       "feature": "Merdiven/balkon/teras editörü",
       "status": "partial",
-      "detail": "Ölçülü merdiven katalog nesnesi var; parametrik merdiven/balkon/teras editörü yok."
+      "detail": "İşlemler yalnızca kontrollü SpacePlanner sitesinin gerçek arayüzünden yapılır; tüm tasarımlar canlı olarak doğrulanmadı. Yerel mimari editör kullanıcı isteğiyle kaldırıldı."
     },
     {
       "id": 102,
       "feature": "Özel mutfak/banyo tasarımı",
       "status": "partial",
-      "detail": "Tezgâh, lavabo, duş ve klozet katalog öğeleri var; tam mutfak/banyo tasarım sistemi yok."
+      "detail": "İşlemler yalnızca kontrollü SpacePlanner sitesinin gerçek arayüzünden yapılır; tüm tasarımlar canlı olarak doğrulanmadı. Yerel mimari editör kullanıcı isteğiyle kaldırıldı."
     },
     {
       "id": 103,
       "feature": "Mimari malzeme/kaplama kataloğu",
-      "status": "partial",
-      "detail": "Temel malzeme birimleri var; kapsamlı gerçek malzeme/doku kataloğu yok."
+      "status": "pending",
+      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
     },
     {
       "id": 104,
       "feature": "Fotogerçekçi mimari ışıklandırma",
       "status": "pending",
-      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
     },
     {
       "id": 105,
       "feature": "Güneş/gölge analizi",
       "status": "pending",
-      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
     },
     {
       "id": 106,
       "feature": "3D ev içinde gezinti",
-      "status": "pending",
-      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+      "status": "partial",
+      "detail": "İşlemler yalnızca kontrollü SpacePlanner sitesinin gerçek arayüzünden yapılır; tüm tasarımlar canlı olarak doğrulanmadı. Yerel mimari editör kullanıcı isteğiyle kaldırıldı."
     },
     {
       "id": 107,
       "feature": "Mobilya çakışma kontrolü",
-      "status": "partial",
-      "detail": "Kat bazlı 2D eksen hizalı mobilya kutusu çakışması eklendi. 3D mesh/ergonomi kontrolü değil."
+      "status": "pending",
+      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
     },
     {
       "id": 108,
       "feature": "Otomatik oda yerleşimi",
-      "status": "partial",
-      "detail": "Dikdörtgenin eşit oda bölümlerine ayrılması var; kısıtlı otomatik yerleşim."
+      "status": "pending",
+      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
     },
     {
       "id": 109,
       "feature": "Fotoğraftan ölçekli plan",
       "status": "pending",
-      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
     },
     {
       "id": 110,
       "feature": "DWG/DXF/OBJ/GLB/PDF aktarımının tamamı",
-      "status": "partial",
-      "detail": "SVG/JSON/DXF oda çizgileri ve basit OBJ duvar yüzeyleri mevcut. DWG/GLB/PDF tam seti yok."
+      "status": "pending",
+      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
     },
     {
       "id": 111,
       "feature": "Fotogerçekçi render",
       "status": "pending",
-      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
     },
     {
       "id": 112,
       "feature": "Sesle tüm mimariyi güvenilir değiştirme",
       "status": "partial",
-      "detail": "Sesli araç çağrısı ve her adımda gözlem var; tüm mimari değişikliklerde güvenilirlik garantisi yok."
+      "detail": "İşlemler yalnızca kontrollü SpacePlanner sitesinin gerçek arayüzünden yapılır; tüm tasarımlar canlı olarak doğrulanmadı. Yerel mimari editör kullanıcı isteğiyle kaldırıldı."
     },
     {
       "id": 113,
       "feature": "Alternatif ev planları",
-      "status": "partial",
-      "detail": "Dikdörtgen için iki şematik alternatif üretilir; profesyonel plan alternatifleri değil."
+      "status": "pending",
+      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
     },
     {
       "id": 114,
       "feature": "Elektrik/tesisat planlama",
       "status": "pending",
-      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
     },
     {
       "id": 115,
       "feature": "Malzeme metrajı/maliyet",
-      "status": "partial",
-      "detail": "Zemin/brüt duvar metrajı ve kullanıcının birim fiyatlarıyla maliyet. Ortak duvar/boşluk/tesisat düşümü yok."
+      "status": "pending",
+      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
     },
     {
       "id": 116,
       "feature": "Tam yerel proje kayıt/sürüm sistemi",
-      "status": "partial",
-      "detail": "Yerel değişmez JSON sürümleri, geçmişten açma ve yeni sürüme kaydetme var; plan veri modeli sınırlı."
+      "status": "pending",
+      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
     },
     {
       "id": 117,
       "feature": "SpacePlanner seviyesinde bağımsız editör",
-      "status": "partial",
-      "detail": "Yerel şematik çalışma alanı eklendi. SpacePlanner özellik eşitliği yok."
+      "status": "pending",
+      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
     },
     {
       "id": 133,

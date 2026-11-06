@@ -719,7 +719,6 @@ TOOL_GROUP.update(_skill_groups)
 GROUP_INFO = {
     "operations": ("SQLite salt okunur inceleme, Python kaynak denetimi, enerji hesabı ve depo takibi", "sqlite veritabanı database güvenlik tarama kaynak denetle enerji tüketim kwh github depo değişiklik takip"),
     "engineering": ("Sembolik denklemler, sayısal sonuç kontrolü ve doğrusal optimizasyon", "denklem integral matematik sembolik optimizasyon minimize maksimize çöz kök"),
-    "architecture": ("Yerel ölçülü plan hesabı, alan, mobilya çakışması, metraj, proje sürümleri ve SVG/DXF/OBJ dışa aktarım", "mimari metraj metrekare çakışma yerleşim planı kat oda mobilya maliyet dxf obj"),
     "integrations": ("Docker, VirtualBox, MQTT ve süreç bellek/CPU ölçümleri", "docker container konteyner virtualbox sanal makine mqtt broker ram bellek sızıntı performans"),
     "reasoning": ("Model cevaplarını karşılaştırma, cevap uzunluğu tercihi, tekrarlanan işlerden makro önerisi", "modelleri karşılaştır cevap uzunluğu kısa detaylı makro öner tekrar eden"),
     "google": ("Gmail ve Google Takvim", "mail posta gmail gelen kutu ileti yanıtla cevapla taslak takvim toplantı randevu ajanda etkinlik davet meet program bugün yarın hafta"),
