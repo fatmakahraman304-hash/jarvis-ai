@@ -497,7 +497,7 @@ TOOLS = {
                                          {"title": S("başlık"), "content": S("içerik"), "path": S("kayıt yolu (boşsa Belgeler)")}, ["title", "content"]), False),
     "create_excel": (create_excel, _schema("Excel tablosu oluşturur (başlık biçimi, filtre, toplam satırı, isteğe bağlı grafik).",
                                            {"data": S("CSV metni veya JSON satırlar; ilk satır başlık"), "path": S("yol"),
-                                            "sheet": S("sayfa adı"), "chart": {"type": "string", "enum": ["", "bar", "line", "pie"]},
+                                            "sheet": S("sayfa adı"), "chart": {"type": "string", "enum": ["bar", "line", "pie"], "description": "İsteğe bağlı; grafik istenmiyorsa bu parametreyi gönderme."},
                                             "chart_title": S("grafik başlığı")}, ["data"]), False),
     "edit_excel": (edit_excel, _schema("Excel hücresine değer/formül yazar.", {"path": S("dosya"), "cell": S("örn B3"),
                                        "value": S("değer veya =FORMÜL"), "sheet": S("sayfa")}, ["path", "cell", "value"]), True),
