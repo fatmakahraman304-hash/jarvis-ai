@@ -29,15 +29,20 @@ class Gemini(BaseHTTPRequestHandler):
             if answered:
                 returned=[p['functionResponse'] for c in body['contents'] for p in c['parts'] if 'functionResponse' in p]
                 originals=[c['parts'] for c in body['contents'] if c['role']=='model' and any('functionCall' in p for p in c['parts'])]
-                if not returned or returned[-1].get('id')!='provider-call-17' or originals[-1]!=SIGNED_PARTS:
+                if not returned or not any(r.get('id')=='provider-call-17' for r in returned) or originals[0]!=SIGNED_PARTS:
                     self.send_response(400);self.end_headers();self.wfile.write(b'{"error":{"message":"FunctionResponse id or original signed parts missing"}}');return
-            parts=[{'text':'SpacePlanner editörü gerçek tarayıcıda açık.'}]
+            if body.get('tools') and answered:
+                drawn=any(r.get('name')=='spaceplanner_draw' for r in returned)
+                fn={'name':'task_report','args':{'status':'finished','summary':'Oda çizimi ekranda doğrulandı.','remaining':''}} if drawn else {'name':'spaceplanner_draw','args':{'points':[{'x':200,'y':200},{'x':500,'y':400}]}}
+                parts=[{'functionCall':{'id':'report-19' if drawn else 'draw-18',**fn},'thoughtSignature':'signed-next'}]
+            else:
+                parts=[{'text':'Görselde tuval ve çizim alanı görünür.'}]
         self.send_response(200);self.end_headers();self.wfile.write(json.dumps({'candidates':[{'content':{'role':'model','parts':parts}}]}).encode())
 server=ThreadingHTTPServer(('127.0.0.1',0),Gemini);threading.Thread(target=server.serve_forever,daemon=True).start()
 old=dict(browser._state)
 def start_browser():
     pw=sync_playwright().start();b=pw.chromium.launch(headless=True, **({'executable_path':os.environ['JARVIS_TEST_CHROMIUM']} if os.environ.get('JARVIS_TEST_CHROMIUM') else {}));ctx=b.new_context();page=ctx.new_page()
-    ctx.route('https://spaceplanner.co/**',lambda r:r.fulfill(content_type='text/html',body='<title>SpacePlanner fixture</title><h1>Editor ready</h1><button>Start Drawing</button>'))
+    ctx.route('https://spaceplanner.co/**',lambda r:r.fulfill(content_type='text/html',body='<title>SpacePlanner fixture</title><h1>Editor ready</h1><button>Start Drawing</button><canvas width=800 height=500 style="position:absolute;left:100px;top:100px"></canvas><script>window.draws=0;document.querySelector("canvas").addEventListener("mouseup",()=>window.draws++);</script>'))
     browser._state.update(ctx=ctx,page=page,pw=pw)
     browser._state['test_browser']=b
     return True
@@ -51,10 +56,12 @@ try:
     browser._call(start_browser)
     with ExitStack() as stack:
         for p in [patch.object(gemini_native,'ROOT',f'http://127.0.0.1:{server.server_port}/v1beta'),patch.object(llm,'configured',side_effect=lambda pid:pid=='gemini'),patch.object(llm,'allowed',return_value=True),patch.object(llm,'_key',return_value='test-key'),patch.object(llm,'key_bad',return_value=''),patch.object(llm,'report_bad_key',return_value=False),patch.object(llm,'pick_model_for_tier',side_effect=lambda pid,tier,override='':override or 'gemini-test-a'),patch.object(llm,'ranked_models_for_tier',return_value=['gemini-test-a','gemini-test-b']),patch.object(llm,'next_model_for_tier',side_effect=lambda pid,m,u,t:'gemini-test-b' if m.endswith('-a') else '')]:stack.enter_context(p)
-        events=list(brain.chat('JARVIS, SpacePlanner aç',groups_override={'browser'}))
-    active=browser._call(lambda:{'url':browser._state['page'].url,'buttons':browser._state['page'].get_by_role('button',name='Start Drawing').count()})
+        events=list(brain.chat('JARVIS, SpacePlanner aç ve bir oda çiz',groups_override={'browser'}))
+    active=browser._call(lambda:{'url':browser._state['page'].url,'buttons':browser._state['page'].get_by_role('button',name='Start Drawing').count(),'draws':browser._state['page'].evaluate('window.draws')})
     assert active['url']=='https://spaceplanner.co/'
     assert active['buttons']==1
+    assert active['draws']==1
+    assert all(req['toolConfig']['functionCallingConfig']['mode']=='ANY' for req in seen if req.get('tools'))
     assert any(e['type']=='tool' and e['name']=='spaceplanner_open' and e['status']=='done' for e in events)
     assert all('[spaceplanner_open]' not in e.get('text','') for e in events if e['type']=='token')
     assert seen[0]['toolConfig']['functionCallingConfig']['mode']=='ANY'

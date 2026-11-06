@@ -1,9 +1,9 @@
 {
-  "version": "4.6.39",
+  "version": "4.6.40",
   "date": "2026-11-06",
   "notes": [
-    "Gemini araç çağrısı kimliği ve imzalı konuşma parçaları devam isteğinde korunur",
-    "SpacePlanner görevlerinde gereksiz araçlar çıkarılır; ek gruplar gerektiğinde açılır",
-    "Araç sonuçları iletişim alanında açılıp okunabilir; gerçek sağlayıcı hatası anahtar gizlenerek gösterilir"
+    "SpacePlanner çiziminde her tur gerçek araç çağrısı gerektirir; metinle başlıyorum deyip durmaz",
+    "Görev sonu raporu gerçek engeli ve kalan işleri bildirir; yalnızca sayfa açmak çizim başarısı sayılmaz",
+    "Başarılı araç adımı ardışık bozuk yanıt sayacını sıfırlar; süre ve adım sınırları korunur"
   ]
 }
