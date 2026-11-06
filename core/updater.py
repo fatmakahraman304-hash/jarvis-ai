@@ -142,7 +142,7 @@ def _tests(base):
     """Yeni sürümün hızlı testleri, geçici veri klasörüyle (gerçek hafızana dokunmaz)."""
     tmp = tempfile.mkdtemp(prefix="jv_upd_")
     envv = dict(os.environ, JARVIS_DATA=tmp, PYTHONIOENCODING="utf-8")
-    for t in ("test_smoke.py", "test_fast_conversation.py", "test_model_tiers.py"):
+    for t in ("test_smoke.py", "test_fast_conversation.py", "test_model_tiers.py", "test_models.py"):
         f = base / "tests" / t
         if not f.exists():
             continue
