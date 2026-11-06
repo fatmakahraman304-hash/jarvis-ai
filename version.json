@@ -2,9 +2,9 @@
   "version": "4.6.8",
   "date": "2026-11-06",
   "notes": [
-    "🛠 Yeni projelerde erişimi kısıtlanan Gemini 2.5 modelleri varsayılan sıralardan ve eski sabitlemelerden çıkarıldı",
-    "⚡ FAST artık Gemini 3.5 Flash-Lite ile başlıyor",
-    "🧠 SMART ve SEARCH artık Gemini 3.8 Flash ile başlıyor",
-    "🧯 Erişim reddi (404) alan model 6 saat kenara alınır; sonraki istek onu tekrar denemez"
+    "🧹 Gemini 2.5 modelleri bu proje için tüm FAST/SMART/SEARCH ve yedek sıralarından çıkarıldı",
+    "⚡ FAST Gemini 3.5 Flash-Lite ile başlar; SMART ve SEARCH Gemini 3.8 Flash ile başlar",
+    "🧯 404 alan model altı saat devre dışı kalır, sonraki isteklerde tekrar denenmez",
+    "🔧 Eski GEMINI_MODEL / kişilik model sabitlemeleri 2.5 ise otomatik temizlenir"
   ]
 }
