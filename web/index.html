@@ -40,11 +40,17 @@
 <section id="spaceplanner-view" aria-label="SpacePlanner">
   <div class="spaceplanner-bar">
     <strong>SPACEPLANNER</strong>
-    <span>Harici planlama aracı · SpacePlanner.co</span>
-    <a href="https://spaceplanner.co/" target="_blank" rel="noopener noreferrer">Yeni sekmede aç ↗</a>
+    <span>Harici planlama aracı · JARVIS ayrı penceresi</span>
+    <button type="button" id="spaceplanner-open">SPACEPLANNER'I AÇ ↗</button>
     <button type="button" id="spaceplanner-close">JARVIS'e dön ✕</button>
   </div>
-  <iframe id="spaceplanner-frame" title="SpacePlanner ev ve alan planlayıcı" src="https://spaceplanner.co/" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="fullscreen"></iframe>
+  <div class="spaceplanner-launch">
+    <div class="spaceplanner-mark">⌂</div>
+    <h2>SPACEPLANNER</h2>
+    <p>Bu site gömülü pencereye izin vermiyor. SpacePlanner, JARVIS'ten açılan ayrı bir uygulama penceresinde çalıştırılacak.</p>
+    <button type="button" id="spaceplanner-open-main">SPACEPLANNER'I JARVIS İÇİNDEN AÇ ↗</button>
+    <small>SpacePlanner ayrı pencerede açılır; JARVIS açık kalır.</small>
+  </div>
 </section>
 
 <!-- açılış ekranı -->
