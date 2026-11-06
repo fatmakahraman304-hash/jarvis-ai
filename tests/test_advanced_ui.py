@@ -42,6 +42,9 @@ try:
             p.click('#plan-save');p.wait_for_function("document.querySelector('#adv-result').textContent.includes('sürüm 2')")
             p.fill('#plan-revision','1');p.click('#plan-load');p.wait_for_function("document.querySelectorAll('#plan-preview rect').length === 0")
             assert p.request.post(base+'/api/architecture',data={'action':'history','project_id':pid}).json()==[1,2]
+            p.click('#plan-export');p.wait_for_selector('#adv-result a')
+            exported=p.request.get(p.locator('#adv-result a').get_attribute('href')).text()
+            assert '<rect' not in exported,'export must use the opened historical revision'
             p.click('#adv-status');p.wait_for_function("document.querySelector('#adv-result').textContent.includes('SLAM')")
             assert 'Donanım/ortam gerekli' in p.text_content('#adv-result')
             assert not errors,errors

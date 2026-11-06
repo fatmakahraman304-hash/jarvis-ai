@@ -2,7 +2,7 @@
 (function () {
   const JV=window.JV; if(!JV)return;
   const $=s=>document.querySelector(s), ns='http://www.w3.org/2000/svg';
-  let plan={units:'m',rooms:[],furniture:[]},catalog={},pid='',dirty=false;
+  let plan={units:'m',rooms:[],furniture:[]},catalog={},pid='',dirty=false,currentRevision=0;
   const api=(action,args={})=>JV.api('/api/architecture',{body:{action,...args}}).then(r=>{if(r.error)throw Error(r.error);return r;});
   const output=t=>$('#adv-result').textContent=typeof t==='string'?t:JSON.stringify(t,null,2);
   const guard=fn=>async()=>{try{await fn();}catch(e){output(e.message);}};
@@ -39,12 +39,12 @@
     const next=JSON.parse(JSON.stringify(plan));next.furniture.push({id:'f_'+Date.now(),room:$('#plan-room').value,kind:$('#plan-kind').value,x:Number($('#item-x').value),y:Number($('#item-y').value)});
     const report=await api('analyze',{document:next});plan=next;dirty=true;draw();output(report);
   });
-  $('#plan-save').onclick=guard(async()=>{const r=await api('save',{project_id:$('#plan-id').value.trim(),document:plan});pid=r.project_id;dirty=false;$('#plan-id').value=pid;output(`Kaydedildi: ${pid}, sürüm ${r.revision}`);});
-  $('#plan-load').onclick=guard(async()=>{const r=await api('load',{project_id:$('#plan-id').value,revision:Number($('#plan-revision').value)||0});plan=r.document;pid=r.project_id;dirty=false;draw();output(`Sürüm ${r.revision} açıldı.`);});
+  $('#plan-save').onclick=guard(async()=>{const r=await api('save',{project_id:$('#plan-id').value.trim(),document:plan});pid=r.project_id;currentRevision=r.revision;dirty=false;$('#plan-id').value=pid;output(`Kaydedildi: ${pid}, sürüm ${r.revision}`);});
+  $('#plan-load').onclick=guard(async()=>{const r=await api('load',{project_id:$('#plan-id').value,revision:Number($('#plan-revision').value)||0});plan=r.document;pid=r.project_id;currentRevision=r.revision;dirty=false;draw();output(`Sürüm ${r.revision} açıldı.`);});
   $('#plan-history').onclick=guard(async()=>output(await api('history',{project_id:$('#plan-id').value})));
   $('#plan-list').onclick=guard(async()=>output(await api('list')));
   $('#plan-analyze').onclick=guard(async()=>output(await api('analyze',{document:plan})));
-  $('#plan-export').onclick=guard(async()=>{if(!pid||dirty)throw Error('Önce değişiklikleri yeni sürüm olarak kaydet.');const r=await api('export',{project_id:pid,format:$('#plan-format').value});output('Dosya hazır: ');const a=document.createElement('a');a.textContent='İNDİR';a.href='/api/files/download?path='+encodeURIComponent(r.path)+'&token='+encodeURIComponent(JV.token||'');a.target='_blank';$('#adv-result').append(a);});
+  $('#plan-export').onclick=guard(async()=>{if(!pid||dirty)throw Error('Önce değişiklikleri yeni sürüm olarak kaydet.');const r=await api('export',{project_id:pid,format:$('#plan-format').value,revision:currentRevision});output('Dosya hazır: ');const a=document.createElement('a');a.textContent='İNDİR';a.href='/api/files/download?path='+encodeURIComponent(r.path)+'&token='+encodeURIComponent(JV.token||'');a.target='_blank';$('#adv-result').append(a);});
   $('#offline-save').onclick=guard(async()=>{await JV.api('/api/keys',{body:{VOSK_MODEL_PATH:$('#offline-path').value}});output('Model yolu kaydedildi. SES sekmesinden Vosk seçebilirsin.');});
   $('#adv-status').onclick=guard(async()=>{const r=await JV.api('/api/features');const names={implemented:'Uygulandı',partial:'Kısmi',pending:'Bekliyor',requires_setup:'Kurulum/test gerekli',requires_hardware:'Donanım/ortam gerekli'};output(r.features.map(f=>`${f.id}. ${f.feature} — ${names[f.status]}\n${f.detail}`).join('\n\n'));});
   $('#adv-metrics').onclick=guard(async()=>{output(await JV.api('/api/diagnostics'));});

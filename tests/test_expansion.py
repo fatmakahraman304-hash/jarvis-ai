@@ -51,6 +51,8 @@ class ExpansionTests(unittest.TestCase):
         self.assertEqual((first['revision'],second['revision']),(1,2));self.assertEqual(a.plan_project('load','test',revision=1)['document']['rooms'][0]['name'],'Salon')
         for format in ['svg','json','dxf','obj']:
             path=Path(a.plan_export('test',format)['path']);self.assertTrue(path.is_file());self.assertGreater(path.stat().st_size,10)
+        old_export=Path(a.plan_export('test','json',revision=1)['path'])
+        self.assertEqual(json.loads(old_export.read_text())['rooms'][0]['name'],'Salon')
         self.assertEqual(a.plan_project('history','test'),[1,2])
     def test_alternatives_preserve_area(self):
         result=a.plan_alternatives(8,6,3)
