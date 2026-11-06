@@ -1012,6 +1012,12 @@ def _migrate_old_models():
                     keep.append(ln)
                 if len(keep) != len(lines):
                     envf.write_text("\n".join(keep) + "\n", encoding="utf-8")
+            # Also clear a process-level Windows environment pin, even when it was not stored in .env.
+            for key in keys:
+                value = os.environ.get(key, "").strip()
+                if value and old.match(value):
+                    changed.append(f"{key}={value} (environment)")
+                    os.environ.pop(key, None)
             done.add(flag)
             save_settings({"personas": pers, "models_migrated_list": sorted(done)})
             if changed:
