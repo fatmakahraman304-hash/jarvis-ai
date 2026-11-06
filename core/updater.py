@@ -139,29 +139,57 @@ def _req_lines(p):
 
 
 def _tests(base):
-    """Yeni sürüm testlerini geçici veri klasöründe çalıştırır ve her adımı arayüze bildirir."""
+    """Kısa, çevrimdışı güncelleme kontrolleri; entegrasyon testi CI üzerinde çalıştırılır."""
     tmp = tempfile.mkdtemp(prefix="jv_upd_")
     envv = dict(os.environ, JARVIS_DATA=tmp, PYTHONIOENCODING="utf-8")
-    tests = ("test_smoke.py", "test_fast_conversation.py", "test_model_tiers.py", "test_models.py", "test_windows_transport.py", "test_research_budget.py", "test_live_voice.py")
+    # Smoke test yerel sunucular başlatır ve normal açılış testidir; kullanıcı cihazındaki
+    # güncelleme akışını dakikalarca bloke etmemesi için GitHub Actions'a bırakılır.
+    tests = (
+        "test_fast_conversation.py",
+        "test_model_tiers.py",
+        "test_models.py",
+        "test_windows_transport.py",
+        "test_research_budget.py",
+        "test_live_voice.py",
+    )
+    total_timeout = 90
+    per_test_timeout = 25
+    deadline = time.monotonic() + total_timeout
     try:
-        selected = [t for t in tests if (base / "tests" / t).exists()]
+        selected = [t for t in tests if (base / "tests" / t).is_file()]
         total = len(selected)
-        for index, t in enumerate(selected, 1):
-            # Test aşamasında sabit %35 yerine canlı alt-adım ve ilerleme göster.
-            progress = 35 + int(17 * (index - 1) / max(total, 1))
-            STATE.update({"ilerleme": progress, "adım": f"yeni sürüm test ediliyor ({index}/{total}): {t}"})
-            f = base / "tests" / t
+        if not total:
+            return False, "Güncelleme paketi doğrulama testi içermiyor; güvenlik için uygulanmadı."
+        for index, name in enumerate(selected, 1):
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return False, f"Toplam test süresi {total_timeout} saniyeyi aştı; güncelleme uygulanmadı."
+            timeout = max(1, min(per_test_timeout, int(remaining)))
+            progress = 35 + int(17 * (index - 1) / total)
+            STATE.update({
+                "ilerleme": progress,
+                "adım": f"hızlı kontroller ({index}/{total}): {name}",
+            })
+            _log(f"Güncelleme testi başladı: {name} (zaman sınırı {timeout} sn)")
             try:
                 result = subprocess.run(
-                    [sys.executable, str(f)], capture_output=True, text=True,
-                    timeout=600, encoding="utf-8", errors="ignore",
-                    env=envv, cwd=str(base)
+                    [sys.executable, str(base / "tests" / name)],
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout,
+                    encoding="utf-8",
+                    errors="ignore",
+                    env=envv,
+                    cwd=str(base),
                 )
             except subprocess.TimeoutExpired:
-                return False, f"{t} testi 10 dakika içinde tamamlanmadı; güncelleme uygulanmadı."
+                return False, f"{name} testi {timeout} saniyede tamamlanmadı; güncelleme uygulanmadı."
             if result.returncode != 0:
-                return False, f"{t} testi başarısız; güncelleme uygulanmadı.\n" + (result.stdout + result.stderr)[-1500:]
-        STATE.update({"ilerleme": 52, "adım": "testler tamamlandı"})
+                detail = (result.stdout or "") + (result.stderr or "")
+                return False, f"{name} testi başarısız; güncelleme uygulanmadı.\n{detail[-1500:]}"
+            STATE.update({"ilerleme": 35 + int(17 * index / total)})
+            _log(f"Güncelleme testi tamamlandı: {name}")
+        STATE.update({"ilerleme": 52, "adım": "hızlı kontroller tamamlandı"})
         return True, ""
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -172,6 +200,7 @@ def apply(restart=True):
     if not _lock.acquire(blocking=False):
         return {"durum": "zaten güncelleniyor"}
     log = []
+    work = None
     try:
         STATE.update({"durum": "çalışıyor", "hata": "", "ilerleme": 5, "adım": "sürüm kontrol ediliyor"})
         info = check(force=True)
@@ -233,6 +262,8 @@ def apply(restart=True):
         _log(f"HATA: {e}")
         return {"durum": "hata", "hata": str(e)}
     finally:
+        if work is not None:
+            shutil.rmtree(work, ignore_errors=True)
         _lock.release()
 
 
