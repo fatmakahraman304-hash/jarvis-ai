@@ -130,6 +130,17 @@ Beyin konuya göre ilgili araçları kendisi seçer; sen sadece ne istediğini s
 - Sunucu varsayılan olarak **sadece bu bilgisayara** açıktır. Telefon modu erişim anahtarı ister; API anahtarları uzaktan değiştirilemez.
 - Anahtarlar `.env` dosyasında, hafıza `data/` klasöründe durur; ikisi de `.gitignore`'da, GitHub'a gitmez.
 
+
+## Hızlı konuşma ve akıllı bağlam (v4.6.5)
+
+Mark-LVI'den ilham alan iki sohbet iyileştirmesi:
+
+- **Anında karşılık:** İnternet, dosya, bilgisayar veya üretim araçları gerektiren web/telefon isteklerinde JARVIS, model cevabını beklerken kısa bir sesli durum bildirimi verir. Basit sohbetlerde gereksiz konuşma eklenmez; bu bildirim ayrı tutulur ve asıl cevabın içine karışmaz.
+- **Bütçeli konuşma bağlamı:** Model isteğine en yeni konuşma mesajları en fazla 24.000 karakterlik kayan pencereyle eklenir. Eski mesajlar SQLite geçmişinden silinmez; yalnızca hız ve bağlam boyutu için o isteğin dışında bırakılır.
+- Mevcut çoklu model yönlendirmesi, araç çağrıları, kritik işlem onayları ve kalıcı hafıza aynen korunur.
+
+Yeni sürüm, Ayarlar > **GÜNCELLE** üzerinden version.json sürümü görüldüğünde kurulabilir.
+
 ## Çok platform
 
 | Nereden | Nasıl |
