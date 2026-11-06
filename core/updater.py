@@ -122,6 +122,9 @@ def _pip(lines, log):
     for spec in lines:
         r = subprocess.run([py, "-m", "pip", "install", "--disable-pip-version-check", "-q", spec], capture_output=True, text=True, encoding="utf-8", errors="ignore")
         log.append(f"pip {spec}: {'tamam' if r.returncode == 0 else 'kurulamadı'}")
+        if r.returncode != 0:
+            detail = (r.stderr or r.stdout or "").strip()[-500:]
+            raise RuntimeError(f"Gerekli paket kurulamadı: {spec}. {detail}")
 
 
 def _req_lines(p):
