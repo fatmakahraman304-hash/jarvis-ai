@@ -698,6 +698,13 @@ def route(order, messages, tools, model_override="", light=False, tier="legacy",
         call_timeout = int(timeout or (10 if light else GEMINI_TIMEOUTS.get(tier, 20)))
         if not model:
             continue
+        # A pinned model or an exhausted ladder must not bypass an active cooldown.
+        if cooling(pid, model):
+            model = (next_model_for_tier(pid, model, [model], tier)
+                     if pid == "gemini" and tier in GEMINI_LADDERS
+                     else next_model(pid, model, [model]))
+            if not model:
+                continue
         use_tools = tools
         used = []
         max_fallbacks = (min(7, max(0, len(ranked_models_for_tier(pid, tier)) - 1))
@@ -737,6 +744,17 @@ def route(order, messages, tools, model_override="", light=False, tier="legacy",
                 if _protocol_error(e):
                     yield ("error", "Model isteğinin araç/konuşma biçimi reddedildi; işlem tamamlanmadı. Sağlayıcının gerçek hatası: " + error_details[-1])
                     return
+                if e.status == 400:
+                    # Never hide a real malformed request behind previous 429s.
+                    # Pausing this model also avoids re-sending the same bad turn.
+                    _cooldown[(pid, model)] = time.time() + 300
+                    if pid == "gemini":
+                        quota_note = (" Diğer modeller ayrıca HTTP 429 kota sınırında."
+                                      if any(item.endswith(": 429") for item in tried) else "")
+                        yield ("error", "Gemini isteği HTTP 400 INVALID_ARGUMENT ile reddedildi. "
+                               "İşlem yapılmış sayılmadı. Son modelin hatası: "
+                               + error_details[-1] + quota_note)
+                        return
                 if use_tools and _tools_unsupported(e):
                     # Araçsız yeniden denemek, işlemi yapmadan yapılmış gibi metin
                     # üretmesine neden olur. Araçları koruyup başka model dene.
@@ -772,9 +790,12 @@ def route(order, messages, tools, model_override="", light=False, tier="legacy",
     if only_gemini():
         if key_bad("gemini"):
             yield ("error", key_bad("gemini"))
-        elif any(":" in t and t.endswith("429") for t in tried):
-            yield ("error", "Gemini'nin bugünkü ücretsiz hakkı doldu (tüm Gemini modelleri). Hak her gün saat 10:00 civarı yenilenir. "
-                            "Beklemeden devam etmek istersen Ayarlar > MODELLER'de 'Sadece Gemini' seçeneğini kapat.")
+        elif any(":" in t and t.endswith("429") for t in tried) or (
+                not tried and any(key[0] == "gemini" and cooling(*key) for key in list(_cooldown))):
+            yield ("error", "Gemini API kota veya hız sınırına takıldı; uygun model şu an kullanılamıyor. "
+                            "Sınırın günlük mü, dakikalık mı olduğunu Google AI Studio > Rate limits bölümünden kontrol et. "
+                            "JARVIS soğuma süresi dolmadan aynı modeli tekrar denemeyecek. "
+                            "Başka bir sağlayıcın varsa Ayarlar > MODELLER'de 'Sadece Gemini' seçeneğini kapatabilirsin.")
         elif any(t.endswith(("500", "502", "503", "504")) for t in tried):
             yield ("error", "Google'ın Gemini sunucuları şu an çok yoğun (tüm Gemini modelleri denendi). Bir dakika sonra tekrar dener misin?")
         else:
