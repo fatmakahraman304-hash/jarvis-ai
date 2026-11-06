@@ -1,5 +1,9 @@
 # J.A.R.V.I.S. Personal AI
 
+## 4.6.44 — Gemini araç şeması HTTP 400 düzeltmesi
+
+Gemini'nin `function_declarations[..].parameters.properties[chart].enum[0]: cannot be empty` hatasına neden olan `create_excel.chart` araç tanımındaki boş enum seçeneği kaldırıldı. Parametre artık isteğe bağlıdır: grafik istenmiyorsa hiç gönderilmez, grafik istenirse `bar`, `line` veya `pie` olur. Google Gemini'ye gönderilen tüm iç içe araç şemalarında boş enum seçenekleri de otomatik olarak temizlenir. Tüm kayıtlı araç bildirimlerini tarayan ve boş seçenekleri reddeden regresyon testi eklendi. Güncellemeden sonra JARVIS'i tamamen yeniden başlat.
+
 ## 4.6.43 — Tekrarlayan tarayıcı onaylarını azaltma
 
 JARVIS normal tarayıcı gezinmelerinde ve hassas olmayan metin girişlerinde tekrar tekrar onay istemeden çalışır. Bu davranış **Ayarlar > Davranış > Tarayıcıda sıradan işlemleri onaysız yap** seçeneğiyle kapatılabilir; varsayılan açık gelir. Google ile giriş, izin/koşul kabulü, ödeme, silme, paylaşım/çıktı, hassas form alanları ve form gönderme onay korumasını sürdürür. Google hesabına giriş yine Chrome’da elle yapılmalıdır.
