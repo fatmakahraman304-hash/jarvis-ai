@@ -52,8 +52,18 @@ def _get(url, timeout=30, accept="application/vnd.github+json"):
     tok = env("GITHUB_TOKEN")
     if tok:
         hdr["Authorization"] = f"Bearer {tok}"
-    with urllib.request.urlopen(urllib.request.Request(url, headers=hdr), timeout=timeout) as r:
-        return r.read()
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(urllib.request.Request(url, headers=hdr), timeout=timeout) as r:
+                return r.read()
+        except urllib.error.HTTPError as exc:
+            if exc.code not in (408, 429, 500, 502, 503, 504) or attempt == 2:
+                raise
+        except (urllib.error.URLError, TimeoutError, OSError):
+            if attempt == 2:
+                raise
+        _log(f"Geçici indirme hatası; yeniden deneme {attempt + 2}/3")
+        time.sleep(attempt + 1)
 
 
 def _log(msg):
@@ -120,11 +130,22 @@ def restore(zip_path):
 def _pip(lines, log):
     py = sys.executable
     for spec in lines:
-        r = subprocess.run([py, "-m", "pip", "install", "--disable-pip-version-check", "-q", spec], capture_output=True, text=True, encoding="utf-8", errors="ignore")
-        log.append(f"pip {spec}: {'tamam' if r.returncode == 0 else 'kurulamadı'}")
-        if r.returncode != 0:
-            detail = (r.stderr or r.stdout or "").strip()[-500:]
-            raise RuntimeError(f"Gerekli paket kurulamadı: {spec}. {detail}")
+        for attempt in range(2):
+            STATE["adım"] = f"Paket kuruluyor: {spec} (deneme {attempt+1}/2)"
+            try:
+                r = subprocess.run([py, "-m", "pip", "install", "--disable-pip-version-check", "--timeout", "15", "--retries", "2", "-q", spec], capture_output=True, text=True, encoding="utf-8", errors="ignore", timeout=180)
+                if r.returncode == 0:
+                    log.append(f"pip {spec}: tamam")
+                    break
+                detail = (r.stderr or r.stdout or "").strip()[-500:]
+                transient = any(word in detail.lower() for word in ("timeout", "timed out", "connection", "temporary failure", "network", "503", "502"))
+            except subprocess.TimeoutExpired:
+                detail, transient = "Paket kurulumu 180 saniyeyi aştı.", True
+            if not transient or attempt == 1:
+                log.append(f"pip {spec}: kurulamadı")
+                raise RuntimeError(f"Gerekli paket kurulamadı: {spec}. {detail}")
+            _log(f"Paket ağı yeniden deneniyor: {spec}")
+            time.sleep(1)
 
 
 def _req_lines(p):

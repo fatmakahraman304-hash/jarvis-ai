@@ -8,10 +8,12 @@ import math
 import queue
 import re
 import threading
+import uuid
+from pathlib import Path
 from urllib.parse import urlparse
 
 from ..config import DATA, load_settings
-from ..tools import S, _schema
+from ..tools import S, _schema, _path
 
 RISKY = re.compile(r"satın|öde|ödeme|sipariş|gönder|sil|onayla|kaydol|abone|bağış|havale|transfer|buy|pay|checkout|order|purchase|submit|send|delete|confirm|subscribe", re.I)
 _jobs = queue.Queue()
@@ -202,6 +204,41 @@ def browser_fill(field, value, submit=False):
             except Exception:
                 pass
         return {"dolduruldu": str(field), "değer": str(value)[:60], "gönderildi": str(submit).lower() in ("true", "1")}
+    return _call(run)
+
+
+def browser_upload(field, path):
+    file = _path(path).resolve()
+    if not file.is_file():
+        raise ValueError("Yüklenecek dosya bulunamadı.")
+    if file.stat().st_size > 100_000_000:
+        raise ValueError("Bu araçta yükleme sınırı 100MB.")
+    def run():
+        p = _page()
+        loc = _loc(p, field)
+        if (loc.get_attribute("type") or "").lower() != "file":
+            raise ValueError("Hedef gerçek dosya seçme alanı olmalı.")
+        loc.set_input_files(str(file), timeout=10000)
+        return {"uploaded":file.name,"field":field,**_read(2000)}
+    return _call(run)
+
+
+def browser_download(target):
+    def run():
+        p = _page()
+        with p.expect_download(timeout=20000) as pending:
+            _loc(p, target).click(timeout=8000)
+        download = pending.value
+        name = re.sub(r"[^\w.()-]", "_", download.suggested_filename.replace('\\', '/').split('/')[-1])[:140] or 'download.bin'
+        folder = DATA / "downloads"
+        folder.mkdir(exist_ok=True)
+        path = folder / (uuid.uuid4().hex[:10] + '-' + name)
+        download.save_as(str(path))
+        failure = download.failure()
+        if failure:
+            path.unlink(missing_ok=True)
+            raise RuntimeError(failure)
+        return {"path":str(path),"bytes":path.stat().st_size,**_read(1500)}
     return _call(run)
 
 
@@ -445,6 +482,8 @@ def _fill_crit(a):
 
 
 TOOLS = {
+    "browser_upload": (browser_upload, _schema("Gerçek file input alanına yerel dosya yükler; alan numarası veya etiketi ve dosya yolu gerekir. 100MB sınırı.", {"field":S("alan"),"path":S("dosya yolu")}, ["field","path"]), True),
+    "browser_download": (browser_download, _schema("İndirme başlatan öğeye tıklar, dosyanın tamamlanmasını bekleyip data/downloads altında yeni adla saklar. Her indirme türü veya oturum dışı pencere desteklenmez.", {"target":S("öğe")}, ["target"]), True),
     "browser_observe": (browser_observe, _schema("Güncel tarayıcı ekranını ve öğeleri yeniden analiz eder. Açık kapat/atla/reddet düğmeli reklam veya çerez engellerini en fazla 3 kez kapatıp tekrar görür; hesap/ödeme/kaydedilmemiş veri pencerelerini otomatik kapatmaz.", {}), False),
     "spaceplanner_open": (spaceplanner_open, _schema("SpacePlanner'ı JARVIS'in kontrol ettiği pencerede açar; varsa aynı plan sekmesini yeniden yüklemeden kullanır.", {}), False),
     "spaceplanner_draw": (spaceplanner_draw, _schema("SpacePlanner canvas üzerinde çizim/yerleştirme/sürükleme. Önce browser_look ile koordinatları gör, browser_click veya browser_press ile aracı seç; sonra sonucu görsel doğrula. Ölçü için size kullan, pikselden metre tahmin etme.", {

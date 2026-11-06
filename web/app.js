@@ -98,7 +98,7 @@
   $("#ai-model-picker").addEventListener("click", (e) => { if (e.target.id === "ai-model-picker") closeModelPicker(); });
   addEventListener("keydown", (e) => { if (e.key === "Escape") closeModelPicker(); });
 
-  async function saveSettings(patch) { JV.settings = await JV.api("/api/settings", { body: patch }); return JV.settings; }
+  async function saveSettings(patch) { JV.settings = await JV.api("/api/settings", { body: patch }); if (JV.applyPreferences) JV.applyPreferences(); return JV.settings; }
   JV.saveSettings = saveSettings;
 
   // ---------- sohbet ----------
@@ -171,7 +171,7 @@
 
   // ---------- konuşma tanıma ----------
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  let rec = null, recognizing = false, wakeMode = false, awaitingCmd = 0, oneShot = false;
+  let rec = null, recognizing = false, wakeMode = false, awaitingCmd = 0, oneShot = false, offlineActive = false;
   let recRetry = null, recFailures = 0, sttHandoff = false;
   function resumeListening(delay = 250) {
     clearTimeout(recRetry);
@@ -215,7 +215,29 @@
     return null;
   }
 
+  function handleWakeFinal(final) {
+    const w = findWake(final);
+    if (w) {
+      if (w.pid !== persona) { applyPersona(w.pid, false); saveSettings({ persona: w.pid }); }
+      if (w.rest.length > 2) guardedSend(w.rest);
+      else { JV.beep(); awaitingCmd = Date.now() + 10000; setStatus("listening", "SİZİ DİNLİYORUM"); }
+    } else if (awaitingCmd > Date.now() || ([...document.querySelectorAll(".confirm")].length && /(onayla|reddet)/i.test(final))) { awaitingCmd = 0; guardedSend(final); }
+  }
+
+  function offlineWake() {
+    clearTimeout(recRetry); oneShot = false; sttHandoff = true; offlineActive = true;
+    if (rec) { rec.onend = rec.onerror = rec.onresult = rec.onstart = null; try { rec.abort(); } catch (e) {} rec = null; }
+    recognizing = true;
+    JV.stt.record({
+      maxMs: 15000, waitMs: 8000,
+      onStart: () => { if (!busy && !JV.speaking) setStatus("listening", "ÇEVRİMDIŞI DİNLİYOR"); },
+      onText: (text) => { offlineActive = false; recognizing = false; sttHandoff = false; if (JV.settings.stt_engine === "vosk" && wakeMode && text) handleWakeFinal(text); resumeListening(); },
+      onError: (error) => { offlineActive = false; recognizing = false; sttHandoff = false; if (JV.settings.stt_engine !== "vosk") { resumeListening(); return; } wakeMode = false; updateToggles(); toast("Çevrimdışı tanıma: " + error, 10000); },
+    });
+  }
+
   function startRec(single) {
+    if (JV.settings.stt_engine === "vosk") { if (single) whisperOnce(); else offlineWake(); return; }
     if (!SR) { if (single) recordFallback(); else toast("Sürekli dinleme için Edge veya Chrome gerekli; mikrofon düğmesi bu tarayıcıda kayıt moduyla çalışır."); return; }
     clearTimeout(recRetry);
     oneShot = !!single;
@@ -240,16 +262,11 @@
       if (JV.speaking && (findWake(heard) || STOP.some((s) => heard.toLowerCase().split(/\s+/).includes(s)))) JV.stopSpeaking();
       if (oneShot) { $("#q").value = heard; if (final) { $("#q").value = ""; guardedSend(final); } return; }
       if (!final) return;
-      const w = findWake(final);
-      if (w) {
-        if (w.pid !== persona) { applyPersona(w.pid, false); saveSettings({ persona: w.pid }); }
-        if (w.rest.length > 2) guardedSend(w.rest);
-        else { JV.beep(); awaitingCmd = Date.now() + 10000; setStatus("listening", "SİZİ DİNLİYORUM"); }
-      } else if (awaitingCmd > Date.now() || ([...document.querySelectorAll(".confirm")].length && /(onayla|reddet)/i.test(final))) { awaitingCmd = 0; guardedSend(final); }
+      handleWakeFinal(final);
     };
     try { rec.start(); } catch (e) { recognizing = false; recFailures = Math.min(recFailures + 1, 5); resumeListening(1000); }
   }
-  function stopRec() { wakeMode = false; clearTimeout(recRetry); if (rec) { try { rec.abort(); } catch (e) {} } recognizing = false; setStatus(null); }
+  function stopRec() { wakeMode = false; clearTimeout(recRetry); if (offlineActive && JV.stt && JV.stt.busy()) JV.stt.stop(); if (rec) { try { rec.abort(); } catch (e) {} } recognizing = false; setStatus(null); }
 
   // Web Speech yoksa (Firefox, bazı telefonlar): sesi kaydet → sunucuda Whisper ile yazıya çevir
   let mediaRec = null, chunks = [];
@@ -379,6 +396,7 @@
 
   // ---------- ayarlar ----------
   const KEY_LINKS = {
+    openai: "https://platform.openai.com/api-keys", anthropic: "https://console.anthropic.com/",
     gemini: "https://aistudio.google.com/apikey", groq: "https://console.groq.com/keys",
     openrouter: "https://openrouter.ai/keys", xai: "https://console.x.ai", mistral: "https://console.mistral.ai/api-keys",
     cerebras: "https://cloud.cerebras.ai", ollama: "https://ollama.com/download",
@@ -449,7 +467,7 @@
       else if (p.id === "custom") { inp = el("input"); inp.placeholder = "CUSTOM_BASE_URL (örn. http://localhost:1234/v1)"; inp.dataset.env = "CUSTOM_BASE_URL"; }
       else { inp = el("input"); inp.type = "password"; inp.placeholder = p.configured ? "•••••• (değiştirmek için yapıştır)" : p.key_env; inp.dataset.env = p.key_env; }
       const right = el("div");
-      if (KEY_LINKS[p.id]) { const a = el("a", "", p.id === "ollama" ? "indir ↗" : "ücretsiz anahtar al ↗"); a.href = KEY_LINKS[p.id]; a.target = "_blank"; right.append(a); }
+      if (KEY_LINKS[p.id]) { const a = el("a", "", p.id === "ollama" ? "indir ↗" : p.free ? "anahtar al ↗" : "ücretli API hesabı ↗"); a.href = KEY_LINKS[p.id]; a.target = "_blank"; right.append(a); }
       row.append(name, inp, right); pl.append(row);
       if (p.configured) {  // bu sağlayıcının beyni: otomatik (en yeni) ya da elle seçilen model
         const ms = el("select", "model-pick"); ms.title = "Bu sağlayıcıda kullanılacak model";
@@ -524,7 +542,7 @@
   }
   $("#v-live").onchange = (e) => { JV.settings.live_voice = e.target.checked; saveSettings({ live_voice: e.target.checked }); };
   $("#v-lang").onchange = (e) => saveSettings({ voice_lang: e.target.value });
-  $("#v-engine").onchange = (e) => saveSettings({ stt_engine: e.target.value });
+  $("#v-engine").onchange = async (e) => { await saveSettings({ stt_engine: e.target.value }); if (wakeMode) { stopRec(); wakeMode = true; startRec(false); updateToggles(); } };
   $("#sl-idle").onchange = (e) => saveSettings({ sleep_idle_min: Math.max(0, +e.target.value || 0) });
   $("#sl-thr").onchange = (e) => saveSettings({ clap_threshold: +e.target.value });
   $("#ar-cmd").onchange = (e) => saveSettings({ ar_thumb_command: e.target.value.trim() });
@@ -866,7 +884,7 @@
   // ---------- başlangıç ----------
   async function refreshState() {
     const s = await JV.api("/api/state");
-    JV.state = s; JV.settings = s.settings;
+    JV.state = s; JV.settings = s.settings; if (JV.applyPreferences) JV.applyPreferences();
     renderProvMini();
     return s;
   }

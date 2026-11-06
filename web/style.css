@@ -690,3 +690,12 @@ body.view-design #world{display:none}
 .spaceplanner-launch button:hover,.spaceplanner-bar #spaceplanner-open:hover{background:#1a5875}
 .spaceplanner-launch small{margin-top:14px;color:#8298aa}
 @media(max-width:700px){.spaceplanner-bar{gap:8px;padding:0 8px;font-size:10px}.spaceplanner-bar span{display:none}.spaceplanner-bar button{padding:6px}}
+
+/* Optional light palette for the main shell and preference panels. */
+:root[data-theme="light"]{--bg:#eef4f8;--panel:rgba(255,255,255,.94);--txt:#17334b;--dim:#476176;--line:#9aafbf;--c:#076d9b;--c2:#215b9b;--glow:none;color-scheme:light}
+html[data-theme="light"] #bg{background:radial-gradient(ellipse at center,#e6f1f8,#fff)}
+html[data-theme="light"] #boot{background:radial-gradient(circle,#f6fbff,#dceaf4)}
+html[data-theme="light"] #settings .s-card,html[data-theme="light"] #ai-model-picker,html[data-theme="light"] .toast,html[data-theme="light"] .confirm{background:#f7fbff;color:#17334b;border-color:#8fa9bd}
+html[data-theme="light"] input,html[data-theme="light"] select,html[data-theme="light"] textarea,html[data-theme="light"] .mini{background:#fff;color:#17334b;border-color:#91adbf}
+html[data-theme="light"] .msg .body,html[data-theme="light"] #log{color:#17334b}
+.adv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin:12px 0}.adv-grid label{display:flex;flex-direction:column;gap:5px}.adv-grid input,.adv-grid select{width:100%;min-width:0;padding:6px}

@@ -11,7 +11,7 @@ WEB = ROOT / "web"
 DATA.mkdir(exist_ok=True)
 SETTINGS_FILE = DATA / "settings.json"
 
-VERSION = "4.6.35"
+VERSION = "4.6.36"
 
 
 def _load_env():
@@ -45,6 +45,8 @@ DEFAULT_SETTINGS = {
     "persona": "jarvis",
     "only_gemini": True,         # tek beyin: yalnızca Google Gemini (diğer anahtarlar durur ama kullanılmaz)
     "visual": "reactor",         # reactor | wave | sphere | face
+    "response_length": "normal",
+    "theme": "dark",
     "voice_enabled": True,
     "voice_lang": "auto",        # auto | tr | en
     "wake_word": True,

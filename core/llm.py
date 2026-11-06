@@ -20,6 +20,8 @@ from .config import env
 UA = "JarvisPersonalAI/1.0"
 
 PROVIDERS = {
+    "openai": {"label": "OpenAI GPT", "base": "https://api.openai.com/v1", "key_env": "OPENAI_API_KEY", "prefer": ["gpt-4.1-mini", "gpt-4o-mini"], "free": False},
+    "anthropic": {"label": "Claude (Anthropic uyumlu API)", "base": "https://api.anthropic.com/v1", "key_env": "ANTHROPIC_API_KEY", "prefer": ["claude-sonnet-4-5"], "free": False},
     "gemini": {
         "label": "Google Gemini",
         "base": "https://generativelanguage.googleapis.com/v1beta/openai",
@@ -210,6 +212,11 @@ def _headers(pid):
         h["x-goog-api-key"] = key  # yeni 'AQ.' anahtarlar Bearer ile reddediliyor
     elif key:
         h["Authorization"] = f"Bearer {key}"
+    if pid == "anthropic":
+        h["x-api-key"] = key
+        h["anthropic-version"] = "2023-06-01"
+        if env("ANTHROPIC_WORKSPACE_ID"):
+            h["anthropic-workspace-id"] = env("ANTHROPIC_WORKSPACE_ID")
     if pid == "openrouter":
         h["HTTP-Referer"] = "http://localhost"
         h["X-Title"] = "JARVIS Personal AI"
@@ -475,6 +482,8 @@ def stream_chat(pid, model, messages, tools=None, temperature=0.7, timeout=90):
             raise ProviderError(pid, e.status, e.body)
         return
     body = {"model": model, "messages": messages, "stream": True, "temperature": temperature}
+    if pid in ("openai", "anthropic"):
+        body.pop("temperature", None)
     if tools:
         body["tools"] = tools
         body["tool_choice"] = "auto"
@@ -548,7 +557,7 @@ def stream_chat(pid, model, messages, tools=None, temperature=0.7, timeout=90):
     yield ("final", {"content": "".join(content), "tool_calls": tool_calls})
 
 
-VISION_ORDER = ["gemini", "openrouter", "xai", "groq", "mistral", "ollama", "custom"]
+VISION_ORDER = ["gemini", "openai", "anthropic", "openrouter", "xai", "groq", "mistral", "ollama", "custom"]
 VISION_DEFAULTS = {"groq": "meta-llama/llama-4-scout-17b-16e-instruct", "mistral": "pixtral-12b-latest",
                    "openrouter": "google/gemma-3-27b-it:free", "ollama": "llava"}
 
@@ -571,7 +580,7 @@ def vision(prompt, image_bytes, mime="image/png", system="", light=False):
         vision_pin = env(f"{pid.upper()}_VISION_MODEL")
         if pid == "gemini" and _gemini_model_restricted(vision_pin):
             vision_pin = ""
-        model = vision_pin or ((light and light_model(pid)) or (pick_model_for_tier(pid, "smart") if pid == "gemini" else (pick_model(pid) if pid in ("xai", "custom") else VISION_DEFAULTS.get(pid, ""))))
+        model = vision_pin or ((light and light_model(pid)) or (pick_model_for_tier(pid, "smart") if pid == "gemini" else (pick_model(pid) if pid in ("xai", "custom", "openai", "anthropic") else VISION_DEFAULTS.get(pid, ""))))
         tried = []
         while model and len(tried) < 3:
             tried.append(model)

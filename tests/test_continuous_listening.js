@@ -39,3 +39,11 @@ t.handoff(false); listeners.focus(); tick(); assert(t.active());
 const before=instances.length; t.stop(); listeners.focus(); tick(); assert.equal(instances.length,before);
 t.enable(); instances.at(-1).onerror({error:'not-allowed'}); instances.at(-1).onend(); tick(); assert(!t.enabled());
 console.log('Continuous listening: restart, one-shot, network, STT handoff, manual stop and permission checks passed.');
+
+let offlineRecords=0,recording;
+context.JV.settings.stt_engine='vosk';
+context.JV.stt.record=(opts)=>{offlineRecords++;recording=opts;};
+t.enable();assert(t.active());assert.equal(offlineRecords,1);
+recording.onText('');tick();assert.equal(offlineRecords,2,'offline wake recording resumes after silence');
+recording.onError('missing model');assert(!t.enabled(),'missing offline model stops instead of cloud fallback');
+console.log('Offline wake lifecycle: OK');
