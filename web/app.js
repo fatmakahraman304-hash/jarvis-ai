@@ -212,12 +212,13 @@
     if (JV.settings.voice_id || JV.settings.voice_lock) JV.voiceId.start();
     if (rec) { try { rec.abort(); } catch (e) {} }
     rec = new SR();
+    const currentRec = rec;
     rec.lang = (JV.settings.stt_lang) || "tr-TR";
     rec.continuous = !single; rec.interimResults = true;
     rec.onstart = () => { recognizing = true; if (!busy && !JV.speaking) setStatus("listening"); };
     rec.onerror = (e) => { if (e.error === "not-allowed" || e.error === "service-not-allowed") { toast("Mikrofon izni verilmedi. Adres çubuğundan mikrofon iznini aç."); wakeMode = false; updateToggles(); }
       else if (e.error === "audio-capture") { toast("Mikrofon bulunamadı. Windows giriş aygıtını kontrol et."); wakeMode = false; updateToggles(); } };
-    rec.onend = () => { recognizing = false; if (!busy && !JV.speaking) setStatus(null); if (wakeMode && !oneShot) setTimeout(() => startRec(false), 250); };
+    rec.onend = () => { if (rec !== currentRec) return; recognizing = false; if (!busy && !JV.speaking) setStatus(null); if (wakeMode && !oneShot) setTimeout(() => { if (wakeMode && rec === currentRec) startRec(false); }, 250); };
     rec.onresult = (e) => {
       let interim = "", final = "";
       for (let i = e.resultIndex; i < e.results.length; i++) { const r = e.results[i]; (r.isFinal ? (final += r[0].transcript) : (interim += r[0].transcript)); }
