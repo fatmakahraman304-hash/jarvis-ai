@@ -2,6 +2,7 @@
 günlük brifing, kendi kendini test etme, hafıza yedeği geri yükleme."""
 import datetime as dt
 import json
+import math
 import subprocess
 import sys
 import threading
@@ -27,7 +28,7 @@ _running = set()
 
 
 def _next_run(t, after=None):
-    now = dt.datetime.fromtimestamp(after or time.time())
+    now = dt.datetime.fromtimestamp(time.time() if after is None else after)
     if t["kind"] == "interval":
         return now.timestamp() + float(t["every_minutes"]) * 60
     hh, mm = (int(x) for x in (t["at"] or "09:00").split(":")[:2])
@@ -63,19 +64,73 @@ def _next_run(t, after=None):
     return None
 
 
+def _schedule(kind="daily", at="09:00", weekday="", monthday=1, every_minutes=60, date=""):
+    """Validate once for both preview and persistence; times use the computer's timezone."""
+    kind = str(kind).lower().strip()
+    if kind not in {"once", "daily", "weekdays", "weekly", "monthly", "interval"}:
+        raise ValueError("Görev türü geçersiz.")
+    now = time.time()
+    t = {"kind": kind, "at": at, "weekday": 0, "monthday": 1,
+         "every_minutes": 60, "next_run": None}
+    if kind == "interval":
+        minutes = float(every_minutes)
+        if not math.isfinite(minutes) or minutes < 1 or minutes > 525600:
+            raise ValueError("Tekrar aralığı 1–525600 dakika olmalı.")
+        t["every_minutes"] = minutes
+    else:
+        parsed = dt.datetime.strptime(str(at), "%H:%M")
+        t["at"] = parsed.strftime("%H:%M")
+        if kind == "weekly":
+            day = str(weekday).lower().strip()
+            wd = GUNLER.get(day, int(day) if day.isdigit() else -1)
+            if not 0 <= wd <= 6:
+                raise ValueError("Haftalık görev için geçerli bir gün adı gerekli.")
+            t["weekday"] = wd
+        if kind == "monthly":
+            md = float(monthday)
+            if not math.isfinite(md) or not md.is_integer() or not 1 <= md <= 31:
+                raise ValueError("Ayın günü 1–31 arasında tam sayı olmalı.")
+            t["monthday"] = int(md)
+    if kind == "once" and date:
+        nr = dt.datetime.strptime(f"{date} {t['at']}", "%Y-%m-%d %H:%M").timestamp()
+        if nr <= now:
+            raise ValueError("Tek seferlik görevin tarihi gelecekte olmalı.")
+    else:
+        nr = _next_run(t, after=now)
+    if nr is None or not math.isfinite(nr):
+        raise ValueError("Sonraki çalışma zamanı hesaplanamadı.")
+    return t, nr
+
+
+def schedule_preview(kind="daily", at="09:00", weekday="", monthday=1, every_minutes=60, date="", count=5):
+    """Show upcoming runs without creating a task or executing its prompt."""
+    try:
+        limit = float(count)
+        if not math.isfinite(limit) or not limit.is_integer() or not 1 <= limit <= 10:
+            raise ValueError("Önizleme sayısı 1–10 arasında tam sayı olmalı.")
+        t, nr = _schedule(kind, at, weekday, monthday, every_minutes, date)
+        runs = []
+        for _ in range(int(limit)):
+            runs.append(dt.datetime.fromtimestamp(nr).strftime("%d.%m.%Y %H:%M"))
+            if t["kind"] == "once":
+                break
+            nr = _next_run(t, after=nr)
+            if nr is None:
+                break
+        return {"çalışma_zamanları": runs, "saat_dilimi": "Bu bilgisayarın yerel saati", "görev_kuruldu": False}
+    except (ValueError, TypeError, OverflowError):
+        return "Zaman geçersiz: saat SS:DD, tarih YYYY-AA-GG; gün ve tekrar aralığını kontrol et."
+
+
 def schedule_task(prompt, kind="daily", at="09:00", weekday="", monthday=1, every_minutes=60, date=""):
     """kind: once | daily | weekdays | weekly | monthly | interval."""
-    kind = kind.lower()
-    wd = GUNLER.get(str(weekday).lower().strip(), weekday if str(weekday).isdigit() else 0)
-    t = {"kind": kind, "at": at, "weekday": int(wd or 0), "monthday": int(monthday or 1),
-         "every_minutes": float(every_minutes or 60), "next_run": None}
-    if kind == "once" and date:
-        d = dt.datetime.strptime(f"{date} {at}", "%Y-%m-%d %H:%M")
-        nr = d.timestamp()
-    else:
-        nr = _next_run(t)
-    if not nr:
-        return "Zaman anlaşılamadı."
+    if not isinstance(prompt, str) or not prompt.strip():
+        return "Görev talimatı boş olamaz."
+    try:
+        t, nr = _schedule(kind, at, weekday, monthday, every_minutes, date)
+    except (ValueError, TypeError, OverflowError) as exc:
+        return f"Görev kurulmadı: zaman bilgilerini kontrol et ({exc})."
+    kind, at = t["kind"], t["at"]
     tid = memory._q("INSERT INTO tasks(prompt,kind,at,weekday,monthday,every_minutes,next_run,persona,created) VALUES(?,?,?,?,?,?,?,?,?)",
                     (prompt, kind, at, t["weekday"], t["monthday"], t["every_minutes"], nr,
                      load_settings().get("persona", "jarvis"), time.time()), commit=True)
@@ -339,6 +394,11 @@ TOOLS = {
         {"prompt": S("yapılacak iş, açık talimat"), "kind": {"type": "string", "enum": ["once", "daily", "weekdays", "weekly", "monthly", "interval"]},
          "at": S("SS:DD"), "weekday": S("haftalık için gün adı"), "monthday": N("aylık için ayın günü"),
          "every_minutes": N("interval için dakika"), "date": S("once için YYYY-AA-GG")}, ["prompt"]), False),
+    "schedule_preview": (schedule_preview, _schema(
+        "Görev KURMADAN gelecek çalışma saatlerini önizler; bilgisayarın yerel saatini kullanır. Ayın bulunmayan günleri atlanır.",
+        {"kind": {"type": "string", "enum": ["once", "daily", "weekdays", "weekly", "monthly", "interval"]},
+         "at": S("SS:DD"), "weekday": S("haftalık için gün adı"), "monthday": N("ayın günü 1–31"),
+         "every_minutes": N("1–525600 dakika"), "date": S("tek sefer için YYYY-AA-GG"), "count": N("1–10, varsayılan 5")}), False),
     "list_tasks": (list_tasks, _schema("Zamanlanmış görevleri ve son sonuçlarını listeler."), False),
     "task_control": (task_control, _schema("Görevi sil / durdur / devam ettir / hemen çalıştır.",
                                            {"task_id": N("görev no"), "action": {"type": "string", "enum": ["delete", "pause", "resume", "run_now"]}},
