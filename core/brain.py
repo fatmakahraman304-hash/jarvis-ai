@@ -9,6 +9,7 @@ chat() bir olay akışı üretir:
   {"type":"error", text}
 """
 import json
+import re
 import secrets
 import threading
 import time
