@@ -34,7 +34,7 @@ class ManualTests(unittest.TestCase):
             self.assertFalse(browser.spaceplanner_manual('finish')['manual'])
             self.assertIs(browser._state['page'],self.page)
             self.page.goto.assert_not_called();self.ctx.new_page.assert_not_called()
-            self.assertEqual([c.args[1] for c in window.call_args_list],['normal','minimized'])
+            self.assertEqual([c.args[1] for c in window.call_args_list],['normal','background'])
 
     def test_google_popup_must_be_finished_before_automation_resumes(self):
         popup=Mock(url='https://accounts.google.com/signin');popup.is_closed.return_value=False
@@ -78,7 +78,7 @@ class ManualTests(unittest.TestCase):
         process=Mock();process.poll.return_value=None
         response=Mock();response.__enter__=Mock(return_value=Mock(status=200));response.__exit__=Mock(return_value=False)
         opener=Mock();opener.open.return_value=response
-        with patch.object(chrome_session,'executable',return_value='/chrome'),patch.object(chrome_session.subprocess,'Popen',return_value=process) as launch,patch.object(chrome_session.urllib.request,'build_opener',return_value=opener),patch.dict(os.environ,{'JARVIS_BROWSER_HEADLESS':''}):
+        with patch.object(chrome_session,'background'),patch.object(chrome_session,'executable',return_value='/chrome'),patch.object(chrome_session.subprocess,'Popen',return_value=process) as launch,patch.object(chrome_session.urllib.request,'build_opener',return_value=opener),patch.dict(os.environ,{'JARVIS_BROWSER_HEADLESS':''}):
             chrome_session.launch(pw,Path(tempfile.mkdtemp()))
         args=launch.call_args.args[0]
         self.assertIn('--remote-debugging-address=127.0.0.1',args)

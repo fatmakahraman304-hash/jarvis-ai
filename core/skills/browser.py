@@ -370,14 +370,18 @@ def spaceplanner_open():
         for p in ctx.pages:
             if not p.is_closed() and _is_spaceplanner(p.url) and not urlparse(p.url).path.startswith("/docs"):
                 _state["page"] = p
-                if not _state.get("manual_capable"):
+                if _state.get("manual_capable"):
+                    _window_state(p, "background")
+                else:
                     p.bring_to_front()
                 return {"ui": "spaceplanner", **_read(4000)}
         # İşçi içinden _call çağırmak kilitlenir; gezinme burada yapılır.
         p = ctx.new_page()
         _state["page"] = p
         p.goto("https://spaceplanner.co/", wait_until="domcontentloaded", timeout=30000)
-        if not _state.get("manual_capable"):
+        if _state.get("manual_capable"):
+            _window_state(p, "background")
+        else:
             p.bring_to_front()
         return {"ui": "spaceplanner", **_read(4000)}
     return _call(run)
@@ -391,12 +395,18 @@ def manual_active():
 
 
 def _window_state(page, state):
+    background = state == "background"
+    if background:
+        state = "normal"
     session = page.context.new_cdp_session(page)
     try:
         window = session.send("Browser.getWindowForTarget")
         session.send("Browser.setWindowBounds", {"windowId": window["windowId"], "bounds": {"windowState": state}})
     finally:
         session.detach()
+    if background:
+        from .. import chrome_session
+        chrome_session.background(_state.get("process"))
 
 
 def spaceplanner_manual(action):
@@ -435,7 +445,7 @@ def spaceplanner_manual(action):
                 raise RuntimeError("SpacePlanner sekmesi bulunamadı; Chrome’da SpacePlanner’a geri dön.")
             if p.evaluate("() => [...document.querySelectorAll(\"input[type=password]\")].some(e => e.value && e.getClientRects().length)"):
                 raise RuntimeError("Giriş formunda doldurulmuş şifre alanı var. Önce Chrome’da girişi tamamla veya alanı temizle.")
-            _window_state(p, "minimized")
+            _window_state(p, "background")
             _state["page"] = p
             _state["manual"] = False
             return {"manual": False, "message": "Kontrol JARVIS’te. Giriş durumunu kontrol ederek devam et komutunu verebilirsin."}
