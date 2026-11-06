@@ -68,8 +68,6 @@ async def synthesize(text, persona_id, lang="auto", mood=""):
             v["voice"] = pick
     user = dict(settings.get("voice", {}).get(persona["id"], {}))
     mr, mp = MOODS.get(mood, (0, 0))
-    if persona["id"] == "ultron":  # ULTRON duygusunu belli etmez, sadece hafifçe
-        mr, mp = mr // 2, mp // 2
     rate = _adj(v["rate"], user.get("rate", 0) + mr, "%")
     pitch = _adj(v["pitch"], user.get("pitch", 0) + mp, "Hz")
     comm = edge_tts.Communicate(text, v["voice"], rate=rate, pitch=pitch)
