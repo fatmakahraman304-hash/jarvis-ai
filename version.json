@@ -1,9 +1,9 @@
 {
-  "version": "4.6.43",
+  "version": "4.6.44",
   "date": "2026-11-06",
   "notes": [
-    "Sıradan tarayıcı tıklamaları ve metin girişleri artık tekrarlayan onay pencereleri olmadan sürer",
-    "Google girişi, izin/koşul kabulü, ödeme, silme, form gönderimi ve hassas alanlar onay gerektirir",
-    "Masaüstünü tam otonom kullanma ayarı ayrıca isteğe bağlı kalır"
+    "Gemini HTTP 400: create_excel.chart boş enum seçeneği kaldırıldı",
+    "Gemini araç şemalarındaki boş enum üyeleri gönderimden önce özyinelemeli temizlenir",
+    "Tüm kayıtlı araç tanımları için Gemini uyumluluk regresyon testi eklendi"
   ]
 }
