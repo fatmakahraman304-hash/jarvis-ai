@@ -811,7 +811,7 @@ def is_critical(name, args):
 
 
 TOOL_TIMEOUT = {"web_search": 15, "news_search": 12, "read_webpage": 12, "weather": 15, "currency": 15,  # ağ araçları: süre sınırlı
-                "spaceplanner_open": 45, "home_design": 45, "spaceplanner_draw": 30, "browser_open": 45, "browser_read": 30, "browser_look": 45}
+                "spaceplanner_open": 45, "home_design": 45, "spaceplanner_draw": 30, "browser_observe": 60, "browser_open": 45, "browser_read": 30, "browser_look": 45}
 
 
 def _run_limited(fn, args, limit):
