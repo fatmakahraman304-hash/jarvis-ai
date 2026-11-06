@@ -167,13 +167,16 @@ def main():
 
     ssl = {}
     scheme = "http"
-    if a.https:
+    # LAN erişiminde kamera/mikrofon için güvenli bağlam zorunlu: --lan otomatik HTTPS kullanır.
+    if a.https or a.lan:
         try:
             crt, key = ensure_cert(lan_ip())
             ssl = {"ssl_certfile": crt, "ssl_keyfile": key}
             scheme = "https"
-        except ImportError:
-            print("  [!] --https için 'pip install cryptography' gerekli; şifresiz devam ediliyor.")
+        except ImportError as e:
+            if a.lan or a.https:
+                raise SystemExit("[HATA] Telefon kamerası için HTTPS gerekli. 'python -m pip install -r requirements.txt' çalıştırıp yeniden başlat.") from e
+            print("  [!] HTTPS için 'pip install cryptography' gerekli.")
     url = f"{scheme}://127.0.0.1:{a.port}"
     print("=" * 60)
     print(f"  J.A.R.V.I.S. Personal AI v{VERSION}")
