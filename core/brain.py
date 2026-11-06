@@ -358,7 +358,7 @@ def ask(prompt, system="", persona_id=None, light=True):
     order = settings["personas"].get(persona["id"], {}).get("providers", [])
     msgs = ([{"role": "system", "content": system}] if system else []) + [{"role": "user", "content": prompt}]
     out = ""
-    for kind, data in llm.route(order, msgs, None, light=light):
+    for kind, data in llm.route(order, msgs, None, light=light, tier=("fast" if light else "smart")):
         if kind == "text":
             out += data
         elif kind == "error":
