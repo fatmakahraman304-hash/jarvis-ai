@@ -15,7 +15,7 @@ from starlette.responses import HTMLResponse, FileResponse, JSONResponse, Redire
 from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 
-from . import brain, llm, memory, personas, tools, voice
+from . import brain, llm, memory, original_voice, personas, tools, voice
 from .config import VERSION, WEB, env, load_settings, save_settings
 
 TOKEN = env("JARVIS_TOKEN")
@@ -808,6 +808,18 @@ async def voices_api(request):
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=502)
 
+async def original_voice_api(request):
+    """Serve an exact-phrase audio clip supplied by the user under data/voice_assets."""
+    q = request.query_params
+    clip = original_voice.find_clip(q.get("persona", ""), q.get("lang", ""), q.get("text", ""))
+    if not clip:
+        return Response(status_code=404)
+    media = {".mp3": "audio/mpeg", ".wav": "audio/wav", ".ogg": "audio/ogg",
+             ".m4a": "audio/mp4", ".webm": "audio/webm"}.get(clip.suffix.lower(), "application/octet-stream")
+    return FileResponse(clip, media_type=media, headers={"Cache-Control": "no-store"})
+
+
+
 
 async def system(request):
     return JSONResponse(tools.system_status(), )
@@ -1018,6 +1030,7 @@ routes = [
     Route("/api/chat", chat, methods=["POST"]),
     Route("/api/confirm", confirm, methods=["POST"]),
     Route("/api/tts", tts),
+    Route("/api/original-voice", original_voice_api),
     Route("/api/voices", voices_api),
     Route("/api/system", system),
     Route("/api/processes", processes),
