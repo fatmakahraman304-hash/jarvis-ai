@@ -418,6 +418,12 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
         step_budget = max(step_budget, 24)
     turn_budget = (300 if "browser" in groups else 180 if "computer" in groups else TURN_BUDGET) if tier != "search" else TURN_BUDGET
     for _step in range(step_budget):
+        from .skills import browser as browser_skill
+        if browser_skill.manual_active():
+            msg = "Chrome elle kullanımda; görev duraklatıldı. Girişi bitirince JARVIS’e geri ver düğmesine bas, ardından devam et de."
+            yield {"type": "token", "text": msg}
+            yield {"type": "done", "text": msg, "outcome": "paused", **used}
+            return
         if time.time() - turn_t0 > turn_budget:
             print(f"[beyin] {turn_budget} sn doldu, eldeki bilgiyle cevaplanıyor")
             stop_reason = "İşlem süre sınırına ulaştı; kalan adımlar yapılmadı."

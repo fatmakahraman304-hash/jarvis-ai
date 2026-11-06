@@ -52,6 +52,20 @@ try:
             panel=p.locator('#spaceplanner-view').bounding_box();chat=p.locator('#right').bounding_box()
             assert panel['x']+panel['width'] <= chat['x']
             assert p.locator('#mic').is_visible() and p.locator('#send').is_visible()
+            saved_frame=dict(frame);handoffs=[]
+            def manual_route(r):
+                action=r.request.post_data_json['action'];handoffs.append(action)
+                frame.clear();frame.update({'active':False,'manual':True,'message':'Chrome elle kullanımda.'} if action=='start' else saved_frame)
+                r.fulfill(content_type='application/json',body=json.dumps({'manual':action=='start','message':'Elle kullanım açık.' if action=='start' else 'Kontrol JARVIS’te.'}))
+            p.route('**/api/spaceplanner/manual',manual_route)
+            p.click('#spaceplanner-manual');p.wait_for_selector('#spaceplanner-resume',state='visible')
+            assert p.locator('#spaceplanner-frame').get_attribute('src') is None
+            p.wait_for_timeout(1400)
+            assert p.locator('#spaceplanner-frame').get_attribute('src') is None
+            p.click('#spaceplanner-resume')
+            p.wait_for_selector('#spaceplanner-frame[src^="data:image/jpeg"]',state='visible')
+            assert handoffs==['start','finish']
+
 
             def sse(events):return ''.join('data: '+json.dumps(e)+'\n\n' for e in events)
             response={'body':sse([{'type':'token','text':'Önceki kısmi yanıt.'},{'type':'error','text':'Gerçek araç çağrısı oluşmadı.'},{'type':'done','text':'Gerçek araç çağrısı oluşmadı.','outcome':'blocked'}])}

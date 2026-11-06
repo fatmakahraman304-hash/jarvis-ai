@@ -48,6 +48,8 @@ def _call(fn, *args, timeout=90):
 
 
 def _ctx():
+    if manual_active():
+        raise RuntimeError("Chrome elle kullanımda; önce JARVIS’e geri ver düğmesine bas.")
     st = _state
     if st["ctx"]:
         try:
@@ -65,6 +67,12 @@ def _ctx():
     prof = DATA / "browser_profile"
     prof.mkdir(parents=True, exist_ok=True)
     headless = st.get("embedded", False) or os.environ.get("JARVIS_BROWSER_HEADLESS") == "1"
+    if st.get("embedded") and os.environ.get("JARVIS_BROWSER_HEADLESS") != "1":
+        from .. import chrome_session
+        browser, context, process = chrome_session.launch(st["pw"], prof)
+        st.update(browser=browser, ctx=context, process=process, manual_capable=True)
+        st["page"] = context.pages[0] if context.pages else context.new_page()
+        return context
     last = None
     channels = ["chrome"] if st.get("embedded") or os.name == "nt" else ([os.environ.get("JARVIS_BROWSER_CHANNEL")] if os.environ.get("JARVIS_BROWSER_CHANNEL") else ["chrome", None])
     for ch in channels:
@@ -101,7 +109,7 @@ _INDEX_JS = r"""() => {
     if (r.bottom < 0 || r.top > innerHeight * 3) continue;
     i++; e.setAttribute('data-jv', i);
     const tag = e.tagName.toLowerCase(), type = (e.getAttribute('type') || '').toLowerCase();
-    let label = e.getAttribute('aria-label') || e.innerText || e.value || e.getAttribute('placeholder') || e.getAttribute('title') || e.getAttribute('name') || e.getAttribute('alt') || '';
+    let label = e.getAttribute('aria-label') || e.innerText || (type === 'password' ? '[gizli]' : e.value) || e.getAttribute('placeholder') || e.getAttribute('title') || e.getAttribute('name') || e.getAttribute('alt') || '';
     if (e.id) { const l = document.querySelector(`label[for="${CSS.escape(e.id)}"]`); if (l) label = l.innerText + (label ? ' · ' + label : ''); }
     const kind = tag === 'a' ? 'bağlantı' : tag === 'button' || e.getAttribute('role') === 'button' ? 'düğme' : tag === 'select' ? 'seçim' : tag === 'textarea' ? 'metin alanı' :
                  tag === 'input' ? (type === 'checkbox' ? 'onay kutusu' : type === 'radio' ? 'seçenek' : type === 'submit' ? 'gönder düğmesi' : type === 'password' ? 'ŞİFRE alanı' : 'giriş alanı') : (e.getAttribute('role') || tag);
@@ -362,22 +370,99 @@ def spaceplanner_open():
         for p in ctx.pages:
             if not p.is_closed() and _is_spaceplanner(p.url) and not urlparse(p.url).path.startswith("/docs"):
                 _state["page"] = p
-                p.bring_to_front()
+                if _state.get("manual_capable"):
+                    _window_state(p, "background")
+                else:
+                    p.bring_to_front()
                 return {"ui": "spaceplanner", **_read(4000)}
         # İşçi içinden _call çağırmak kilitlenir; gezinme burada yapılır.
         p = ctx.new_page()
         _state["page"] = p
         p.goto("https://spaceplanner.co/", wait_until="domcontentloaded", timeout=30000)
-        p.bring_to_front()
+        if _state.get("manual_capable"):
+            _window_state(p, "background")
+        else:
+            p.bring_to_front()
         return {"ui": "spaceplanner", **_read(4000)}
     return _call(run)
 
 
+_manual_lock = threading.Lock()
+
+
+def manual_active():
+    return bool(_state.get("manual"))
+
+
+def _window_state(page, state):
+    background = state == "background"
+    if background:
+        state = "normal"
+    session = page.context.new_cdp_session(page)
+    try:
+        window = session.send("Browser.getWindowForTarget")
+        session.send("Browser.setWindowBounds", {"windowId": window["windowId"], "bounds": {"windowState": state}})
+    finally:
+        session.detach()
+    if background:
+        from .. import chrome_session
+        chrome_session.background(_state.get("process"))
+
+
+def spaceplanner_manual(action):
+    if action not in {"start", "finish"}:
+        raise ValueError("Geçersiz elle kullanım işlemi.")
+    if not _manual_lock.acquire(blocking=False):
+        raise RuntimeError("Önceki elle kullanım isteği sürüyor.")
+    try:
+        if action == "start":
+            if not _state.get("ctx") or not _state.get("manual_capable"):
+                raise RuntimeError("Bu oturum elle kullanımı desteklemiyor. JARVIS’i güncelleyip tamamen kapat/aç; ardından SpacePlanner’ı aç.")
+            # Set before queueing: queued screenshots and new model tools cannot capture login.
+            _state["manual"] = True
+            def show():
+                p = _state.get("page")
+                if not p or p.is_closed() or not _is_spaceplanner(p.url):
+                    raise RuntimeError("Önce SpacePlanner sekmesini aç.")
+                _window_state(p, "normal")
+                p.bring_to_front()
+                return {"manual": True, "message": "Chrome penceresinde koşulları kendin inceleyip Google ile devam et. Girişi tamamlayınca JARVIS’e geri ver."}
+            try:
+                return _call(show)
+            except Exception:
+                _state["manual"] = False
+                raise
+        def resume():
+            ctx = _state.get("ctx")
+            if not ctx:
+                raise RuntimeError("Chrome kapandı. SpacePlanner’ı yeniden aç.")
+            pages = [p for p in ctx.pages if not p.is_closed()]
+            if any(urlparse(p.url).hostname == "accounts.google.com" for p in pages):
+                raise RuntimeError("Google giriş penceresi hâlâ açık. Girişi tamamla veya iptal edip bu pencereyi kapat.")
+            original = _state.get("page")
+            p = original if original in pages and _is_spaceplanner(original.url) else next((p for p in pages if _is_spaceplanner(p.url)), None)
+            if p is None:
+                raise RuntimeError("SpacePlanner sekmesi bulunamadı; Chrome’da SpacePlanner’a geri dön.")
+            if p.evaluate("() => [...document.querySelectorAll(\"input[type=password]\")].some(e => e.value && e.getClientRects().length)"):
+                raise RuntimeError("Giriş formunda doldurulmuş şifre alanı var. Önce Chrome’da girişi tamamla veya alanı temizle.")
+            _window_state(p, "background")
+            _state["page"] = p
+            _state["manual"] = False
+            return {"manual": False, "message": "Kontrol JARVIS’te. Giriş durumunu kontrol ederek devam et komutunu verebilirsin."}
+        return _call(resume)
+    finally:
+        _manual_lock.release()
+
+
 def spaceplanner_frame():
     """Same controlled Chrome page, rendered in JARVIS; never launch or navigate from polling."""
+    if manual_active():
+        return {"active": False, "manual": True, "message": "Chrome’da elle kullanım açık. Girişi bitirince JARVIS’e geri ver düğmesine bas."}
     if not _state.get("ctx"):
         return {"active": False, "message": "SpacePlanner’ı açmak için AÇ düğmesine bas veya sesle iste."}
     def run():
+        if manual_active():
+            return {"active": False, "manual": True, "message": "Chrome elle kullanımda; görüntü aktarımı duraklatıldı."}
         p = _state.get("page")
         if not p or p.is_closed() or not _is_spaceplanner(p.url):
             return {"active": False, "message": "SpacePlanner sekmesi etkin değil; JARVIS’e SpacePlanner’a dön de."}
@@ -445,8 +530,12 @@ def spaceplanner_draw(points, action="drag", size=""):
 
 def browser_close():
     def run():
+        if manual_active():
+            raise RuntimeError("Chrome elle kullanımda; önce kontrolü JARVIS’e geri ver.")
         try:
-            if _state["ctx"]:
+            if _state.get("browser"):
+                _state["browser"].new_browser_cdp_session().send("Browser.close")
+            elif _state["ctx"]:
                 _state["ctx"].close()
         finally:
             _state["ctx"] = _state["page"] = None

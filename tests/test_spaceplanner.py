@@ -49,20 +49,17 @@ class PlannerTests(unittest.TestCase):
         self.assertTrue(browser._state['embedded'])
         self.assertEqual(result['ui'],'spaceplanner')
 
-    def test_embedded_launch_requires_chrome_without_edge_fallback(self):
+    def test_embedded_launch_requires_regular_chrome_without_edge_fallback(self):
         from playwright import sync_api
+        from core import chrome_session
         original=dict(browser._state)
         try:
             browser._state.update(ctx=None,page=None,pw=None,embedded=True)
-            chrome=Mock();chrome.launch_persistent_context.side_effect=RuntimeError('Chrome missing')
-            pw=Mock(chromium=chrome)
-            with patch.object(browser,'_ctx',wraps=ORIGINAL_CTX),patch.object(sync_api,'sync_playwright') as factory:
-                factory.return_value.start.return_value=pw
-                with self.assertRaisesRegex(RuntimeError,'Chrome kurulu'):
-                    browser._ctx()
-            self.assertEqual(chrome.launch_persistent_context.call_count,1)
-            options=chrome.launch_persistent_context.call_args.kwargs
-            self.assertEqual(options['channel'],'chrome');self.assertTrue(options['headless'])
+            with patch.object(browser,'_ctx',wraps=ORIGINAL_CTX),patch.object(sync_api,'sync_playwright'),patch.object(chrome_session,'launch',side_effect=RuntimeError('Chrome missing')) as launch:
+                with patch.dict(os.environ,{'JARVIS_BROWSER_HEADLESS':''}):
+                    with self.assertRaisesRegex(RuntimeError,'Chrome missing'):
+                        browser._ctx()
+                launch.assert_called_once()
         finally:
             browser._state.clear();browser._state.update(original)
 
