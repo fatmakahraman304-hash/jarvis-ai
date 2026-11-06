@@ -112,7 +112,7 @@
     if (busy && abortCtl) abortCtl.abort();
     JV.stopSpeaking(false);
     busy = true; setStatus("thinking");
-    const task = { done: false, outcome: "running" };
+    const task = { done: false, outcome: "running", rows: {} };
     setTaskState("running", "KOMUT İŞLENİYOR");
     if (!opts.hidden) addMsg("user", text, null, opts.speaker);
     const body = addMsg("ai", "", persona);
@@ -159,10 +159,17 @@
       case "token": body.textContent += ev.text; sent.push(ev.text); scrollLog(); break;
       case "tool":
         if (ev.status === "running") {
-          const t = el("div", "msg tool", `⚙ ${ev.name} …`); body.parentElement.before(t); scrollLog();
+          const t = el("details", "msg tool");
+          t.append(el("summary", "", `⚙ ${ev.name} …`));
+          task.rows[ev.name] = t; body.parentElement.before(t); scrollLog();
           const nice = { browser_observe: "SAYFAYI YENİDEN ANALİZ EDİYOR", screen_look: "EKRANI ANALİZ EDİYOR", screen_find: "EKRANDA HEDEFİ BULUYOR", browser_read: "SAYFAYI KONTROL EDİYOR", spaceplanner_open: "SPACEPLANNER AÇILIYOR", web_search: "İNTERNETTE ARIYOR", news_search: "HABERLERE BAKIYOR", read_webpage: "SAYFAYI OKUYOR", weather: "HAVA DURUMUNA BAKIYOR" }[ev.name];
           setStatus("thinking", nice || ("ÇALIŞIYOR: " + ev.name));
           setTaskState("running", nice || ("ÇALIŞIYOR: " + ev.name));
+        }
+        if (ev.status === "done" && task.rows[ev.name]) {
+          const row = task.rows[ev.name];
+          row.querySelector("summary").textContent = `⚙ ${ev.name} · SONUÇ ALINDI`;
+          row.append(el("pre", "tool-result", ev.result || "Sonuç metni yok."));
         }
         if (ev.status === "done" && ev.result && ev.result.startsWith("{") && ev.result.includes('"ui"') && JV.uiCommand) { try { JV.uiCommand(ev.name, ev.args, ev.result); } catch (e) { console.warn(e); } }
         break;

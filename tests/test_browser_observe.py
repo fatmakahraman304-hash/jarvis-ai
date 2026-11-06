@@ -13,7 +13,7 @@ from core.skills import browser, control
 from playwright.sync_api import sync_playwright
 
 with sync_playwright() as pw:
-    b=pw.chromium.launch(headless=True)
+    b=pw.chromium.launch(headless=True, **({'executable_path':os.environ['JARVIS_TEST_CHROMIUM']} if os.environ.get('JARVIS_TEST_CHROMIUM') else {}))
     try:
         p=b.new_page(viewport={'width':1000,'height':700})
         p.route('https://app.spaceplanner.co/**',lambda r:r.fulfill(content_type='text/html',body='''

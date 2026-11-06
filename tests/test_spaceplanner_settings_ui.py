@@ -24,7 +24,7 @@ try:
         except Exception:time.sleep(.1)
     else:log.seek(0);raise RuntimeError(log.read()[-3000:])
     with sync_playwright() as pw:
-        b=pw.chromium.launch(headless=True)
+        b=pw.chromium.launch(headless=True, **({'executable_path':os.environ['JARVIS_TEST_CHROMIUM']} if os.environ.get('JARVIS_TEST_CHROMIUM') else {}))
         try:
             p=b.new_page(viewport={'width':1360,'height':1000});errors=[];p.on('pageerror',lambda e:errors.append(str(e)))
             p.route('**/*',lambda r:r.continue_() if r.request.url.startswith(base) else r.abort())
@@ -51,6 +51,11 @@ try:
             p.evaluate("JV.sendCommand('SpacePlanner aç')")
             assert p.locator('#task-state').get_attribute('data-state')=='blocked'
             assert 'tamamlanmadan kesildi' in p.locator('#log').inner_text()
+            response['body']=sse([{'type':'tool','name':'browser_observe','status':'running'}, {'type':'tool','name':'browser_observe','status':'done','result':'<script>untrusted</script> gözlem sonucu'}, {'type':'done','text':'Gözlem alındı.','outcome':'finished'}])
+            p.evaluate("JV.sendCommand('SpacePlanner analiz et')")
+            assert 'SONUÇ ALINDI' in p.locator('#log').inner_text()
+            assert '<script>untrusted</script>' in p.locator('.tool-result').last.text_content()
+            assert p.locator('.tool-result script').count()==0
             response['body']=sse([{'type':'token','text':'SpacePlanner açık.'},{'type':'done','text':'SpacePlanner açık.','outcome':'finished'}])
             p.evaluate("JV.sendCommand('SpacePlanner aç')")
             assert p.locator('#task-state').get_attribute('data-state')=='finished'

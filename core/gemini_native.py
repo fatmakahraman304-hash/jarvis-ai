@@ -6,6 +6,7 @@ ile reddediliyor ("API key not valid" / ACCESS_TOKEN_TYPE_UNSUPPORTED). Kendi u�
 Gemini 3'ün araç çağrısı 'thoughtSignature' imzalarını da korur (yoksa çok adımlı araç kullanımı 400 verir).
 """
 import json
+import copy
 import time
 import urllib.error
 import urllib.request
@@ -86,7 +87,7 @@ def _user_parts(content):
     return parts or [{"text": " "}]
 
 
-def convert(messages):
+def convert(messages, model=None):
     """OpenAI mesajları → (systemInstruction, contents)."""
     system, contents = [], []
 
@@ -96,7 +97,7 @@ def convert(messages):
         else:
             contents.append({"role": role, "parts": list(parts)})
 
-    names = {}
+    names, native_ids, flattened = {}, {}, set()
     for m in messages:
         role = m.get("role")
         if role == "system":
@@ -104,6 +105,20 @@ def convert(messages):
         elif role == "user":
             add("user", _user_parts(m.get("content")))
         elif role == "assistant":
+            foreign = bool(model and m.get("tool_provider") and (m["tool_provider"] != "gemini" or (m.get("tool_model") and m["tool_model"] != model)))
+            if foreign and m.get("tool_calls"):
+                for tc in m["tool_calls"]:
+                    flattened.add(tc.get("id"))
+                add("model", [{"text": "Önceki modelin araç istekleri (yapıldığının kanıtı değildir): " + json.dumps([c.get("function", {}) for c in m["tool_calls"]], ensure_ascii=False)}])
+                continue
+            raw = m.get("gemini_content")
+            if not foreign and isinstance(raw, dict) and isinstance(raw.get("parts"), list):
+                for tc in m.get("tool_calls") or []:
+                    names[tc.get("id")] = (tc.get("function") or {}).get("name", "")
+                    if tc.get("gemini_call_id"):
+                        native_ids[tc["id"]] = tc["gemini_call_id"]
+                add("model", copy.deepcopy(raw["parts"]))
+                continue
             parts = []
             if m.get("content"):
                 parts.append({"text": m["content"]})
@@ -114,19 +129,28 @@ def convert(messages):
                 except Exception:
                     args = {}
                 p = {"functionCall": {"name": fn.get("name", ""), "args": args if isinstance(args, dict) else {"value": args}}}
+                if tc.get("gemini_call_id"):
+                    p["functionCall"]["id"] = tc["gemini_call_id"]
+                    native_ids[tc.get("id")] = tc["gemini_call_id"]
                 if tc.get("thought_signature"):
                     p["thoughtSignature"] = tc["thought_signature"]
                 parts.append(p)
                 names[tc.get("id")] = fn.get("name", "")
             add("model", parts or [{"text": " "}])
         elif role == "tool":
+            if m.get("tool_call_id") in flattened:
+                add("user", [{"text": "Önceki aracın gerçek sonucu: " + str(m.get("name", "")) + "\n" + str(m.get("content", ""))}])
+                continue
             name = m.get("name") or names.get(m.get("tool_call_id"), "tool")
             res = m.get("content")
             try:
                 val = json.loads(res) if isinstance(res, str) and res[:1] in "{[" else res
             except Exception:
                 val = res
-            add("user", [{"functionResponse": {"name": name, "response": val if isinstance(val, dict) else {"result": val}}}])
+            response = {"name": name, "response": val if isinstance(val, dict) else {"result": val}}
+            if m.get("tool_call_id") in native_ids:
+                response["id"] = native_ids[m["tool_call_id"]]
+            add("user", [{"functionResponse": response}])
     if contents and contents[0]["role"] != "user":  # Gemini sohbetin kullanıcıyla başlamasını ister
         contents.insert(0, {"role": "user", "parts": [{"text": "(devam)"}]})
     sys_inst = {"parts": [{"text": "\n\n".join(s for s in system if s)}]} if any(system) else None
@@ -156,7 +180,7 @@ _NO_THINK_CFG = set()  # bu ayarı kabul etmeyen modeller
 
 def stream(key, model, messages, tools=None, temperature=0.7, timeout=20, tool_choice="auto"):
     """("text", parça) ... ("final", {"content", "tool_calls"}) üretir — llm.stream_chat ile aynı sözleşme."""
-    sys_inst, contents = convert(messages)
+    sys_inst, contents = convert(messages, model=model)
     body = {"contents": contents, "generationConfig": {"temperature": temperature}}
     if model.startswith("gemini-3") and model not in _NO_THINK_CFG:
         # Gemini 3 varsayılan olarak uzun 'düşünür' → yavaş. Sesli asistan için düşük düşünme: çok daha hızlı cevap
@@ -194,7 +218,9 @@ def stream(key, model, messages, tools=None, temperature=0.7, timeout=20, tool_c
         raise NativeError(int(err.get("code") or 500), json.dumps(err, ensure_ascii=False))
     content, calls = [], []
     blocked = (data.get("promptFeedback") or {}).get("blockReason", "")
-    for cand in data.get("candidates") or []:
+    selected_content = None
+    for cand in (data.get("candidates") or [])[:1]:
+        selected_content = cand.get("content")
         for p in (cand.get("content") or {}).get("parts") or []:
             if p.get("thought"):  # iç düşünce özeti: kullanıcıya gösterme
                 continue
@@ -202,8 +228,9 @@ def stream(key, model, messages, tools=None, temperature=0.7, timeout=20, tool_c
                 content.append(p["text"])
             if p.get("functionCall"):
                 fc = p["functionCall"]
-                calls.append({"id": f"call_{len(calls)}_{int(time.time() * 1000)}", "type": "function",
+                calls.append({"id": fc.get("id") or f"call_{len(calls)}_{int(time.time() * 1000)}", "type": "function",
                               "function": {"name": fc.get("name", ""), "arguments": json.dumps(fc.get("args") or {}, ensure_ascii=False)},
+                              **({"gemini_call_id": fc["id"]} if fc.get("id") else {}),
                               **({"thought_signature": p["thoughtSignature"]} if p.get("thoughtSignature") else {})})
     print(f"[gemini] {model} {time.time() - t0:.1f} sn" + (f" · araç: {', '.join(c['function']['name'] for c in calls)}" if calls else ""))
     text = "".join(content)
@@ -211,7 +238,7 @@ def stream(key, model, messages, tools=None, temperature=0.7, timeout=20, tool_c
         text = "Bu isteğe Google'ın güvenlik filtresi cevap vermeye izin vermedi."
     if text:
         yield ("text", text)
-    yield ("final", {"content": text, "tool_calls": calls})
+    yield ("final", {"content": text, "tool_calls": calls, "gemini_content": selected_content, "tool_provider": "gemini", "tool_model": model})
 
 
 def embed(key, model, texts, timeout=40):

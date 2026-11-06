@@ -53,6 +53,33 @@ def _spaceplanner_start(text):
     return bool(re.search(r"space\s*planner|spacelanner|spaceplaner|spacepllaner", low) and re.search(r"\b(aç|açıp|çiz|tasarla|open|draw|design)\b", low))
 
 
+def _model_turn(final, calls, used):
+    turn = {"role": "assistant", "content": final.get("content") or ""}
+    if calls:
+        turn["tool_calls"] = calls
+    for key in ("gemini_content", "tool_provider", "tool_model"):
+        if final.get(key) is not None:
+            turn[key] = final[key]
+    if used.get("provider"):
+        turn.setdefault("tool_provider", used["provider"])
+        turn.setdefault("tool_model", used.get("model", ""))
+    return turn
+
+
+def _focused_specs(specs, manual_groups):
+    out = []
+    for spec in specs:
+        f = spec.get("function") or {}
+        name = f.get("name", "")
+        group = tools.TOOL_GROUP.get(name, "core")
+        if name == "enable_tools":
+            spec = {**spec, "function": {**f, "description": "SpacePlanner araçları açık. Ekran/fare gerekirse computer grubunu etkinleştir. Gereken ek grup adları: " + ", ".join(["core", *tools.GROUP_INFO])}}
+        elif group != "browser" and group not in manual_groups:
+            continue
+        out.append(spec)
+    return out
+
+
 def _observer_for(name):
     if name in _BROWSER_ACTIONS:
         return "browser_observe"
@@ -346,6 +373,10 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
         previous = next((h["content"] for h in reversed(hist) if h["role"] == "user" and not re.fullmatch(r"devam(?: et)?[.!?\s]*", h["content"].casefold().strip())), "")
         if previous and _ui_action_requested(previous, groups):
             ui_task, task_goal = True, previous
+    focused_browser = ui_task and _spaceplanner_start(task_goal) and "browser" in groups
+    if focused_browser:
+        groups = {"core", "browser"}
+    manual_groups = set()
 
     # Speak immediately while the web/phone model request is starting.
     if not hidden and source in ("web", "phone"):
@@ -391,6 +422,8 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
             search_attempts=research_search_attempts,
             page_reads=research_page_reads,
         )
+        if focused_browser:
+            available_tools = _focused_specs(available_tools, manual_groups)
         route_options = {"tier": tier}
         require_call = ui_task and task_outcome != "needs_confirmation" and (not performed_tools or force_next_tool)
         if require_call:
@@ -400,7 +433,12 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
                 if launch:
                     available_tools = launch
         force_next_tool = False
-        for ev in llm.route(pconf.get("providers", []), messages, available_tools, pconf.get("model", ""), **route_options):
+        order = pconf.get("providers", [])
+        override = pconf.get("model", "")
+        if used.get("provider") == "gemini" and performed_tools:
+            order = ["gemini"] + [p for p in order if p != "gemini"]
+            override = used.get("model") or override
+        for ev in llm.route(order, messages, available_tools, override, **route_options):
             kind, data = ev
             if kind == "provider":
                 used = {"provider": data["provider"], "model": data["model"]}
@@ -426,7 +464,7 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
             if ui_task and task_outcome != "needs_confirmation" and (_text_tool_markers(response) or not performed_tools or promise or (unfinished_drawing and task_outcome != "blocked")):
                 if repair_attempts < 2:
                     repair_attempts += 1
-                    messages.append({"role": "assistant", "content": response})
+                    messages.append(_model_turn(final, [], used))
                     messages.append({"role": "user", "content": "SİSTEM DENETİMİ: Bu metin bir araç çağrısı değildir ve yazılan komutlar ÇALIŞTIRILMADI. Henüz istenen eylem tamamlanmadı. Araç adını düz metinde yazma. Uygun GERÇEK function/tool call üret; eksik argümanları güncel gözlemden al. Asıl kullanıcı görevini sürdür. Yapamıyorsan yapılmış gibi konuşma."})
                     force_next_tool = True
                     yield {"type": "progress", "text": "Model yanıtı gerçek araç çağrısı için yeniden doğrulanıyor."}
@@ -441,14 +479,15 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
             break
         if not ui_task:
             full_text += step_text
-        messages.append({"role": "assistant", "content": final.get("content") or "", "tool_calls": calls})
+        messages.append(_model_turn(final, calls, used))
         acted_this_round = False
         for call in calls:
             name = call["function"]["name"]
             args = _parse_args(call["function"].get("arguments"))
             if name == "enable_tools":
-                req = {g.strip() for g in str(args.get("groups", "")).split(",") if g.strip() in tools.GROUP_INFO}
+                req = {g.strip() for g in str(args.get("groups", "")).split(",") if g.strip() in tools.GROUP_INFO or g.strip() == "core"}
                 groups |= req
+                manual_groups |= req
                 result = f"Açıldı: {', '.join(sorted(req)) or 'yok'}. Şimdi bu araçları kullanabilirsin."
             elif name in _SEARCH_TOOL_NAMES and research_search_done:
                 result = "Bu istek için canlı web araması zaten yapıldı. İlk arama sonuçları yeterli; yeni arama başlatma, mevcut kaynakları sentezleyip cevap ver."

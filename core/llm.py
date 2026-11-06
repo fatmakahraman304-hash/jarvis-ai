@@ -481,7 +481,13 @@ def stream_chat(pid, model, messages, tools=None, temperature=0.7, timeout=90, t
         except gemini_native.NativeError as e:
             raise ProviderError(pid, e.status, e.body)
         return
-    body = {"model": model, "messages": messages, "stream": True, "temperature": temperature}
+    clean_messages = []
+    for message in messages:
+        clean = {k: v for k, v in message.items() if k not in {"gemini_content", "tool_provider", "tool_model"}}
+        if clean.get("tool_calls"):
+            clean["tool_calls"] = [{k: v for k, v in c.items() if k not in {"thought_signature", "gemini_call_id"}} for c in clean["tool_calls"]]
+        clean_messages.append(clean)
+    body = {"model": model, "messages": clean_messages, "stream": True, "temperature": temperature}
     if pid in ("openai", "anthropic"):
         body.pop("temperature", None)
     if tools:
@@ -613,6 +619,27 @@ def _tools_unsupported(err):
     return err.status in (400, 404, 422) and ("tool" in b or "function" in b)
 
 
+def _protocol_error(err):
+    body = err.body.lower()
+    return err.status == 400 and any(s in body for s in ("thought_signature", "thoughtsignature", "function response", "functionresponse", "function_response", "invalid json payload", "function_declarations", "functiondeclarations", "tools["))
+
+
+def _error_detail(pid, model, error):
+    try:
+        data = json.loads(error.body)
+        detail = (data.get("error") or data).get("message", error.body)
+    except (ValueError, TypeError, AttributeError):
+        detail = error.body
+    detail = str(detail)
+    secret = _key(pid)
+    if len(secret) >= 8:
+        detail = detail.replace(secret, "[anahtar gizlendi]")
+    detail = re.sub(r"(?:AIza[\w-]{15,}|AQ\.[\w-]{10,}|sk-[\w-]{10,})", "[anahtar gizlendi]", detail)
+    detail = re.sub(r"\s+", " ", detail).strip()[:700]
+    code = "yerel araç doğrulaması" if error.status == 422 and error.body.startswith("Native tool call required") else f"HTTP {error.status}"
+    return f"{pid}/{model} · {code}: {detail}"
+
+
 def light_model(pid):
     # Background/short tasks use the same FAST ladder as Mark LVI.
     if pid == "gemini":
@@ -646,6 +673,7 @@ def route(order, messages, tools, model_override="", light=False, tier="legacy",
     """
     tried = []
     tool_failures = False
+    error_details = []
     if require_tools and not tools:
         yield ("error", "Bu işlem için gerçek araç çağrısı gerekli; kullanılabilir araç bulunamadı. İşlem yapılmadı.")
         return
@@ -700,10 +728,14 @@ def route(order, messages, tools, model_override="", light=False, tier="legacy",
                 return
             except ProviderError as e:
                 tried.append(f"{pid}: {e.status}")
+                error_details.append(_error_detail(pid, model, e))
                 if report_bad_key(pid, e.status, e.body):
                     break  # anahtar geçersiz: bu sağlayıcının başka modelini denemenin anlamı yok
                 if emitted:
                     yield ("error", "Model bağlantısı yanıt tamamlanmadan kesildi; işlem tamamlandı sayılmadı.")
+                    return
+                if _protocol_error(e):
+                    yield ("error", "Model isteğinin araç/konuşma biçimi reddedildi; işlem tamamlanmadı. Sağlayıcının gerçek hatası: " + error_details[-1])
                     return
                 if use_tools and _tools_unsupported(e):
                     # Araçsız yeniden denemek, işlemi yapmadan yapılmış gibi metin
@@ -735,7 +767,7 @@ def route(order, messages, tools, model_override="", light=False, tier="legacy",
                         continue
                 break
     if tool_failures:
-        yield ("error", "Bağlı model gerçek araç çağrısı üretemedi veya araç isteğini reddetti. İstenen işlem tamamlanmadı; araçlar kapatılıp metinle yapılmış gibi gösterilmedi.")
+        yield ("error", "Model araç çağrısına devam edemedi; işlem tamamlanmadı. Deneme ayrıntıları: " + " | ".join(error_details[-3:]))
         return
     if only_gemini():
         if key_bad("gemini"):
