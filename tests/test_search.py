@@ -74,10 +74,11 @@ llm.list_models = lambda pid, refresh=False: ["gemini-3.8-flash", "gemini-3.5-fl
 llm.configured = lambda pid: pid == "gemini"
 
 print("CANLI ARAMA")
+bing_direct = tools._search_bing("dolar kuru bugün", 6)
+check("Bing ayrıştırıcısı sonuç çıkarır", bing_direct[0]["link"] == "https://site.com/dolar", bing_direct)
 r = tools.web_search("dolar kuru bugün")
-check("ilk yararlı arama motoru hızlı döner", r.get("sonuçlar", [{}])[0].get("link") == "https://site.com/dolar", r)
+check("ilk yararlı paralel arama motoru hızlı döner", r.get("sonuçlar", [{}])[0].get("link") in ("https://site.com/dolar", "https://lite.com/x"), r)
 check("normal web aramasında ikinci Gemini üretimi yapılmaz", state["ground_calls"] == 0, state["ground_calls"])
-check("Bing sonuçları gelir", r.get("motor") == "bing" and r["sonuçlar"][0]["link"] == "https://site.com/dolar", r)
 check("'bugün' geçince tarihli haberler de eklenir", r.get("haberler", [{}])[0].get("tarih", "").startswith("05.11.2026"), r)
 check("CANLI sonuç notu korunur", "CANLI" in r.get("not", ""))
 state.update(bing_down=True, ground=False)
@@ -93,6 +94,7 @@ state.update(bing_down=True, lite_down=True, ground=True)
 r = tools.web_search("son çare araması")
 check("bütün web motorları başarısızsa Google Grounding yedeği çalışır",
       r.get("canlı_cevap", {}).get("cevap", "").startswith("5 Kasım 2026") and state["ground_calls"] == n + 1, r)
+check("Google Grounding yedeği hafif Flash-Lite kullanır", "gemini-3.5-flash-lite" in state.get("ground_url", ""), state.get("ground_url"))
 import time as _t  # noqa: E402
 state.update(bing_down=False, lite_down=False, ground=True)
 orig_get = tools._http_get
