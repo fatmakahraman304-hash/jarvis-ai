@@ -117,7 +117,7 @@ body.cc #views button{flex:0 0 auto;padding:5px 9px}
 body.cc #status-line.cc-pill{position:static;transform:none;border:1px solid var(--line);border-radius:var(--r);background:var(--panel);padding:5px 10px;color:#cfe;white-space:nowrap;font-size:10px}
 body.cc .top-right{flex-direction:row;align-items:center;gap:10px;min-width:max-content}
 body.cc #hdr-extra{font-size:10px}
-body.cc #model-badge{display:none}
+body.cc #model-badge{display:inline-flex;align-items:center;flex:0 0 auto;visibility:visible;pointer-events:auto}
 body.cc #chips:empty,body.cc #chips.hide{display:none}
 body.cc .cc-mid>*{flex:none}body.cc .cc-mid>#views{flex:0 1 auto}
 body.cc #clock{font-size:15px}
