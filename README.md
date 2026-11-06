@@ -1,5 +1,11 @@
 # J.A.R.V.I.S. Personal AI
 
+## 4.6.46 — Gemini Lite HTTP 400 için uyumluluk ve teşhis
+
+Gemini 3.5 ve sonraki Flash modellerine gönderilen eski sampling parametreleri çıkarıldı. Flash-Lite otomatik en düşük düşünme düzeyiyle çalıştığından ayrıca "low" ayarı zorlanmaz. Genel 400 hatasında JARVIS konsoluna yalnızca araç/mesaj sayısı ve düşünme imzası sayısı gibi yapısal bilgiler kaydedilir; sohbet metni veya API anahtarı yazılmaz. Bu ayarlar tek başına bütün HTTP 400 nedenlerini kesin çözmez.
+
+Hata sürerse JARVIS klasöründe Windows Komut İstemi'nden `py -3.13 scripts/diagnose_gemini.py` çalıştır. En fazla üç küçük Gemini API isteği ile 1) basit mesaj, 2) tek araç çağrısı ve 3) araç sonrası devam sınanır. Kullanıcı geçmişi, dosyalar, şifreler veya SpacePlanner içeriği gönderilmez; API kotasından istek tüketir. Yalnızca terminaldeki aşama/HTTP sonuçlarını paylaş; .env/API anahtarını paylaşma. Gerçek kullanıcı hesabıyla canlı doğrulama burada yapılmadı.
+
 ## 4.6.45 — Gemini HTTP 429 ve genel HTTP 400 teşhisi
 
 Kota veya hız sınırıyla HTTP 429 döndüren modeller, soğuma süresinde tekrar seçilmez; bu Google kotasını artırmaz. Gemini, yalnızca genel `Request contains an invalid argument` hatası döndürürse isteğe bağlı `thinkingConfig` kaldırılarak, araçlar ve konuşma geçmişi korunarak en fazla bir kez yeniden denenir. Hata sürüyorsa gerçek HTTP 400 gösterilir; başka modellerin HTTP 429 hatasıyla karıştırılmaz. Yeni regresyon testleri tekrarlı isteği ve hata gösterimini kontrol eder. Kota durumunu Google AI Studio Rate limits bölümünden incele. Gerçek hesapla API testi yapılmamıştır.
