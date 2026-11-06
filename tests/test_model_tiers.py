@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 os.environ["JARVIS_DATA"] = tempfile.mkdtemp(prefix="jarvis_model_tiers_")
 os.environ["GEMINI_API_KEY"] = "test-key"
-os.environ.pop("GEMINI_MODEL", None)
+os.environ["GEMINI_MODEL"] = ""
 
 from core import llm  # noqa: E402
 from core.brain import _conversation_tier  # noqa: E402
