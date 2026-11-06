@@ -1,7 +1,9 @@
 {
-  "version": "4.6.0",
-  "date": "2026-11-05",
+  "version": "4.6.1",
+  "date": "2026-11-06",
   "notes": [
+    "📱 iPhone/telefon kamerası: start-lan.bat artık otomatik HTTPS açar; HTTP kaynaklı getUserMedia hatası giderildi",
+    "🔒 Kamera API'si yoksa anlaşılır HTTPS/izin yönergesi gösterilir; cryptography bağımlılığı kurulum listesine eklendi",
     "📱 Telefon ekranları: eski telefonlarda JARVIS adresini sonuna ?rol=ekran ekleyerek aç — JARVIS onlara komut verir",
     "▶ \"Tüm telefonlarda … aç\" → hepsinde aynı video; \"a | b | c\" → her telefonda farklı video. Yazı göster, sesli konuş, animasyon, durdur",
     "📞 JARVIS seni ARAR: \"beni ara\" → telefonda (ya da bilgisayarda) gelen arama ekranı çalar; CEVAPLA → mesajı söyler, sesli görüşme başlar",
