@@ -45,12 +45,25 @@
     else { $("#up-step", root).innerHTML = `<span class="dn">${esc(r.hata || r.durum)}</span>`; $("#up-go", root).disabled = false; }
   }
   function waitRestart() {
-    let down = false;
+    let down = false, failures = 0;
+    const reopen = () => {
+      clearInterval(t);
+      // LAN güncellemesi HTTP'den HTTPS'e geçebilir; eski sekmeyi aynı IP/port ve token ile güvenli adrese taşı.
+      if (location.protocol === "http:") location.replace(location.href.replace(/^http:/i, "https:"));
+      else location.reload();
+    };
     const t = setInterval(async () => {
-      try { const r = await fetch("/api/state", { cache: "no-store" }); if (r.ok && down) { clearInterval(t); location.reload(); } else if (!r.ok) down = true; }
-      catch (e) { down = true; }
+      try {
+        const r = await fetch("/api/state", { cache: "no-store" });
+        if (r.ok && down) reopen();
+        else if (!r.ok) { down = true; failures++; }
+      } catch (e) {
+        down = true; failures++;
+        // Yeni HTTPS sunucusunun ayağa kalkmasına zaman tanı.
+        if (failures >= 8) reopen();
+      }
     }, 1500);
-    setTimeout(() => { clearInterval(t); location.reload(); }, 60000);
+    setTimeout(reopen, 60000);
   }
   JV.updater = { open: () => { build(); root.classList.remove("hidden"); check(false); }, check };
   document.addEventListener("DOMContentLoaded", () => {
