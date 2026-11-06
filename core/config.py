@@ -11,7 +11,7 @@ WEB = ROOT / "web"
 DATA.mkdir(exist_ok=True)
 SETTINGS_FILE = DATA / "settings.json"
 
-VERSION = "4.6.13"
+VERSION = "4.6.14"
 
 
 def _load_env():
@@ -47,7 +47,7 @@ DEFAULT_SETTINGS = {
     "visual": "reactor",         # reactor | wave | sphere | face
     "voice_enabled": True,
     "voice_lang": "auto",        # auto | tr | en
-    "wake_word": False,
+    "wake_word": True,
     "effects": True,
     "auto_control": False,       # ekran/fare/klavye işlemlerinde onay isteme
     "email_watch": True,         # önemli yeni e-postayı bildir
@@ -65,13 +65,11 @@ DEFAULT_SETTINGS = {
         # her kişilik için sağlayıcı sırası; ilk çalışan kullanılır, diğerleri yedek
         "jarvis": {"providers": ["gemini", "groq", "openrouter", "mistral", "cerebras", "xai", "ollama"], "model": ""},
         "friday": {"providers": ["groq", "gemini", "cerebras", "openrouter", "mistral", "xai", "ollama"], "model": ""},
-        "ultron": {"providers": ["xai", "openrouter", "gemini", "groq", "mistral", "cerebras", "ollama"], "model": ""},
     },
-    "live_voice_names": {"jarvis": "Charon", "friday": "Aoede", "ultron": "Fenrir"},
+    "live_voice_names": {"jarvis": "Charon", "friday": "Aoede"},
     "voice": {
         "jarvis": {"rate": 0, "pitch": 0},
         "friday": {"rate": 0, "pitch": 0},
-        "ultron": {"rate": 0, "pitch": 0},
     },
 }
 
@@ -96,12 +94,34 @@ def load_settings():
                 data = json.loads(SETTINGS_FILE.read_text(encoding="utf-8"))
             except Exception:
                 data = {}
-        return _merge(DEFAULT_SETTINGS, data)
+        merged = _merge(DEFAULT_SETTINGS, data)
+        changed = False
+        for key in ("personas", "live_voice_names", "voice", "voice_pick", "voice_fx", "original_voice"):
+            values = merged.get(key)
+            if isinstance(values, dict) and "ultron" in values:
+                values.pop("ultron", None)
+                changed = True
+        if merged.get("persona") not in ("jarvis", "friday"):
+            merged["persona"] = "jarvis"
+            changed = True
+        if not data.get("always_listen_migrated"):
+            merged["wake_word"] = True
+            merged["always_listen_migrated"] = True
+            changed = True
+        if changed and SETTINGS_FILE.exists():
+            SETTINGS_FILE.write_text(json.dumps(merged, ensure_ascii=False, indent=2), encoding="utf-8")
+        return merged
 
 
 def save_settings(patch):
     current = load_settings()
     new = _merge(current, patch or {})
+    for key in ("personas", "live_voice_names", "voice", "voice_pick", "voice_fx", "original_voice"):
+        values = new.get(key)
+        if isinstance(values, dict):
+            values.pop("ultron", None)
+    if new.get("persona") not in ("jarvis", "friday"):
+        new["persona"] = "jarvis"
     with _lock:
         SETTINGS_FILE.write_text(json.dumps(new, ensure_ascii=False, indent=2), encoding="utf-8")
     return new

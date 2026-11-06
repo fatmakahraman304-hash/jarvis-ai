@@ -1,18 +1,13 @@
 # J.A.R.V.I.S. Personal AI
 
-## 4.6.13 — JARVIS / FRIDAY / ULTRON ayrı ses profilleri
+## 4.6.14 — İki kişilik mod, sürekli dinleme ve sadeleştirilmiş arayüz
 
-- JARVIS varsayılan olarak **Charon**, FRIDAY **Aoede** (yumuşak kadınsı ton), ULTRON **Fenrir** (derin ve güçlü ton) Gemini Live seslerini kullanır.
-- **Ayarlar → SES → SES KARAKTERLERİ** bölümünden üç kişiliğin Live sesini ayrı ayrı değiştirebilirsin. Değişiklik bir sonraki konuşmada etkinleşir.
-- Gemini Live çalışmazsa her kişilik kendi Microsoft Neural yedek sesine döner: JARVIS Ahmet/Ryan, FRIDAY Emel/Emily, ULTRON daha düşük perdeli Ahmet/Christopher.
-- Ses Laboratuvarı, önizleme modülü, ses listeleme API'si ve ona ait stiller kaldırıldı. Mikrofon, konuşma tanıma, sesli yanıt, efektler ve ses kimliği korunur.
+- Yalnızca J.A.R.V.I.S. ve F.R.I.D.A.Y. kaldı; kaldırılan kişiliğin ses, model, Telegram, makro ve kayıtlı ayarları temizlenir.
+- 3D ŞEHİR simülasyonu, komutu, arayüzü, stilleri ve web/city.js dosyası kaldırıldı. Fizik hesaplayıcı ve diğer 3D görünümler korunur.
+- Uyandırma kelimesi varsayılan olarak etkinleşir. Sistem başlatma düğmesine bir kez bastıktan ve mikrofon iznini verdikten sonra tarayıcı sayfası açıkken sürekli dinler; "JARVIS" veya "FRIDAY" deyip komutunu söyle.
+- Uyandırma kelimesinden sonra ayrı mikrofon düğmesine basman gerekmez. Tarayıcı ve işletim sistemi mikrofon izni ile sürekli konuşma tanıma desteği gerekir.
 
-- Ayarlar → **SES** bölümündeki **Mark LVI tarzı Gemini Live sesi (Charon)** seçeneğiyle JARVIS yanıtlarını Gemini Live'ın Charon sesiyle dinleyebilirsin.
-- Yanıtı hâlâ JARVIS'in kendi beyni üretir; web araması, araçlar, hafıza, kritik işlem onayı ve mevcut konuşma akışı korunur. Gemini Live yalnızca metni sese dönüştürür.
-- Canlı ses oturumu aynı tarayıcı bağlantısı boyunca açık tutulur; böylece her cümlede yeniden oturum açılmaz. Live bağlantısı veya ses üretimi başarısızsa Edge TTS'ye geri dönülür.
-- Bu özellik Gemini API anahtarı ve `google-genai` paketini kullanır; Gemini Live ses kotası/faturalandırması geçerli olabilir. Eski Edge TTS davranışına dönmek için seçeneği kapat.
-
-Tek beyin, çok model, çok platform. Üç kişilik: **JARVIS** (mavi, sakin İngiliz uşak), **FRIDAY** (turuncu, enerjik operasyon uzmanı), **ULTRON** (kırmızı, karanlık ve teatral). Hepsi aynı hafızayı ve aynı bilgisayar yetkilerini paylaşır; sadece karakter, ses, renk ve tercih ettikleri model değişir.
+Tek beyin, çok model, çok platform. İki kişilik: **JARVIS** (mavi, sakin İngiliz uşak) ve **FRIDAY** (turuncu, enerjik operasyon uzmanı). İkisi de aynı hafızayı ve aynı bilgisayar yetkilerini paylaşır; karakter, ses, renk ve model tercihleri farklıdır.
 
 ## 3 adımda çalıştır (Windows 11)
 
@@ -29,7 +24,7 @@ Tek beyin, çok model, çok platform. Üç kişilik: **JARVIS** (mavi, sakin İn
 | OpenRouter | openrouter.ai/keys | `:free` modeller (DeepSeek, Llama, Qwen…) |
 | Mistral | console.mistral.ai | ücretsiz deneme katmanı |
 | Cerebras | cloud.cerebras.ai | çok hızlı |
-| xAI Grok | console.x.ai | ULTRON'un varsayılanı; ücretli kredi gerekebilir, yoksa ULTRON otomatik diğerlerine geçer |
+| xAI Grok | console.x.ai | İsteğe bağlı sağlayıcı; ücretli kredi gerekebilir |
 | Ollama | ollama.com | Yerel, **internetsiz**, anahtar gerekmez: `ollama pull qwen2.5` |
 
 **Tek beyin nasıl çalışır:** Her kişiliğin bir model sırası vardır. Bir model kotaya takılır ya da hata verirse beyin aynı cevap için otomatik sıradakine geçer. Model adları her açılışta sağlayıcıdan otomatik okunur, yani modeller değişse de bozulmaz. Ayarlar → Modeller'den her kişiliğe istediğin modeli atayabilirsin.
@@ -46,7 +41,7 @@ Bir sorun olursa aynı pencerede **↶ ÖNCEKİ SÜRÜME DÖN**. JARVIS ayrıca 
 ## Kullanım
 
 - **Yaz** ya da **mikrofon düğmesine bas** (klavyede **Boşluk**). **Esc** konuşmayı keser.
-- **👂 UYANDIRMA** açıkken sürekli dinler: *"JARVIS, hava nasıl?"*, *"FRIDAY bilgisayarımın durumu"*, *"ULTRON müziği durdur"*. İsim söylemek kişiliği de değiştirir. Sadece "JARVIS" dersen bip sesinden sonra 8 sn komut bekler. O konuşurken "dur"/"sus" ya da ismini söylersen susar.
+- **👂 UYANDIRMA** açıkken sürekli dinler: *"JARVIS, hava nasıl?"* veya *"FRIDAY bilgisayarımın durumu"*. İsim söylemek kişiliği de değiştirir. Sadece "JARVIS" ya da "FRIDAY" dersen bip sesinden sonra 10 sn komut bekler. O konuşurken "dur"/"sus" ya da ismini söylersen susar.
 - **◉ KÜRE / ☺ YÜZ**: dönen nokta küresi ya da 3D hologram yüz. İkisi de sesle birlikte titreşir, yüzün çenesi konuşurken açılır.
 - Konuşma tanıma için **Edge veya Chrome** kullan (start.bat zaten Edge'de açar).
 
@@ -120,7 +115,7 @@ Beyin konuya göre ilgili araçları kendisi seçer; sen sadece ne istediğini s
 | **Çeviri merkezi** | 🌐 ÇEVİRMEN: 22 dil, konuşulan dili otomatik tanır, iki kişi arasında canlı sesli tercüman (her dil kendi sesiyle), görüntülü görüşmede bilgisayar sesini çevirme, kameradaki yazıyı çevirme, videoya SRT altyazı, aynı anda birçok dile çeviri |
 | **Görsel stüdyo** | "uzayda bir kedi çiz" (ücretsiz yapay zekâ resmi), fotoğraf düzenleme (kırp, filtre, yazı, filigran, arka plan silme), kolaj, vektör logo (SVG), video: sahne bulma, içerik analizi (kareler + konuşma), kesme, hızlandırma, GIF, birleştirme, altyazı gömme, müzik ekleme, resimlerden montaj |
 | **Komuta merkezi** | ⌘ KOMUTA (Ctrl+Shift+K): sistem, güvenlik, ekip, görevler, bağlantılar, bilgisayarlar, modüller tek ekranda. Çalışma modları: sessiz, araştırma, mühendislik, komuta, acil durum. Makrolar: "film modu" deyince bir dizi işi birden yapar. Modülleri aç/kapat |
-| **Sanal şehir** | 🏙 ŞEHİR: tıklayarak bina/ev/park kur, gece-gündüz ve zaman hızı, trafik ışıklı araç trafiği, yağmur/kar/sis/fırtına, gezegen yerçekimi (Ay, Mars…) ile gerçek fizik: top bırak (teori ile ölçüm karşılaştırması), fıskiye suyu, rüzgârda dalgalanan bayrak, ateş ve duman; STL olarak indir |
+
 | **Bilgi merkezi** | 📚 BİLGİ: PDF/Word/EPUB/web sayfası kütüphanesi, kaynak ve sayfa göstererek cevap, özet, 3D bilgi grafiği, sesli kitap (mp3), quiz ve aralıklı tekrar kartları, haftalık öğrenme planı |
 | **Bilgisayarlarım** | Ağdaki diğer JARVIS'leri bul/bağla, canlı durumları, uzaktan komut (karşı tarafın izniyle), dosya gönder/al, kapalıysa iş kuyruğu, şifreli bağlantı |
 | **Dijital ikiz** | 🖥 İKİZ: bilgisayarının canlı 3D ikizi (çekirdek yükleri, RAM, disk, ağ, GPU, fanlar), Home Assistant'tan evin 3D ikizi (tıkla aç/kapat) |
@@ -202,11 +197,11 @@ Windows Python Proactor event loop, tarayıcı/istemci bağlantıyı aniden kapa
 | Telefon (aynı Wi-Fi) | `start-lan.bat` → pencerede yazan `https://192.168…/?token=…` adresini telefonda aç → ilk sertifika uyarısında **Gelişmiş > Devam et** → tarayıcı menüsünden **Ana ekrana ekle**. HTTPS kamera/mikrofonu da destekler. |
 | VR gözlük | `start-vr.bat` → gözlüğün tarayıcısında pencerede yazan `https://…` adresini aç ("Gelişmiş > Devam et") → bir 3D dünya seç → 🥽 VR |
 | Diğer bilgisayarlar | Her birinde `start-lan.bat`; birinde ⌘ KOMUTA → BİLGİSAYARLARIM → AĞI TARA → anahtarı gir → BAĞLA. Uzaktan komut için diğerinde Ayarlar → Bağlantılar → "Ağdaki diğer JARVIS bilgisayarlarından gelen komutlara izin ver" |
-| Telegram (her yerden) | @BotFather → `/newbot` → token'ı `.env`'de `TELEGRAM_BOT_TOKEN`'a yaz, JARVIS'i başlat, bota yaz; bot sana kullanıcı kimliğini söyler → `TELEGRAM_ALLOWED_IDS`'e yaz, yeniden başlat. Komutlar: `/panel` `/ekran` `/kilitle` `/durum` `/brifing` `/ses` `/jarvis` `/friday` `/ultron` `/onay KOD` `/iptal KOD` `/dur` (telefondaki `/` menüsünde de listelenir). Bot senin bilgisayarında çalışan beyne bağlıdır; bilgisayar açık olmalı. |
+| Telegram (her yerden) | @BotFather → `/newbot` → token'ı `.env`'de `TELEGRAM_BOT_TOKEN`'a yaz, JARVIS'i başlat, bota yaz; bot sana kullanıcı kimliğini söyler → `TELEGRAM_ALLOWED_IDS`'e yaz, yeniden başlat. Komutlar: `/panel` `/ekran` `/kilitle` `/durum` `/brifing` `/ses` `/jarvis` `/friday` `/onay KOD` `/iptal KOD` `/dur` (telefondaki `/` menüsünde de listelenir). Bot senin bilgisayarında çalışan beyne bağlıdır; bilgisayar açık olmalı. |
 
 ## Sesler hakkında
 
-Sesler ücretsiz Microsoft Neural seslerinden (edge-tts, anahtar gerekmez) ayarlanır ve tarayıcıda kişiliğe özel efekt eklenir: JARVIS'e hafif yankı ve netlik, FRIDAY'e sıcak hafif yankı, ULTRON'a kalın ton, metalik halka modülasyonu, hafif distorsiyon ve uzun yankı. Ses dili Otomatik/Türkçe/İngilizce seçilebilir; İngilizce'de JARVIS İngiliz (Ryan), FRIDAY İrlandalı (Emily) aksanıyla konuşur. Filmdeki oyuncuların seslerinin kopyası **değildir** (gerçek kişilerin sesini izinsiz klonlamak doğru olmaz); film havasına yaklaştıran ayarlardır. Hız/ton sürgüleri Ayarlar → Ses'te.
+Sesler ücretsiz Microsoft Neural seslerinden (edge-tts, anahtar gerekmez) ayarlanır ve tarayıcıda kişiliğe özel efekt eklenir: JARVIS'e hafif yankı ve netlik, FRIDAY'e sıcak hafif yankı. Ses dili Otomatik/Türkçe/İngilizce seçilebilir; İngilizce'de JARVIS İngiliz (Ryan), FRIDAY İrlandalı (Emily) aksanıyla konuşur. Filmdeki oyuncuların seslerinin kopyası **değildir** (gerçek kişilerin sesini izinsiz klonlamak doğru olmaz); film havasına yaklaştıran ayarlardır. Hız/ton sürgüleri Ayarlar → Ses'te.
 
 ### Kullanıcıya ait orijinal ses klipleri (Türkçe + İngilizce)
 
@@ -224,7 +219,7 @@ Desteklenen biçimler: MP3, WAV, OGG, M4A ve WebM. Dosyalar yerel `data/` klasö
 run.py               başlatıcı (--lan telefon/ağ, --https şifreli, --port, --no-browser)
 core/brain.py        TEK BEYİN: ajan döngüsü, araç çağrısı, onay sistemi
 core/llm.py          çoklu model yönlendirici (Gemini, Groq, OpenRouter, Grok, Mistral, Cerebras, Ollama)
-core/personas.py     JARVIS / FRIDAY / ULTRON karakter, ses, renk
+core/personas.py     JARVIS / FRIDAY karakter, ses, renk
 core/tools.py        temel araçlar + akıllı araç seçimi
 core/skills/         31 yetenek modülü: google, computer, windows, office, finance(+lab), automation, smarthome, media,
                      geo, holo, space, worldwatch, team, translate, studio, command, world, knowledge, nodes, twin, music…

@@ -214,7 +214,7 @@ nm = ww.news_map("ekonomi", 1)
 tr = next(x for x in nm if x["ülke"] == "Türkiye")
 check("haber haritası: ülkeler başkentlerine yerleşir", len(nm) == len(ww.EDITIONS) and abs(tr["lat"] - 39.93) < 0.2 and tr["haberler"][0]["başlık"] == "Manşet A", tr)
 
-print("SANAL ŞEHİR + FİZİK")
+print("FİZİK HESAPLARI")
 from core.skills import world as wd  # noqa: E402
 ff = wd.free_fall(45)
 check("serbest düşme 45 m = 3.03 s, 107 km/s", ff["süre_s"] == 3.029 and round(ff["çarpma_hızı_kmh"]) == 107, ff)
@@ -225,10 +225,6 @@ br = wd.braking_distance(100, 0.7, 1.0)
 check("100 km/s durma mesafesi ≈ 84 m", br["toplam_m"] == 84.0, br)
 pj = wd.projectile(20, 45)
 check("eğik atış 20 m/s 45° menzil 40.8 m", pj["menzil_m"] == 40.77, pj)
-check("şehir komutu: Türkçe eş anlamlılar", wd.city_command("yerçekimi", "mars") == {"ui": "city", "action": "gravity", "value": "Mars"} and wd.city_command("hava", "karlı")["value"] == "kar")
-check("şehir inşa komutu", wd.city_command("inşa", "", "ev", 500)["count"] == 200)
-check("şehir top bırak + teori", wd.city_command("top", "80")["fizik"]["süre_s"] == 4.039)
-check("geçersiz işlem reddedilir", wd.city_command("uç").startswith("Bilinmeyen"))
 
 print("DİJİTAL İKİZ + BİYOLOJİ")
 from core.skills import twin as tw  # noqa: E402
@@ -484,7 +480,7 @@ _t = _PR(inv["fatura"]).pages[0].extract_text()
 check("fatura: hesap (ara toplam 17.500, KDV 3.500, toplam 21.000) + PDF metni", inv["ara_toplam"] == 17500 and inv["kdv"] == 3500 and inv["genel_toplam"] == 21000 and "21.000,00 TL" in _t and "Ali Veli" in _t, inv)
 check("fatura: hatalı kalem anlaşılır hata", "okunamadı" in str(of.invoice_create("x", "Kalem;iki;10")))
 
-print("SES LABORATUVARI")
+print("SES KARAKTERLERİ")
 import asyncio as _aio  # noqa: E402
 from core import voice as _vc, config as _cf  # noqa: E402
 _calls = []
@@ -494,22 +490,12 @@ class _FC:
         yield {"type": "audio", "data": b"ID3"}
 class _FE:
     Communicate = _FC
-    @staticmethod
-    async def list_voices():
-        return [{"ShortName": "tr-TR-AhmetNeural", "Locale": "tr-TR", "Gender": "Male"}, {"ShortName": "en-GB-RyanNeural", "Locale": "en-GB", "Gender": "Male"},
-                {"ShortName": "en-US-AndrewMultilingualNeural", "Locale": "en-US", "Gender": "Male"}, {"ShortName": "fr-FR-RemyMultilingualNeural", "Locale": "fr-FR", "Gender": "Male"},
-                {"ShortName": "ja-JP-KeitaNeural", "Locale": "ja-JP", "Gender": "Male"}]
 _vc.edge_tts = _FE
-_vc._voice_cache.update({"t": 0, "v": []})
-vl = _aio.run(_vc.list_voices())
-check("ses listesi: Türkçe + İngilizce + çok dilli (Japonca hariç)", [v["name"] for v in vl][0] == "tr-TR-AhmetNeural" and len(vl) == 4 and all(v["tr"] for v in vl if v["multilingual"]), [v["name"] for v in vl])
-_cf.save_settings({"voice_pick": {"ultron": {"tr": "en-US-AndrewMultilingualNeural"}}, "voice": {"ultron": {"rate": 5, "pitch": -10}}})
-_aio.run(_vc.synthesize("Merhaba", "ultron", "tr"))
-check("kaydedilen ses + hız/ton kullanılır", _calls[-1][0] == "en-US-AndrewMultilingualNeural" and _calls[-1][1] == "-7%" and _calls[-1][2] == "-34Hz", _calls[-1])
-_aio.run(_vc.synthesize("Merhaba", "ultron", "tr", "", "tr-TR-AhmetNeural", 0, 0))
-check("önizleme geçici ayarları kaydı değiştirmez", _calls[-1] == ("tr-TR-AhmetNeural", "-12%", "-24Hz") and _cf.load_settings()["voice_pick"]["ultron"]["tr"] == "en-US-AndrewMultilingualNeural", _calls[-1])
+_cf.save_settings({"voice_pick": {"friday": {"tr": "en-US-AndrewMultilingualNeural"}}, "voice": {"friday": {"rate": 5, "pitch": -10}}})
+_aio.run(_vc.synthesize("Merhaba", "friday", "tr"))
+check("FRIDAY kayıtlı ses + hız/ton kullanılır", _calls[-1][0] == "en-US-AndrewMultilingualNeural" and _calls[-1][1] == "+11%" and _calls[-1][2] == "-10Hz", _calls[-1])
 _aio.run(_vc.synthesize("Hello", "jarvis", "en"))
-check("seçim yoksa film varsayılanı (İngiliz Ryan)", _calls[-1][0] == "en-GB-RyanNeural")
+check("JARVIS varsayılan İngiliz Ryan sesini kullanır", _calls[-1][0] == "en-GB-RyanNeural")
 
 print("GÖRSEL STÜDYO")
 import io as _io  # noqa: E402

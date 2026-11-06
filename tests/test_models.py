@@ -178,8 +178,7 @@ llm.configured = lambda pid: pid == "gemini"
 # eski sabitlemelerin temizlenmesi
 from core import server  # noqa: E402
 from core.config import load_settings, save_settings  # noqa: E402
-save_settings({"personas": {"jarvis": {"providers": ["gemini"], "model": "gemini-2.5-flash"}, "friday": {"providers": ["gemini"], "model": "gemini-3.6-flash"},
-                            "ultron": {"providers": ["groq"], "model": "llama-3.3-70b-versatile"}}})
+save_settings({"personas": {"jarvis": {"providers": ["gemini"], "model": "gemini-2.5-flash"}, "friday": {"providers": ["gemini"], "model": "gemini-3.6-flash"}}})
 envf = ROOT / ".env"
 backup = envf.read_text(encoding="utf-8") if envf.exists() else None
 try:
@@ -190,8 +189,9 @@ try:
     check("kişilikteki 2.5 sabitlemesi kaldırıldı", st["personas"]["jarvis"]["model"] == "")
     check("bilinçli 3.x seçimi korunur", st["personas"]["friday"]["model"] == "gemini-3.6-flash")
     check(".env'deki GEMINI_MODEL=2.5 kaldırıldı", "GEMINI_MODEL=gemini-2.5" not in envf.read_text(encoding="utf-8") and not os.environ.get("GEMINI_MODEL"))
+    save_settings({"persona": "ultron", "personas": {"ultron": {"model": "llama-3.3-70b-versatile"}}})
     st2 = load_settings()
-    check("Groq'taki eski llama-3.3 sabitlemesi de kaldırıldı", st2["personas"]["ultron"]["model"] == "")
+    check("kaldırılan kişilik ayarlardan temizlenir", "ultron" not in st2["personas"] and st2["persona"] == "jarvis")
     save_settings({"personas": {"jarvis": {"model": "gemini-2.5-flash"}}})
     server._migrate_old_models()
     check("geçiş yalnızca bir kez (sonra seçimine dokunmaz)", load_settings()["personas"]["jarvis"]["model"] == "gemini-2.5-flash")

@@ -11,7 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 ASSET_DIR = ROOT / "data" / "voice_assets"
 MANIFEST = ASSET_DIR / "manifest.json"
-PERSONAS = {"jarvis", "friday", "ultron"}
+PERSONAS = {"jarvis", "friday"}
 LANGUAGES = {"tr", "en"}
 AUDIO_EXTENSIONS = {".mp3", ".wav", ".ogg", ".m4a", ".webm"}
 

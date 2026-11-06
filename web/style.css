@@ -332,13 +332,6 @@ body.mode-acil::after{content:"ACİL DURUM MODU";position:fixed;top:8px;left:50%
 body.mode-sessiz #t-command::after{content:" · SESSİZ"}
 #t-command.on{border-color:var(--c);color:var(--c)}
 
-#city-bar{position:fixed;left:50%;transform:translateX(-50%);bottom:205px;z-index:6;display:flex;gap:4px;align-items:center;background:var(--panel);border:1px solid var(--line);padding:6px 10px;border-radius:20px;backdrop-filter:blur(6px);flex-wrap:wrap;justify-content:center;max-width:min(1100px,94vw);font-size:11px}
-#city-bar.hidden{display:none}#city-bar .mini.on{background:var(--c);color:#001018}
-#city-bar b{font-family:var(--head);color:var(--c);letter-spacing:.1em;margin-right:6px}
-#city-bar select{background:#06192a;color:var(--c);border:1px solid var(--line);font-size:11px;padding:2px}
-#city-bar label{color:var(--dim);display:flex;align-items:center;gap:4px}#city-bar input[type=range]{width:70px}
-.cb-sep{width:1px;height:16px;background:var(--line);margin:0 4px}
-
 #library,#quiz{position:fixed;inset:0;z-index:19;background:rgba(0,0,0,.6);display:grid;place-items:center}
 #library.hidden,#quiz.hidden{display:none}
 .kb-card,.qz-card{width:min(900px,95vw);max-height:92vh;overflow:auto;background:#03101a;border:1px solid var(--c);box-shadow:var(--glow);padding:12px}

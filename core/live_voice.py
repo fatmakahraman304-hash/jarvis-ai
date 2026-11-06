@@ -15,8 +15,8 @@ from .config import env, load_settings
 
 LIVE_MODEL = "gemini-3.1-flash-live-preview"
 LIVE_VOICE = "Charon"
-LIVE_VOICES = {"jarvis": "Charon", "friday": "Aoede", "ultron": "Fenrir"}
-ALLOWED_VOICES = {"Charon", "Aoede", "Fenrir", "Puck", "Kore", "Orus", "Leda", "Zephyr"}
+LIVE_VOICES = {"jarvis": "Charon", "friday": "Aoede"}
+ALLOWED_VOICES = {"Charon", "Aoede", "Puck", "Kore", "Orus", "Leda", "Zephyr"}
 SAMPLE_RATE = 24000
 
 

@@ -41,13 +41,12 @@
     const s = ctx.createWaveShaper(); s.curve = curve; s.oversample = "4x"; return s;
   }
 
-  // ---- Film efekt ayarları (Ses laboratuvarından değiştirilebilir) ----
+  // ---- JARVIS ve FRIDAY ses karakteri efektleri ----
   // hpf: alçak kesim Hz · bass: kalınlık dB · presence: netlik dB · drive: distorsiyon · metal: metalik halka (0-1)
   // double: ikinci ses katmanı (0-1) · reverb: yankı (0-1) · room: oda büyüklüğü sn · speed: oynatma hızı · radio: hologram/telsiz filtresi (0-1)
   const FX = {
     jarvis: { hpf: 140, bass: 1, presence: 4, drive: 0, metal: 0, double: 0.12, reverb: 0.22, room: 1.4, speed: 1, radio: 0.1 },
     friday: { hpf: 110, bass: 0, presence: 3, drive: 0, metal: 0, double: 0, reverb: 0.12, room: 0.9, speed: 1, radio: 0 },
-    ultron: { hpf: 50, bass: 8, presence: 2, drive: 6, metal: 0.35, double: 0.5, reverb: 0.38, room: 2.6, speed: 0.96, radio: 0 },
   };
   JV.FX_DEFAULTS = FX;
   JV.fxFor = (persona) => Object.assign({}, FX[persona] || FX.jarvis, ((JV.settings.voice_fx || {})[persona]) || {});
@@ -78,7 +77,7 @@
     }
     node.connect(dry);
     if (f.double > 0) { const dly = ctx.createDelay(); dly.delayTime.value = 0.018; const g = ctx.createGain(); g.gain.value = f.double * 0.9; low.connect(dly); dly.connect(g); g.connect(dry); }
-    node.connect(rev); rev.buffer = impulse(Math.max(0.3, f.room), persona === "ultron" ? 2.2 : 3);
+    node.connect(rev); rev.buffer = impulse(Math.max(0.3, f.room), 3);
     dry.gain.value = 0.92; wet.gain.value = f.reverb;
     rev.connect(wet); dry.connect(out); wet.connect(out);
     return { input, rate: f.speed || 1, cleanup: () => cleanups.forEach((c) => c()) };
@@ -119,13 +118,13 @@
   }
 
   // Mark LVI-style Gemini Live speech output. Keep one persistent session and
-  // serialize sentences; Edge TTS remains the fallback and voice-lab preview.
+  // serialize sentences; Edge TTS remains the fallback.
   let liveSocket = null, liveConnect = null, liveReady = false, liveVoicePersona = "";
   let liveCurrent = null, liveSequence = 0, liveQueue = Promise.resolve();
   let liveFailureUntil = 0, liveWarned = false;
 
   function liveEnsureSocket(persona) {
-    const wanted = ["jarvis", "friday", "ultron"].includes(persona) ? persona : "jarvis";
+    const wanted = ["jarvis", "friday"].includes(persona) ? persona : "jarvis";
     if (liveSocket && liveVoicePersona !== wanted) {
       const previous = liveSocket;
       liveSocket = null; liveReady = false; liveConnect = null;

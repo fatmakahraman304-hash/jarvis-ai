@@ -303,7 +303,7 @@ def cell_show(kind="hayvan"):
 
 def vr_mode(view="", mode="vr"):
     """3D dünyalardan birini VR gözlükte ya da AR'de (telefon kamerası üstünde) açar."""
-    v = {"dünya": "globe", "küre": "globe", "atölye": "lab", "bilim": "science", "uzay": "space", "şehir": "city", "ikiz": "twin", "biyoloji": "bio", "hücre": "bio",
+    v = {"dünya": "globe", "küre": "globe", "atölye": "lab", "bilim": "science", "uzay": "space", "ikiz": "twin", "biyoloji": "bio", "hücre": "bio",
          "protein": "bio", "grafik": "graph"}.get((view or "").lower(), view or "")
     m = "ar" if (mode or "").lower() in ("ar", "artırılmış") else "vr"
     return {"ui": "xr", "view": v, "mode": m, "not": ("VR için: Quest/Pico tarayıcısında ya da SteamVR/Windows Mixed Reality ile Chrome/Edge'de JARVIS'i "
@@ -312,7 +312,7 @@ def vr_mode(view="", mode="vr"):
 
 
 TOOLS = {
-    "vr_mode": (vr_mode, _schema("3D dünyayı (küre, uzay, şehir, atölye, bilim, ikiz, biyoloji) VR gözlükte ya da AR'de açar (WebXR).",
+    "vr_mode": (vr_mode, _schema("3D dünyayı (küre, uzay, atölye, bilim, ikiz, biyoloji) VR gözlükte ya da AR'de açar (WebXR).",
                                  {"view": S("dünya"), "mode": S("vr / ar")}), False),
     "digital_twin": (digital_twin, _schema("Dijital ikiz: bilgisayarın (pc) canlı 3D modeli (çekirdekler, RAM, disk, ağ, GPU, sıcaklık) ya da evin (ev) Home Assistant'tan 3D ikizi.",
                                            {"kind": S("pc / ev")}), False),

@@ -76,7 +76,7 @@
     const grid = $("#ai-model-options"); if (!grid) return; grid.innerHTML = "";
     JV.state.personas.forEach((p, i) => {
       const b = el("button", "ai-chip"); b.type = "button"; b.dataset.id = p.id;
-      b.style.setProperty("--chip", p.color || (i === 1 ? "#d7a65e" : i === 2 ? "#d9535d" : "#38d6ff"));
+      b.style.setProperty("--chip", p.color || (i === 1 ? "#d7a65e" : "#38d6ff"));
       b.setAttribute("aria-pressed", String(p.id === persona));
       const label = el("span", "ai-chip-label", p.name || p.id.toUpperCase());
       const circuit = el("span", "ai-chip-circuit");
@@ -175,7 +175,6 @@
   const WAKE = {
     jarvis: ["jarvis", "carvis", "cervis", "jarvıs", "çarvis", "jarviz", "jervis", "jarvis'", "javis"],
     friday: ["friday", "fraydey", "fraydi", "frayday", "fırayday", "fridey"],
-    ultron: ["ultron", "altron", "ültron", "ultran", "oltron"],
   };
   const STOP = ["dur", "sus", "yeter", "stop", "kes"];
   async function guardedSend(text) {
@@ -213,11 +212,13 @@
     if (JV.settings.voice_id || JV.settings.voice_lock) JV.voiceId.start();
     if (rec) { try { rec.abort(); } catch (e) {} }
     rec = new SR();
+    const currentRec = rec;
     rec.lang = (JV.settings.stt_lang) || "tr-TR";
     rec.continuous = !single; rec.interimResults = true;
     rec.onstart = () => { recognizing = true; if (!busy && !JV.speaking) setStatus("listening"); };
-    rec.onerror = (e) => { if (e.error === "not-allowed") { toast("Mikrofon izni verilmedi."); wakeMode = false; updateToggles(); } };
-    rec.onend = () => { recognizing = false; if (!busy && !JV.speaking) setStatus(null); if (wakeMode && !oneShot) setTimeout(() => startRec(false), 250); };
+    rec.onerror = (e) => { if (e.error === "not-allowed" || e.error === "service-not-allowed") { toast("Mikrofon izni verilmedi. Adres çubuğundan mikrofon iznini aç."); wakeMode = false; updateToggles(); }
+      else if (e.error === "audio-capture") { toast("Mikrofon bulunamadı. Windows giriş aygıtını kontrol et."); wakeMode = false; updateToggles(); } };
+    rec.onend = () => { if (rec !== currentRec) return; recognizing = false; if (!busy && !JV.speaking) setStatus(null); if (wakeMode && !oneShot) setTimeout(() => { if (wakeMode && rec === currentRec) startRec(false); }, 250); };
     rec.onresult = (e) => {
       let interim = "", final = "";
       for (let i = e.resultIndex; i < e.results.length; i++) { const r = e.results[i]; (r.isFinal ? (final += r[0].transcript) : (interim += r[0].transcript)); }
@@ -231,8 +232,7 @@
       if (w) {
         if (w.pid !== persona) { applyPersona(w.pid, false); saveSettings({ persona: w.pid }); }
         if (w.rest.length > 2) guardedSend(w.rest);
-        else if (JV.stt && JV.stt.available()) { JV.beep(); whisperOnce(); }
-        else { JV.beep(); awaitingCmd = Date.now() + 8000; setStatus("listening", "SİZİ DİNLİYORUM"); }
+        else { JV.beep(); awaitingCmd = Date.now() + 10000; setStatus("listening", "SİZİ DİNLİYORUM"); }
       } else if (awaitingCmd > Date.now() || ([...document.querySelectorAll(".confirm")].length && /(onayla|reddet)/i.test(final))) { awaitingCmd = 0; guardedSend(final); }
     };
     try { rec.start(); } catch (e) {}
@@ -307,7 +307,7 @@
   $("#t-wake").onclick = () => {
     JV.unlockAudio();
     if (wakeMode) { stopRec(); saveSettings({ wake_word: false }); }
-    else { wakeMode = true; startRec(false); toast('Uyandırma açık: "JARVIS …", "FRIDAY …" veya "ULTRON …" de.'); saveSettings({ wake_word: true }); }
+    else { wakeMode = true; startRec(false); toast('Uyandırma açık: "JARVIS …", "FRIDAY …" de.'); saveSettings({ wake_word: true }); }
     updateToggles();
   };
 
@@ -383,7 +383,6 @@
   const LIVE_VOICE_OPTIONS = [
     ["Charon", "Charon · tok ve dengeli"],
     ["Aoede", "Aoede · yumuşak ve kadınsı"],
-    ["Fenrir", "Fenrir · derin ve güçlü"],
     ["Puck", "Puck · canlı ve enerjik"],
     ["Kore", "Kore · net ve sıcak"],
     ["Orus", "Orus · otoriter ve tok"],
@@ -394,16 +393,16 @@
     const box = $("#persona-voice-picks");
     if (!box) return;
     box.innerHTML = "";
-    const current = JV.settings.live_voice_names || { jarvis: "Charon", friday: "Aoede", ultron: "Fenrir" };
-    const labels = { jarvis: "J.A.R.V.I.S.", friday: "F.R.I.D.A.Y.", ultron: "ULTRON" };
-    ["jarvis", "friday", "ultron"].forEach((id) => {
+    const current = JV.settings.live_voice_names || { jarvis: "Charon", friday: "Aoede" };
+    const labels = { jarvis: "J.A.R.V.I.S.", friday: "F.R.I.D.A.Y." };
+    ["jarvis", "friday"].forEach((id) => {
       const row = el("label", "row persona-voice-row");
       row.append(el("span", "", labels[id]));
       const select = el("select");
       LIVE_VOICE_OPTIONS.forEach(([value, label]) => {
         const option = el("option", "", label); option.value = value; select.append(option);
       });
-      select.value = current[id] || ({ jarvis: "Charon", friday: "Aoede", ultron: "Fenrir" })[id];
+      select.value = current[id] || ({ jarvis: "Charon", friday: "Aoede" })[id];
       select.onchange = async () => {
         try {
           await saveSettings({ live_voice_names: { [id]: select.value } });
@@ -864,7 +863,7 @@
   }
 
   async function boot() {
-    const lines = ["INITIALIZING NEURAL CORE...", "LOADING PERSONALITY MATRIX: JARVIS / FRIDAY / ULTRON", "MOUNTING MEMORY BANKS...", "LINKING MODEL NETWORK...", "AUDIO SUBSYSTEM ONLINE", "HUD ONLINE"];
+    const lines = ["INITIALIZING NEURAL CORE...", "LOADING PERSONALITY MATRIX: JARVIS / FRIDAY", "MOUNTING MEMORY BANKS...", "LINKING MODEL NETWORK...", "AUDIO SUBSYSTEM ONLINE", "HUD ONLINE"];
     const log = $("#boot-log");
     for (const l of lines) { log.textContent += "> " + l + "\n"; await new Promise((r) => setTimeout(r, 160)); }
     try {
@@ -892,7 +891,7 @@
     const p = P(persona);
     if (p.greeting) { addMsg("ai", p.greeting, persona); JV.say(p.greeting, persona); }
     if (!JV.state.providers.some((x) => x.configured)) setTimeout(openSettings, 1200);
-    if (JV.settings.wake_word) { wakeMode = true; startRec(false); updateToggles(); }
+    if (JV.settings.wake_word !== false) { wakeMode = true; startRec(false); updateToggles(); }
   };
   if ("speechSynthesis" in window) speechSynthesis.getVoices();
   boot();
