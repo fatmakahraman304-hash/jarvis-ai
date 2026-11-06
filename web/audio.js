@@ -100,7 +100,7 @@
       // Neural TTS path remains the fallback for every unrecorded sentence.
       if (useOriginal && !o.voice) {
         const clipLang = (lang && lang !== "auto") ? lang :
-          (/[çğıöşüÇĞİÖŞÜ]/.test(text) ? "tr" : (JV.settings.voice_lang === "en" ? "en" : "tr"));
+          (/[çğıöşüÇĞİÖŞÜ]/.test(text) ? "tr" : (JV.settings.voice_lang === "tr" ? "tr" : "en"));
         const clip = await JV.api("/api/original-voice?persona=" + encodeURIComponent(persona) +
           "&lang=" + encodeURIComponent(clipLang) + "&text=" + encodeURIComponent(text), { raw: true });
         if (clip.ok) {
