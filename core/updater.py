@@ -290,12 +290,24 @@ def apply(restart=True):
 
 def rollback():
     """En son yedeğe döner ve yeniden başlar."""
-    olds = sorted(BACKUPS.glob("v*.zip"), key=lambda p: p.stat().st_mtime) if BACKUPS.exists() else []
-    if not olds:
-        return {"durum": "hata", "hata": "Geri dönülecek yedek yok."}
-    msg = restore(olds[-1])
-    threading.Timer(1.5, lambda: os._exit(42)).start()
-    return {"durum": "geri alındı", "mesaj": msg}
+    if not _lock.acquire(blocking=False):
+        return {"durum": "hata", "hata": "Güncelleme veya geri dönüş sürüyor; tamamlanmasını bekle."}
+    try:
+        olds = sorted(BACKUPS.glob("v*.zip"), key=lambda p: p.stat().st_mtime) if BACKUPS.exists() else []
+        if not olds:
+            return {"durum": "hata", "hata": "Geri dönülecek yedek yok."}
+        STATE.update({"durum": "çalışıyor", "hata": "", "ilerleme": 10, "adım": "önceki sürüm geri yükleniyor"})
+        msg = restore(olds[-1])
+        STATE.update({"durum": "bitti", "ilerleme": 100, "adım": "önceki sürüm geri yüklendi, yeniden başlatılıyor"})
+        threading.Timer(1.5, lambda: os._exit(42)).start()
+        return {"durum": "geri alındı", "mesaj": msg}
+    except Exception as exc:
+        message = f"Önceki sürüm geri yüklenemedi: {exc}"
+        STATE.update({"durum": "hata", "hata": message, "ilerleme": 0})
+        _log(message)
+        return {"durum": "hata", "hata": message}
+    finally:
+        _lock.release()
 
 
 def list_backups():
