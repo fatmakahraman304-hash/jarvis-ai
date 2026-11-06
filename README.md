@@ -138,6 +138,7 @@ Mark-LVI'den ilham alan iki sohbet iyileştirmesi:
 - **Anında karşılık:** İnternet, dosya, bilgisayar veya üretim araçları gerektiren web/telefon isteklerinde JARVIS, model cevabını beklerken kısa bir sesli durum bildirimi verir. Basit sohbetlerde gereksiz konuşma eklenmez; bu bildirim ayrı tutulur ve asıl cevabın içine karışmaz.
 - **Bütçeli konuşma bağlamı:** Model isteğine en yeni konuşma mesajları en fazla 24.000 karakterlik kayan pencereyle eklenir. Eski mesajlar SQLite geçmişinden silinmez; yalnızca hız ve bağlam boyutu için o isteğin dışında bırakılır.
 - Mevcut çoklu model yönlendirmesi, araç çağrıları, kritik işlem onayları ve kalıcı hafıza aynen korunur.
+- `tests/test_fast_conversation.py` bu davranışlar için regresyon kapsamı sağlar; yeni güncelleyici bu testi sonraki sürüm yükseltmelerinde ön kontrolde çalıştırır.
 
 Yeni sürüm, Ayarlar > **GÜNCELLE** üzerinden version.json sürümü görüldüğünde kurulabilir.
 
