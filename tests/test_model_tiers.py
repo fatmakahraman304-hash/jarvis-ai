@@ -38,6 +38,12 @@ def main():
     assert llm._gemini_model_restricted("models/gemini-2.5-flash-lite")
     assert not llm._gemini_model_restricted("gemini-3.5-flash-lite")
 
+    # Explicit legacy pins must also be ignored on this new project.
+    assert llm.pick_model_for_tier("gemini", "fast", "gemini-2.5-flash-lite") == "gemini-3.5-flash-lite"
+    os.environ["GEMINI_MODEL"] = "gemini-2.5-flash"
+    assert llm.pick_model("gemini") == "gemini-3.8-flash"
+    os.environ["GEMINI_MODEL"] = ""
+
     assert _conversation_tier("chromu aç", {"core", "browser"}) == "fast"
     assert _conversation_tier("Ekip kur: elektrikli araç pazarı için kapsamlı rapor hazırla", {"core", "team"}) == "smart"
     assert _conversation_tier("İnternette kaynaklarıyla güncel araştırma yap", {"core", "browser"}) == "search"
