@@ -744,17 +744,6 @@ def route(order, messages, tools, model_override="", light=False, tier="legacy",
                 if _protocol_error(e):
                     yield ("error", "Model isteğinin araç/konuşma biçimi reddedildi; işlem tamamlanmadı. Sağlayıcının gerçek hatası: " + error_details[-1])
                     return
-                if e.status == 400:
-                    # Never hide a real malformed request behind previous 429s.
-                    # Pausing this model also avoids re-sending the same bad turn.
-                    _cooldown[(pid, model)] = time.time() + 300
-                    if pid == "gemini":
-                        quota_note = (" Diğer modeller ayrıca HTTP 429 kota sınırında."
-                                      if any(item.endswith(": 429") for item in tried) else "")
-                        yield ("error", "Gemini isteği HTTP 400 INVALID_ARGUMENT ile reddedildi. "
-                               "İşlem yapılmış sayılmadı. Son modelin hatası: "
-                               + error_details[-1] + quota_note)
-                        return
                 if use_tools and _tools_unsupported(e):
                     # Araçsız yeniden denemek, işlemi yapmadan yapılmış gibi metin
                     # üretmesine neden olur. Araçları koruyup başka model dene.
@@ -766,6 +755,17 @@ def route(order, messages, tools, model_override="", light=False, tier="legacy",
                         model = nm
                         continue
                     break
+                if e.status == 400:
+                    # Never hide a real malformed request behind previous 429s.
+                    # Pausing this model also avoids re-sending the same bad turn.
+                    _cooldown[(pid, model)] = time.time() + 300
+                    if pid == "gemini":
+                        quota_note = (" Diğer modeller ayrıca HTTP 429 kota sınırında."
+                                      if any(item.endswith(": 429") for item in tried) else "")
+                        yield ("error", "Gemini isteği HTTP 400 INVALID_ARGUMENT ile reddedildi. "
+                               "İşlem yapılmış sayılmadı. Son modelin hatası: "
+                               + error_details[-1] + quota_note)
+                        return
                 if e.status == 404:
                     # Model ID may still appear in /models while this project is blocked from generateContent.
                     _cooldown[(pid, model)] = time.time() + 6 * 60 * 60
