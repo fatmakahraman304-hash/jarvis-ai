@@ -1,10 +1,10 @@
 {
-  "version": "4.6.12",
+  "version": "4.6.13",
   "date": "2026-11-06",
   "notes": [
-    "🎙 Mark LVI tarzı Gemini Live ses çıkışı eklendi: kalıcı oturum, Charon sesi ve cümle bazlı konuşma kuyruğu",
-    "🧠 Yanıt üretimi JARVIS'in mevcut beyni, araçları, hafızası ve onay akışıyla devam eder; yalnızca seslendirme Live API'ye taşınır",
-    "🔁 Gemini Live ses kullanılamazsa Edge TTS otomatik yedek olur; Ayarlar → Ses'ten Live ses kapatılabilir",
-    "📦 Gemini Live istemcisi ve WebSocket uç noktası eklendi; uzak bağlantılar JARVIS erişim anahtarıyla korunur"
+    "🎭 JARVIS, FRIDAY ve ULTRON için ayrı Gemini Live ses profilleri: Charon, Aoede ve Fenrir",
+    "🔊 Live ses çalışmazsa her kişilik kendi farklı Microsoft Neural yedek sesini ve ton ayarını kullanır",
+    "🧹 Ayarlar sadeleştirildi: Ses Laboratuvarı arayüzü, önizleme kodu ve kullanılmayan ses listeleme API'si kaldırıldı",
+    "⚙️ Ses sekmesinde her kişiliğin Live sesini basit bir listeden seçebilirsin"
   ]
 }
