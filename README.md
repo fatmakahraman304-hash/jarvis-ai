@@ -169,6 +169,13 @@ Google, Gemini 2.5 modellerine yeni projelerde erişimi kısıtladığından JAR
 
 Kaynak: Google Gemini API model kataloğu ve yeni projeler için 2.5 erişim notu: https://ai.google.dev/gemini-api/docs/models
 
+
+## Windows 4.6.9 bağlantı kapanışı
+
+Windows Python Proactor event loop, tarayıcı/istemci bağlantıyı aniden kapattığında `ConnectionResetError: [WinError 10054]` mesajını bazen callback hatası olarak yazdırabilir. JARVIS 4.6.9 yalnızca `_ProactorBasePipeTransport._call_connection_lost` sırasında gelen bu belirli reseti sessiz ele alır; diğer asyncio hataları normal şekilde gösterilir. Varsayılan Proactor event loop korunur.
+
+**`Invalid HTTP request received`** farklı bir uyarıdır: sunucuya geçersiz HTTP veya yanlış protokolle gelen bağlantı isteğini gösterir. Normal bilgisayar modunda ekranda yazan `http://127.0.0.1:8765`, LAN/HTTPS modunda ekranda yazan `https://...` adresini kullan. Yanlış protokol isteği devam ediyorsa tarayıcı adresini, uzantıları veya güvenlik yazılımının yerel port taramasını kontrol et.
+
 ## Çok platform
 
 | Nereden | Nasıl |
