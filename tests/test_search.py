@@ -37,6 +37,8 @@ def fake_get(url, timeout=12):
     if "news.google.com" in url:
         return RSS
     if "lite.duckduckgo" in url:
+        if state["lite_down"]:
+            raise RuntimeError("Lite engellendi")
         return "<a rel=\"nofollow\" href=\"https://lite.com/x\" class='result-link'>Lite sonuç</a><td class='result-snippet'>özet</td>"
     raise RuntimeError("yok")
 
