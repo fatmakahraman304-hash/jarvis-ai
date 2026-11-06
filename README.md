@@ -1,5 +1,16 @@
 # J.A.R.V.I.S. Personal AI
 
+## 4.6.36 — Genişleme paketi
+
+Ayarlar → PLAN / ARAÇLAR: yerel oda/mobilya şeması, alan ve çakışma hesabı, değişmez proje sürümleri, SVG/JSON/DXF/OBJ aktarımı, tema, cevap uzunluğu ve süreç ölçümleri. Yeni hesap araçları: math_solve, math_verify, linear_optimize; bağlantılar: model_compare, mqtt_message, docker_manage, vm_manage, browser_upload/browser_download. SQLite salt okunur inceleme, sezgisel kaynak denetimi, enerji hesabı ve halka açık depo takibi eklendi.
+
+Vosk için cihazına uygun dil modelini indirip model klasörünü PLAN / ARAÇLAR bölümünden kaydet; SES → Vosk seç. Bu mod PCM WAV kayıtlarını yerelde tanır ve buluta yedek geçmez. Gerçek mikrofon ve model testi cihazında yapılmalıdır. Vosk modelleri: https://alphacephei.com/vosk/models
+
+GPT ve Claude için Ayarlar → MODELLER’de Sadece Gemini seçimini kapatıp kendi API anahtarlarını ekle. Claude Anthropic’in OpenAI uyumluluk katmanını kullanır; tüm sağlayıcı API özellikleri desteklenmez. MQTT için .env: MQTT_HOST, MQTT_PORT, MQTT_USER, MQTT_PASSWORD, MQTT_TLS; Docker/VirtualBox için ilgili yazılımın kurulu ve erişilebilir olması gerekir. Ücretli sağlayıcılar API ücreti doğurabilir.
+
+**İstenen listenin tamamı bitmiş değildir.** Her maddenin gerçek kapsamı ve kalan işleri [FEATURE_STATUS.md](FEATURE_STATUS.md) ve Ayarlar → PLAN / ARAÇLAR → İSTENEN ÖZELLİKLERİN DURUMU bölümünde bulunur. Bu paket bağımsız profesyonel CAD/render, SLAM, drone uçuşu veya imzalı güncelleme sistemi sunduğunu iddia etmez.
+
+
 ## 4.6.35 — Gör, işlem yap, yeniden analiz et
 
 Ekran ve tarayıcı görevlerinde her etkileşimden sonra yeni analiz modele verilir. Ekran okuma ve etkileşim sonuçları eski önbellekten getirilmez; modelin aynı turda verdiği ikinci arayüz eylemi, yeni görüntü değerlendirilene kadar çalıştırılmaz. İlk masaüstü eyleminden önce de ekran analizi alınır. Onaylanan işlemden sonra asıl görev sürdürülür.

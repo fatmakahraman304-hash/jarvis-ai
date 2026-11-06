@@ -8,7 +8,7 @@ import traceback
 
 from ..config import ROOT
 
-MODULES = ["google", "computer", "windows", "office", "finance", "automation", "smarthome", "media", "voiceid", "vault", "habits", "games", "selfdev", "semantic", "geo", "holo", "control", "daily", "space", "worldwatch", "team", "translate", "studio", "command", "world", "knowledge", "nodes", "twin", "financelab", "music", "browser", "arfx", "cams", "library", "scene", "life", "hud", "stage", "screens"]
+MODULES = ["operations", "architecture", "engineering", "integrations", "reasoning", "google", "computer", "windows", "office", "finance", "automation", "smarthome", "media", "voiceid", "vault", "habits", "games", "selfdev", "semantic", "geo", "holo", "control", "daily", "space", "worldwatch", "team", "translate", "studio", "command", "world", "knowledge", "nodes", "twin", "financelab", "music", "browser", "arfx", "cams", "library", "scene", "life", "hud", "stage", "screens"]
 LOAD_ERRORS = {}
 
 

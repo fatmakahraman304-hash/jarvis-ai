@@ -28,7 +28,7 @@
       const eng = (JV.settings && JV.settings.stt_engine) || "auto";
       if (eng === "browser") return false;
       const ok = (id) => (JV.state && JV.state.providers || []).some((p) => p.id === id && p.configured && !p.key_error);
-      return eng === "whisper" || (JV.state && JV.state.stt_ready) || ok("groq") || ok("gemini");
+      return eng === "vosk" || eng === "whisper" || (JV.state && JV.state.stt_ready) || ok("groq") || ok("gemini");
     },
     busy: () => !!active,
     stop() { if (active) active.stop(true); },
@@ -37,6 +37,7 @@
     },
     async record({ onStart, onText, onError, onLevel, maxMs = 30000, silenceMs = 1300, waitMs = 10000, transcribe = true } = {}) {
       if (active) { active.stop(true); return; }
+      const captureEngine = (JV.settings && JV.settings.stt_engine) || "auto";
       let stream;
       const mic = JV.settings && JV.settings.mic_id;
       const base = { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
@@ -62,7 +63,7 @@
         }
         const { blob, peak } = wav(pcm, ctx.sampleRate);
         if (!transcribe) { onText && onText("", { reason: "test", level: maxLvl, peak, blob }); return; }
-        fetch("/api/transcribe?lang=" + ((JV.settings.stt_lang || "tr").slice(0, 2)), { method: "POST", headers: { "x-token": JV.token || "", "Content-Type": "audio/wav" }, body: blob })
+        fetch("/api/transcribe?engine=" + encodeURIComponent(captureEngine) + "&lang=" + ((JV.settings.stt_lang || "tr").slice(0, 2)), { method: "POST", headers: { "x-token": JV.token || "", "Content-Type": "audio/wav" }, body: blob })
           .then((r) => r.json())
           .then((j) => { if (j.error) onError && onError(j.error); else onText && onText((j.text || "").trim(), { reason: j.text ? "ok" : "anlaşılmadı", level: maxLvl, engine: j.engine }); })
           .catch((e) => onError && onError(e.message));

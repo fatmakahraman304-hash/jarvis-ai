@@ -156,9 +156,17 @@ def transcribe_gemini(data, mime="audio/wav", language="tr"):
     raise err or RuntimeError("Gemini ile yazıya çevrilemedi")
 
 
-def transcribe_bytes(data, filename="ses.webm", mime="audio/webm", language="tr", info=None):
+def transcribe_bytes(data, filename="ses.webm", mime="audio/webm", language="tr", info=None, engine=""):
     """Ses → yazı. 'Sadece Gemini' açıksa önce Gemini; sonra Groq Whisper (ücretsiz) ya da OpenAI."""
     from .. import llm
+    from ..config import load_settings
+    if engine == "vosk" or load_settings().get("stt_engine") == "vosk":
+        from ..offline_stt import transcribe
+        if mime != "audio/wav":
+            raise ValueError("Vosk modu WAV kayıt ister; tarayıcı mikrofonunu kullan.")
+        result = transcribe(data)
+        if info is not None: info["engine"] = "Vosk (offline)"
+        return result
     gem_err = None
     if llm.configured("gemini") and (llm.only_gemini() or not (env("GROQ_API_KEY") or env("OPENAI_API_KEY"))) and mime in ("audio/wav", "audio/ogg", "audio/mpeg", "audio/mp3", "audio/flac", "audio/aac"):
         try:

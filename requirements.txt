@@ -8,3 +8,8 @@ truststore>=0.9        # Windows sertifika deposu (antivirüs HTTPS taraması ol
 cryptography>=42.0     # Yerel ağda telefon kamera/mikrofonu için HTTPS sertifikası
 google-genai>=2.8.0,<3   # Gemini Live voice output (optional feature, imported lazily)
 pillow>=10,<13  # Ekran analizi ve OCR için ekran görüntüsü
+
+sympy>=1.12,<2
+scipy>=1.11,<2
+paho-mqtt>=2,<3
+vosk>=0.3.45,<0.4

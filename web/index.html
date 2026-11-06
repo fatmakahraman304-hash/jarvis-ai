@@ -180,6 +180,7 @@
     <div class="s-head"><span>AYARLAR</span><button id="s-close" class="mini">KAPAT ✕</button></div>
     <div class="s-tabs">
       <button data-tab="models" class="active">MODELLER</button>
+      <button data-tab="advanced">PLAN / ARAÇLAR</button>
       <button data-tab="voice">SES</button>
       <button data-tab="memory">HAFIZA</button>
       <button data-tab="links">BAĞLANTILAR</button>
@@ -188,6 +189,23 @@
       <button data-tab="files">DOSYALAR</button>
       <button data-tab="platforms">PLATFORMLAR</button>
     </div>
+    <section data-tab="advanced" hidden>
+      <label class="row">Tema <select id="adv-theme"><option value="dark">Koyu</option><option value="light">Açık</option><option value="system">Sistem</option></select></label>
+      <label class="row">Cevap uzunluğu <select id="adv-length"><option value="short">Kısa</option><option value="normal">Normal</option><option value="detailed">Ayrıntılı</option></select></label>
+      <h4>YEREL ŞEMATİK PLAN — METRE</h4>
+      <p class="note">Oda alanları, 2D mobilya çakışması ve sürüm kaydı. Profesyonel mimari/taşıyıcı proje değildir. Katlar bu önizlemede birlikte gösterilir.</p>
+      <div class="adv-grid"><label>Oda adı<input id="plan-name" value="Salon"></label><label>Genişlik (m)<input id="plan-width" type="number" min="0.1" step="0.1" value="4"></label><label>Derinlik (m)<input id="plan-depth" type="number" min="0.1" step="0.1" value="3"></label><label>X (m)<input id="plan-x" type="number" value="0"></label><label>Y (m)<input id="plan-y" type="number" value="0"></label></div>
+      <button class="mini" id="plan-add-room">ODA EKLE</button>
+      <svg id="plan-preview" role="img" aria-label="Yerel oda planı" style="width:100%;height:280px;background:#fff;border:1px solid #789"></svg>
+      <div class="adv-grid"><label>Oda<select id="plan-room"></select></label><label>Mobilya<select id="plan-kind"></select></label><label>X (m)<input id="item-x" type="number" step="0.1" value="0.2"></label><label>Y (m)<input id="item-y" type="number" step="0.1" value="0.2"></label></div>
+      <button class="mini" id="plan-add-item">MOBİLYA EKLE</button><button class="mini" id="plan-analyze">ALAN / ÇAKIŞMA HESAPLA</button>
+      <div class="adv-grid"><label>Proje kimliği<input id="plan-id" placeholder="Yeni projede boş bırak"></label><label>Sürüm (0 = son)<input id="plan-revision" type="number" min="0" value="0"></label><label>Aktarım<select id="plan-format"><option>svg</option><option>json</option><option>dxf</option><option>obj</option></select></label></div>
+      <button class="mini" id="plan-save">YENİ SÜRÜM KAYDET</button><button class="mini" id="plan-load">AÇ</button><button class="mini" id="plan-history">SÜRÜMLER</button><button class="mini" id="plan-list">PROJELER</button><button class="mini" id="plan-export">DIŞA AKTAR</button>
+      <h4>ÇEVRİMDIŞI SES</h4><label class="row">Vosk model klasörü<input id="offline-path" placeholder="Ör. C:/Modeller/vosk-model-small-tr-0.3"></label><button class="mini" id="offline-save">MODEL YOLUNU KAYDET</button><p class="note">İndirilmiş Vosk model klasörü gerekir. Sonra SES sekmesinde Vosk seç. Bu mod buluta yedek geçmez.</p>
+      <button class="mini" id="adv-status">İSTENEN ÖZELLİKLERİN DURUMU</button>
+      <h4>SİSTEM ÖLÇÜMLERİ</h4><button class="mini" id="adv-metrics">RAM / CPU ÖLÇ</button>
+      <pre id="adv-result" style="white-space:pre-wrap;max-height:280px;overflow:auto"></pre>
+    </section>
     <section data-tab="models">
       <p class="note">Ücretsiz anahtar al, buraya yapıştır, kaydet. Anahtarlar sadece bu bilgisayardaki <code>.env</code> dosyasına yazılır, GitHub'a gitmez. Bir model kotaya takılırsa beyin otomatik sıradakine geçer.</p>
       <div id="prov-list"></div>
@@ -199,7 +217,7 @@
       <label class="row">Film efektleri (yankı, metalik) <input type="checkbox" id="v-fx"></label>
       <label class="row">Mark LVI tarzı Gemini Live sesi (Charon) <input type="checkbox" id="v-live" checked></label>
       <p class="note">Yanıtlar JARVIS’in kendi beyni ve araçlarıyla üretilir; yalnızca seslendirme Gemini Live ile yapılır. Sorun olursa Edge TTS otomatik yedek olur.</p>
-      <label class="row">Konuşma tanıma <select id="v-engine"><option value="auto">Otomatik (Whisper / Gemini)</option><option value="whisper">Whisper — en doğru</option><option value="browser">Tarayıcı — en hızlı</option></select></label>
+      <label class="row">Konuşma tanıma <select id="v-engine"><option value="auto">Otomatik (Whisper / Gemini)</option><option value="whisper">Whisper — en doğru</option><option value="browser">Tarayıcı — en hızlı</option><option value="vosk">Vosk — çevrimdışı (yerel model gerekir)</option></select></label>
       <label class="row">Mikrofon <select id="v-mic"><option value="">Windows varsayılanı</option></select></label>
       <div class="row"><button class="mini" id="v-mictest">🎙 MİKROFON TESTİ</button> <span id="v-micout" class="note"></span></div>
       <div class="micbar"><i id="v-miclvl"></i></div>
@@ -332,5 +350,6 @@
 <script src="/static/music.js"></script>
 <script src="/static/ambient.js"></script>
 <script src="/static/update.js"></script>
+<script src="/static/advanced.js"></script>
 </body>
 </html>

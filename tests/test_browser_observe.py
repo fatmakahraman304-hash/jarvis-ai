@@ -33,6 +33,13 @@ with sync_playwright() as pw:
             browser.browser_click('Draw room')
             assert p.locator('#draw').inner_text()=='Drawing ready'
             assert browser.browser_observe()['kapatılanlar']==[]
+            p.evaluate("""() => {document.body.insertAdjacentHTML('beforeend','<input type="file" aria-label="Upload plan"><a href="/file.txt">Download file</a>')}""")
+            source=Path(tempfile.mkdtemp())/'plan.txt';source.write_text('plan fixture')
+            browser.browser_upload('Upload plan',str(source))
+            assert p.get_by_label('Upload plan').evaluate('e=>e.files[0].name')=='plan.txt'
+            p.route('**/file.txt',lambda r:r.fulfill(body='download fixture',headers={'Content-Type':'text/plain','Content-Disposition':'attachment; filename="fixture.txt"'}))
+            saved=browser.browser_download('Download file')
+            assert Path(saved['path']).read_text()=='download fixture'
             p.evaluate("""() => {document.body.insertAdjacentHTML('beforeend','<div role="dialog" id="payment" style="position:fixed;inset:0;background:white;z-index:20">Payment credit card<button>Close</button></div>')}""")
             assert browser._dismiss_overlays(p)==[]
             assert p.locator('#payment').count()==1

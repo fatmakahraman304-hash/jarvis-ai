@@ -717,6 +717,11 @@ TOOLS.update(_skill_tools)
 TOOL_GROUP.update(_skill_groups)
 
 GROUP_INFO = {
+    "operations": ("SQLite salt okunur inceleme, Python kaynak denetimi, enerji hesabı ve depo takibi", "sqlite veritabanı database güvenlik tarama kaynak denetle enerji tüketim kwh github depo değişiklik takip"),
+    "engineering": ("Sembolik denklemler, sayısal sonuç kontrolü ve doğrusal optimizasyon", "denklem integral matematik sembolik optimizasyon minimize maksimize çöz kök"),
+    "architecture": ("Yerel ölçülü plan hesabı, alan, mobilya çakışması, metraj, proje sürümleri ve SVG/DXF/OBJ dışa aktarım", "mimari metraj metrekare çakışma yerleşim planı kat oda mobilya maliyet dxf obj"),
+    "integrations": ("Docker, VirtualBox, MQTT ve süreç bellek/CPU ölçümleri", "docker container konteyner virtualbox sanal makine mqtt broker ram bellek sızıntı performans"),
+    "reasoning": ("Model cevaplarını karşılaştırma, cevap uzunluğu tercihi, tekrarlanan işlerden makro önerisi", "modelleri karşılaştır cevap uzunluğu kısa detaylı makro öner tekrar eden"),
     "google": ("Gmail ve Google Takvim", "mail posta gmail gelen kutu ileti yanıtla cevapla taslak takvim toplantı randevu ajanda etkinlik davet meet program bugün yarın hafta"),
     "computer": ("ekranı görme, fare/klavye, pencereler, pano, kamera, görsel analiz", "ekran ekranda tıkla tıklat yaz klavye fare mouse mosue imleç sürükle sürükleme taşı hareket pencere sekme pano kopyala yapıştır kamera bak gör görsel resim fotoğraf foto oku ocr buton hata mesajı kullan"),
     "windows": ("Windows/donanım/güvenlik/dosya bakımı", "parlaklık wifi wi-fi internet ağ bluetooth yazıcı yazdır usb disk sürücü başlangıç açılış program kurulu gpu ekran-kartı sıcaklık fan yavaş kasıyor donuyor yinelenen kopya zip arşiv sıkıştır yedek düzenle temizle güvenlik virüs defender tarama şüpheli güvenlik duvarı izle"),
@@ -810,7 +815,7 @@ def is_critical(name, args):
     return crit(args) if callable(crit) else bool(crit)
 
 
-TOOL_TIMEOUT = {"web_search": 15, "news_search": 12, "read_webpage": 12, "weather": 15, "currency": 15,  # ağ araçları: süre sınırlı
+TOOL_TIMEOUT = {"repository_watch": 20, "source_audit": 20, "math_solve": 15, "math_verify": 10, "linear_optimize": 15, "model_compare": 40, "docker_manage": 30, "vm_manage": 30, "mqtt_message": 30, "browser_download": 45, "browser_upload": 30, "web_search": 15, "news_search": 12, "read_webpage": 12, "weather": 15, "currency": 15,  # ağ araçları: süre sınırlı
                 "spaceplanner_open": 45, "home_design": 45, "spaceplanner_draw": 30, "browser_observe": 60, "browser_open": 45, "browser_read": 30, "browser_look": 45}
 
 

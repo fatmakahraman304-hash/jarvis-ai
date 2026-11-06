@@ -1,9 +1,10 @@
 {
-  "version": "4.6.35",
+  "version": "4.6.36",
   "date": "2026-11-06",
   "notes": [
-    "Ekran ve tarayıcı işlemlerinden sonra otomatik yeni analiz yapılır",
-    "Açık kapat/atla düğmeli reklam ve açılır pencereler kaldırılıp asıl göreve devam edilir",
-    "Eski ekran okuma önbelleği kaldırıldı; aynı turda körlemesine birden fazla arayüz adımı çalıştırılmaz"
+    "Yerel şematik plan, alan/çakışma/metraj hesabı, proje sürümleri ve SVG/DXF/OBJ aktarımı",
+    "Sembolik denklemler, doğrusal optimizasyon, model karşılaştırma, GPT/Claude bağlantıları",
+    "Vosk çevrimdışı ses hattı (yerel model gerekir), MQTT/Docker/VirtualBox araçları ve dosya aktarımı",
+    "Açık/koyu tema, cevap uzunluğu, süreç ölçümleri ve gerçek özellik durum listesi"
   ]
 }

@@ -1,0 +1,433 @@
+{
+  "version": "4.6.36",
+  "requested_label": "82 özellik",
+  "actual_listed_count": 71,
+  "features": [
+    {
+      "id": 9,
+      "feature": "Gelişmiş gürültü/yankı engelleme",
+      "status": "pending",
+      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+    },
+    {
+      "id": 10,
+      "feature": "Ses tonundan güvenilir duygu tespiti",
+      "status": "pending",
+      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+    },
+    {
+      "id": 11,
+      "feature": "Özel fısıltı algılama",
+      "status": "pending",
+      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+    },
+    {
+      "id": 12,
+      "feature": "Tam çevrimdışı konuşma tanıma",
+      "status": "requires_setup",
+      "detail": "Vosk yerel model yolu gerektirir. WAV tanıma ve sürekli uyandırma hattı eklendi; buluta yedek geçmez. Gerçek mikrofon/dil modeli testi kullanıcı cihazında yapılmalı."
+    },
+    {
+      "id": 13,
+      "feature": "Mikrofon/hoparlör otomatik yönetimi",
+      "status": "pending",
+      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+    },
+    {
+      "id": 22,
+      "feature": "GPT/Gemini/Claude/yerel doğrudan bağlantıları",
+      "status": "partial",
+      "detail": "GPT ve Anthropic uyumlu Chat Completions uçları eklendi; Gemini/Ollama mevcut. Hesap anahtarları ve canlı sağlayıcı testleri gerekli; tüm API özellikleri kapsanmaz."
+    },
+    {
+      "id": 23,
+      "feature": "İnternet bilgisini çapraz doğrulama",
+      "status": "pending",
+      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+    },
+    {
+      "id": 24,
+      "feature": "Birden fazla model cevabını karşılaştırma",
+      "status": "partial",
+      "detail": "En fazla dört modele aynı soru yöneltilir; yanıtlar ve kimlikler ayrı döner. Bağımsız doğruluk kanıtı değildir."
+    },
+    {
+      "id": 25,
+      "feature": "Gelişmiş yanlış bilgi önleme",
+      "status": "pending",
+      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+    },
+    {
+      "id": 67,
+      "feature": "Eksiksiz tarayıcı dosya aktarımı",
+      "status": "partial",
+      "detail": "File input yükleme ve indirme olayını yakalama eklendi. Özel dropzone/yerel dosya diyalogu gibi tüm türler kapsanmaz."
+    },
+    {
+      "id": 68,
+      "feature": "Bağımsız otomatik bilgi doğrulama",
+      "status": "pending",
+      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+    },
+    {
+      "id": 94,
+      "feature": "Eksiksiz duvar çizme/düzenleme",
+      "status": "partial",
+      "detail": "Yerel oda poligonları ve SpacePlanner tuval araçları mevcut; tam duvar editörü değil."
+    },
+    {
+      "id": 95,
+      "feature": "Otomatik kapı/pencere yerleştirme",
+      "status": "partial",
+      "detail": "SpacePlanner arayüzü üzerinden yerleştirme hattı mevcut; bütün planlarda otomatik sonuç doğrulanmadı."
+    },
+    {
+      "id": 96,
+      "feature": "Eksiksiz mobilya yerleştirme",
+      "status": "partial",
+      "detail": "Yerel katalog nesneleri konumlandırılabilir; sınırlı 2D ölçü/dönüş desteği."
+    },
+    {
+      "id": 97,
+      "feature": "Yerel mimari mobilya kütüphanesi",
+      "status": "implemented",
+      "detail": "12 ölçülü yerel mobilya/ıslak hacim/merdiven nesnesi kataloğu."
+    },
+    {
+      "id": 98,
+      "feature": "Profesyonel ölçülü mimari plan",
+      "status": "pending",
+      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+    },
+    {
+      "id": 99,
+      "feature": "Otomatik metrekare hesabı",
+      "status": "implemented",
+      "detail": "Poligon alanı ve çevre hesabı eklendi. Örtüşen oda alanları toplamdan düşülmez."
+    },
+    {
+      "id": 100,
+      "feature": "Tam kat planı editörü",
+      "status": "partial",
+      "detail": "Yerel oda ekleme, şematik önizleme ve sürüm kaydı var; tam CAD editörü değil."
+    },
+    {
+      "id": 101,
+      "feature": "Merdiven/balkon/teras editörü",
+      "status": "partial",
+      "detail": "Ölçülü merdiven katalog nesnesi var; parametrik merdiven/balkon/teras editörü yok."
+    },
+    {
+      "id": 102,
+      "feature": "Özel mutfak/banyo tasarımı",
+      "status": "partial",
+      "detail": "Tezgâh, lavabo, duş ve klozet katalog öğeleri var; tam mutfak/banyo tasarım sistemi yok."
+    },
+    {
+      "id": 103,
+      "feature": "Mimari malzeme/kaplama kataloğu",
+      "status": "partial",
+      "detail": "Temel malzeme birimleri var; kapsamlı gerçek malzeme/doku kataloğu yok."
+    },
+    {
+      "id": 104,
+      "feature": "Fotogerçekçi mimari ışıklandırma",
+      "status": "pending",
+      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+    },
+    {
+      "id": 105,
+      "feature": "Güneş/gölge analizi",
+      "status": "pending",
+      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+    },
+    {
+      "id": 106,
+      "feature": "3D ev içinde gezinti",
+      "status": "pending",
+      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+    },
+    {
+      "id": 107,
+      "feature": "Mobilya çakışma kontrolü",
+      "status": "partial",
+      "detail": "Kat bazlı 2D eksen hizalı mobilya kutusu çakışması eklendi. 3D mesh/ergonomi kontrolü değil."
+    },
+    {
+      "id": 108,
+      "feature": "Otomatik oda yerleşimi",
+      "status": "partial",
+      "detail": "Dikdörtgenin eşit oda bölümlerine ayrılması var; kısıtlı otomatik yerleşim."
+    },
+    {
+      "id": 109,
+      "feature": "Fotoğraftan ölçekli plan",
+      "status": "pending",
+      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+    },
+    {
+      "id": 110,
+      "feature": "DWG/DXF/OBJ/GLB/PDF aktarımının tamamı",
+      "status": "partial",
+      "detail": "SVG/JSON/DXF oda çizgileri ve basit OBJ duvar yüzeyleri mevcut. DWG/GLB/PDF tam seti yok."
+    },
+    {
+      "id": 111,
+      "feature": "Fotogerçekçi render",
+      "status": "pending",
+      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+    },
+    {
+      "id": 112,
+      "feature": "Sesle tüm mimariyi güvenilir değiştirme",
+      "status": "partial",
+      "detail": "Sesli araç çağrısı ve her adımda gözlem var; tüm mimari değişikliklerde güvenilirlik garantisi yok."
+    },
+    {
+      "id": 113,
+      "feature": "Alternatif ev planları",
+      "status": "partial",
+      "detail": "Dikdörtgen için iki şematik alternatif üretilir; profesyonel plan alternatifleri değil."
+    },
+    {
+      "id": 114,
+      "feature": "Elektrik/tesisat planlama",
+      "status": "pending",
+      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+    },
+    {
+      "id": 115,
+      "feature": "Malzeme metrajı/maliyet",
+      "status": "partial",
+      "detail": "Zemin/brüt duvar metrajı ve kullanıcının birim fiyatlarıyla maliyet. Ortak duvar/boşluk/tesisat düşümü yok."
+    },
+    {
+      "id": 116,
+      "feature": "Tam yerel proje kayıt/sürüm sistemi",
+      "status": "partial",
+      "detail": "Yerel değişmez JSON sürümleri, geçmişten açma ve yeni sürüme kaydetme var; plan veri modeli sınırlı."
+    },
+    {
+      "id": 117,
+      "feature": "SpacePlanner seviyesinde bağımsız editör",
+      "status": "partial",
+      "detail": "Yerel şematik çalışma alanı eklendi. SpacePlanner özellik eşitliği yok."
+    },
+    {
+      "id": 133,
+      "feature": "Kapsamlı güvenlik açığı tarayıcısı",
+      "status": "partial",
+      "detail": "Sezgisel Python AST kaynak denetimi eklendi; tam CVE/dinamik zafiyet tarayıcısı değil."
+    },
+    {
+      "id": 134,
+      "feature": "Genel veritabanı yönetim paneli",
+      "status": "partial",
+      "detail": "Salt okunur SQLite tablo/satır inceleme aracı var; genel veritabanı yönetim paneli yok."
+    },
+    {
+      "id": 148,
+      "feature": "Her güncelleme hatasını otomatik tekrar deneme",
+      "status": "partial",
+      "detail": "Geçici HTTP/ağ hatalarında üç indirme denemesi, paket kurulumunda iki sınırlı deneme ve süre sınırı eklendi. Yetki/sözdizimi/kalıcı test hataları körlemesine tekrar edilmez."
+    },
+    {
+      "id": 149,
+      "feature": "Kriptografik güncelleme imzası",
+      "status": "pending",
+      "detail": "Güvenilen yayın imzalama anahtarı, imzalı paket üretimi ve güncelleyiciye zorunlu doğrulama hattı kurulmadı."
+    },
+    {
+      "id": 164,
+      "feature": "Ayrıntılı enerji analizi",
+      "status": "partial",
+      "detail": "Watt/zaman örneklerinden kWh, ortalama/tepe güç ve maliyet hesaplanır. Sensör veri toplama/enerji dashboardu yok."
+    },
+    {
+      "id": 165,
+      "feature": "Doğrudan MQTT istemcisi",
+      "status": "requires_setup",
+      "detail": "MQTT QoS1 yayın ve tek mesaj okuma istemcisi eklendi; broker/adres/yetki ve canlı broker testi gerekir."
+    },
+    {
+      "id": 188,
+      "feature": "Telefonun bütün bildirimleri",
+      "status": "pending",
+      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+    },
+    {
+      "id": 189,
+      "feature": "SMS okuma/gönderme",
+      "status": "pending",
+      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+    },
+    {
+      "id": 190,
+      "feature": "Telefon arama entegrasyonu",
+      "status": "pending",
+      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+    },
+    {
+      "id": 202,
+      "feature": "Gelişmiş ses temizleme stüdyosu",
+      "status": "pending",
+      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+    },
+    {
+      "id": 212,
+      "feature": "Genel sembolik denklem motoru",
+      "status": "partial",
+      "detail": "SymPy ile sınırlı, güvenli ayrıştırılan denklem/sistem çözümü var. Genel matematiğin tamamı kapsanmaz."
+    },
+    {
+      "id": 213,
+      "feature": "Genel matematik optimizasyon motoru",
+      "status": "partial",
+      "detail": "SciPy HiGHS doğrusal optimizasyonu var; genel doğrusal olmayan/global optimizasyon yok."
+    },
+    {
+      "id": 214,
+      "feature": "Mühendislik hesaplarını bağımsız doğrulama",
+      "status": "partial",
+      "detail": "Sayısal yerine koyma ve denklem kalanı kontrolü var; bağımsız mühendislik modeli/standart doğrulaması değil."
+    },
+    {
+      "id": 234,
+      "feature": "Eksiksiz açık/koyu tema",
+      "status": "partial",
+      "detail": "Ana arayüz ve ayar panellerinde açık/koyu/sistem teması var; bütün 3D/AR modları kapsamlı görsel doğrulamadan geçmedi."
+    },
+    {
+      "id": 249,
+      "feature": "Kapsamlı cevap uzunluğu profilleri",
+      "status": "partial",
+      "detail": "Kalıcı kısa/normal/ayrıntılı tercih ve arayüz seçimi eklendi; bağlama özgü kapsamlı profiller yok."
+    },
+    {
+      "id": 250,
+      "feature": "Bulut/yerel hafıza senkronizasyon seçimi",
+      "status": "pending",
+      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+    },
+    {
+      "id": 260,
+      "feature": "GitHub depo değişikliklerini sürekli izleme",
+      "status": "partial",
+      "detail": "Herkese açık depolar için commit kontrolü ve uygulama açıkken periyodik görev var; özel depo/webhook tabanlı izleme yok."
+    },
+    {
+      "id": 261,
+      "feature": "Tekrarlanan işlerden otomatik makro önerme",
+      "status": "partial",
+      "detail": "Tekrarlanan güvenli iki adımlı eylemlerden isteğe bağlı makro öneri aracı var; proaktif öğrenme sistemi değil."
+    },
+    {
+      "id": 271,
+      "feature": "Bütün API anahtarlarını şifreli kasada saklama",
+      "status": "pending",
+      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+    },
+    {
+      "id": 272,
+      "feature": "Uygulama bazlı internet güvenlik duvarı",
+      "status": "pending",
+      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+    },
+    {
+      "id": 273,
+      "feature": "Güncelleme imza doğrulaması",
+      "status": "pending",
+      "detail": "Güvenilen yayın imzalama anahtarı, imzalı paket üretimi ve güncelleyiciye zorunlu doğrulama hattı kurulmadı."
+    },
+    {
+      "id": 286,
+      "feature": "Ölçülmüş hızlı başlatma",
+      "status": "pending",
+      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+    },
+    {
+      "id": 287,
+      "feature": "Doğrulanmış düşük RAM",
+      "status": "pending",
+      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+    },
+    {
+      "id": 288,
+      "feature": "Yönetilebilir GPU hızlandırma",
+      "status": "pending",
+      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+    },
+    {
+      "id": 289,
+      "feature": "Tam AI cevap önbelleği",
+      "status": "pending",
+      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+    },
+    {
+      "id": 290,
+      "feature": "Bellek sızıntısı tespit sistemi",
+      "status": "partial",
+      "detail": "Gerçek RSS/CPU örnekleri ve isteğe bağlı tracemalloc kaynak raporu var; artış sızıntı kanıtı değildir."
+    },
+    {
+      "id": 306,
+      "feature": "Genel MCP istemci/sunucu",
+      "status": "pending",
+      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+    },
+    {
+      "id": 307,
+      "feature": "Eklenti mağazası",
+      "status": "pending",
+      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+    },
+    {
+      "id": 308,
+      "feature": "Genel webhook yönetimi",
+      "status": "pending",
+      "detail": "Bu sürümde uygulanmadı; tamamlandı olarak gösterilmez."
+    },
+    {
+      "id": 309,
+      "feature": "Docker ortam yönetimi",
+      "status": "partial",
+      "detail": "Docker container liste/inceleme/log/start/stop/restart var. Docker kurulumu/daemon gerekir; image/build/compose yönetimi yok."
+    },
+    {
+      "id": 310,
+      "feature": "Sanal makine kontrolü",
+      "status": "partial",
+      "detail": "VirtualBox liste/info/start/pause/resume/ACPI kapatma var; kurulu VirtualBox/VM gerekir. Tüm hipervizörler kapsanmaz."
+    },
+    {
+      "id": 318,
+      "feature": "Gerçek drone uçuş kontrolü",
+      "status": "requires_hardware",
+      "detail": "Uygun cihaz/sensör/çalışma ortamı ve fiziksel doğrulama sağlanmadı; uygulanmış sayılmadı."
+    },
+    {
+      "id": 319,
+      "feature": "ROS/ROS2",
+      "status": "requires_hardware",
+      "detail": "Uygun cihaz/sensör/çalışma ortamı ve fiziksel doğrulama sağlanmadı; uygulanmış sayılmadı."
+    },
+    {
+      "id": 320,
+      "feature": "Fiziksel görev simülasyonu",
+      "status": "requires_hardware",
+      "detail": "Uygun cihaz/sensör/çalışma ortamı ve fiziksel doğrulama sağlanmadı; uygulanmış sayılmadı."
+    },
+    {
+      "id": 321,
+      "feature": "Tam SLAM",
+      "status": "requires_hardware",
+      "detail": "Uygun cihaz/sensör/çalışma ortamı ve fiziksel doğrulama sağlanmadı; uygulanmış sayılmadı."
+    },
+    {
+      "id": 322,
+      "feature": "Dağıtık model çalıştırma",
+      "status": "requires_hardware",
+      "detail": "Uygun cihaz/sensör/çalışma ortamı ve fiziksel doğrulama sağlanmadı; uygulanmış sayılmadı."
+    }
+  ]
+}
