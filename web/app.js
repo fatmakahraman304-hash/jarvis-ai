@@ -67,18 +67,36 @@
     document.documentElement.style.setProperty("--c2", p.color2);
     $("#p-name").textContent = p.name; $("#p-full").textContent = p.full;
     document.title = p.name;
-    document.querySelectorAll("#personas button").forEach((b) => b.classList.toggle("active", b.dataset.id === id));
+    document.querySelectorAll("#ai-model-options .ai-chip").forEach((b) => { const active = b.dataset.id === id; b.classList.toggle("active", active); b.setAttribute("aria-pressed", String(active)); });
+    const badge = $("#model-badge"); if (badge) badge.textContent = "AI MODEL";
     JV.setColor(p.color);
     if (speak) { JV.stopSpeaking(); addMsg("ai", p.greeting, id); JV.say(p.greeting, id); }
   }
   function renderPersonas() {
-    const nav = $("#personas"); nav.innerHTML = "";
-    JV.state.personas.forEach((p) => {
-      const b = el("button", "", p.id.toUpperCase()); b.dataset.id = p.id; b.style.setProperty("--pc", p.color);
-      b.onclick = () => { if (p.id === persona) return; applyPersona(p.id, true); saveSettings({ persona: p.id }); };
-      nav.append(b);
+    const grid = $("#ai-model-options"); if (!grid) return; grid.innerHTML = "";
+    JV.state.personas.forEach((p, i) => {
+      const b = el("button", "ai-chip"); b.type = "button"; b.dataset.id = p.id;
+      b.style.setProperty("--chip", p.color || (i === 1 ? "#d7a65e" : i === 2 ? "#d9535d" : "#38d6ff"));
+      b.setAttribute("aria-pressed", String(p.id === persona));
+      const label = el("span", "ai-chip-label", p.name || p.id.toUpperCase());
+      const circuit = el("span", "ai-chip-circuit");
+      const pins = el("span", "ai-chip-pins");
+      for (let n = 0; n < 9; n++) pins.append(el("i"));
+      const state = el("span", "ai-chip-state", "SEÇ");
+      b.append(label, circuit, pins, state);
+      b.onclick = async () => {
+        if (p.id !== persona) { applyPersona(p.id, true); try { await saveSettings({ persona: p.id }); } catch (e) { toast("Seçim kaydedilemedi: " + e.message); } }
+        closeModelPicker();
+      };
+      grid.append(b);
     });
   }
+  function openModelPicker() { renderPersonas(); $("#ai-model-picker").classList.remove("hidden"); }
+  function closeModelPicker() { $("#ai-model-picker").classList.add("hidden"); }
+  $("#model-badge").onclick = openModelPicker;
+  $("#ai-model-close").onclick = closeModelPicker;
+  $("#ai-model-picker").addEventListener("click", (e) => { if (e.target.id === "ai-model-picker") closeModelPicker(); });
+  addEventListener("keydown", (e) => { if (e.key === "Escape") closeModelPicker(); });
 
   async function saveSettings(patch) { JV.settings = await JV.api("/api/settings", { body: patch }); return JV.settings; }
   JV.saveSettings = saveSettings;
