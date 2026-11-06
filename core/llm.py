@@ -558,7 +558,7 @@ def vision(prompt, image_bytes, mime="image/png", system="", light=False):
     for pid in VISION_ORDER:
         if not configured(pid) or not allowed(pid) or key_bad(pid):
             continue
-        model = env(f"{pid.upper()}_VISION_MODEL") or ((light and light_model(pid)) or (pick_model(pid) if pid in ("gemini", "xai", "custom") else VISION_DEFAULTS.get(pid, "")))
+        model = env(f"{pid.upper()}_VISION_MODEL") or ((light and light_model(pid)) or (pick_model_for_tier(pid, "smart") if pid == "gemini" else (pick_model(pid) if pid in ("xai", "custom") else VISION_DEFAULTS.get(pid, ""))))
         tried = []
         while model and len(tried) < 3:
             tried.append(model)
@@ -612,7 +612,7 @@ def allowed(pid):
     return pid == "gemini" or not only_gemini() or not _key("gemini")  # Gemini anahtarı hiç yoksa kilitleme
 
 
-def route(order, messages, tools, model_override="", light=False):
+def route(order, messages, tools, model_override="", light=False, tier="legacy", timeout=None):
     """Sağlayıcıları sırayla dener; kota/hata olursa sıradakine geçer (tek beyin, çok model).
 
     Olay üretir: ("provider", {...}), ("text", parça), ("final", {...}), ("error", metin)
@@ -629,9 +629,14 @@ def route(order, messages, tools, model_override="", light=False):
         yield ("error", "NO_PROVIDER")
         return
     for i, pid in enumerate(candidates):
-        model = pick_model(pid, model_override if i == 0 else "")
-        if light and not (model_override and i == 0):
+        override = model_override if i == 0 else ""
+        if pid == "gemini" and tier in GEMINI_LADDERS:
+            model = pick_model_for_tier(pid, tier, override)
+        else:
+            model = pick_model(pid, override)
+        if light and not override:
             model = light_model(pid) or model
+        call_timeout = int(timeout or GEMINI_TIMEOUTS.get(tier, 20))
         if not model:
             continue
         use_tools = tools
@@ -642,7 +647,7 @@ def route(order, messages, tools, model_override="", light=False):
             try:
                 yield ("provider", {"provider": pid, "model": model, "label": PROVIDERS[pid]["label"]})
                 try:
-                    for ev in stream_chat(pid, model, messages, use_tools):
+                    for ev in stream_chat(pid, model, messages, use_tools, timeout=call_timeout):
                         if ev[0] == "text":
                             emitted = True
                         yield ev
@@ -676,7 +681,7 @@ def route(order, messages, tools, model_override="", light=False):
                     _cooldown[(pid, model)] = time.time() + 120
                 if e.status in (403, 404, 429, 500, 502, 503, 504) and len(used) < 3:
                     # bu model kotada/erişilemez: aynı sağlayıcının bir sonraki en iyi modeline geç (ör. 3.8 → 3.6)
-                    nm = next_model(pid, model, used)
+                    nm = (next_model_for_tier(pid, model, used, tier) if pid == "gemini" and tier in GEMINI_LADDERS else next_model(pid, model, used))
                     if nm:
                         used.append(model)
                         model = nm
