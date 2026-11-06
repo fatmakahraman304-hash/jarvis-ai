@@ -18,7 +18,7 @@
   beam.position.y = 2; table.add(beam);
 
   let model = null, title = "", explodeK = 0, explodeTarget = 0, autoRotate = true, wire = false, selected = null;
-  let walkMode = false, walkKeys = Object.create(null);
+  let walkMode = false, walkKeys = Object.create(null), doorParts = [];
 
   function tint() { const c = U.color(); grid.material.color = c; disc.material.color = c; rings.forEach((r) => (r.material.color = c)); beam.material.color = c; rim.color = c; }
 
@@ -54,10 +54,17 @@
     const root = new T.Group(), inner = new T.Group(); root.add(inner);
     parts.forEach((p, i) => {
       const m = holoMesh(geometry(p), p.color);
-      m.position.fromArray(p.pos || [0, 0, 0]);
-      if (p.rot) m.rotation.set(p.rot[0] * DEG, (p.rot[1] || 0) * DEG, (p.rot[2] || 0) * DEG);
-      m.userData.name = p.name || `parça ${i + 1}`; m.userData.home = m.position.clone();
-      inner.add(m);
+      if (p.hinge) {
+        const pivot = new T.Group(); pivot.position.fromArray(p.pos || [0,0,0]);
+        m.position.set(0.44,0,0); pivot.add(m);
+        pivot.userData.name = p.name || 'Kapı kanadı'; pivot.userData.home = pivot.position.clone();
+        pivot.userData.door = true; pivot.userData.doorOpen = false;
+        inner.add(pivot); doorParts.push(pivot);
+      } else {
+        m.position.fromArray(p.pos || [0,0,0]);
+        if (p.rot) m.rotation.set(p.rot[0]*DEG,(p.rot[1]||0)*DEG,(p.rot[2]||0)*DEG);
+        m.userData.name = p.name || ('parça '+(i+1)); m.userData.home = m.position.clone(); inner.add(m);
+      }
     });
     fit(root, inner);
     model = root; scene.add(model);
@@ -79,7 +86,7 @@
 
   function clear() {
     if (model) { scene.remove(model); U.disposeTree(model); model = null; }
-    selected = null;
+    selected = null; doorParts = [];
   }
 
   // ---- parametrik tasarımlar ----
@@ -292,7 +299,7 @@
     // Kapı ve pencereler 3D modelde renkli, duvara oturan elemanlar olarak gösterilir.
     (p.objects||[]).forEach((o,i)=>{
       const x=Number(o.x)||0,z=Number(o.z)||0;
-      if(o.type==="door") parts.push({name:"Kapı kasası "+(i+1),type:"box",size:[0.07,2.1,0.08],pos:[x-0.46,1.17,z],color:"#80502f"},{name:"Kapı kanadı "+(i+1),type:"box",size:[0.88,2.0,0.045],pos:[x,1.12,z],color:"#a66b3f"});
+      if(o.type==="door") parts.push({name:"Kapı kasası "+(i+1),type:"box",size:[0.07,2.1,0.08],pos:[x-0.46,1.17,z],color:"#80502f"},{name:"Kapı kanadı "+(i+1),type:"box",size:[0.88,2.0,0.045],pos:[x-0.44,1.12,z],color:"#a66b3f",hinge:true});
       else if(o.type==="window") { /* Cam ve duvar açıklığı addWall içinde üretilir. */ }
       else {
         const specs={sofa:[1.9,0.75,0.85,"#657b8d"],bed:[1.6,0.45,2.0,"#b7a0c9"],table:[1.2,0.75,0.8,"#a8794f"],wardrobe:[1.1,2.1,0.6,"#8d735f"],toilet:[0.48,0.42,0.68,"#f0f4f5"],kitchen:[1.8,0.9,0.65,"#777f87"],desk:[1.2,0.75,0.65,"#9b744d"],plant:[0.45,0.9,0.45,"#39875c"]};
