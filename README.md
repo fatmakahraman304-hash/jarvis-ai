@@ -1,6 +1,6 @@
 # J.A.R.V.I.S. Personal AI
 
-## 4.6.12 — Mark LVI tarzı canlı ses
+## 4.6.13 — Mark LVI tarzı canlı ses
 
 - Ayarlar → **SES** bölümündeki **Mark LVI tarzı Gemini Live sesi (Charon)** seçeneğiyle JARVIS yanıtlarını Gemini Live'ın Charon sesiyle dinleyebilirsin.
 - Yanıtı hâlâ JARVIS'in kendi beyni üretir; web araması, araçlar, hafıza, kritik işlem onayı ve mevcut konuşma akışı korunur. Gemini Live yalnızca metni sese dönüştürür.
