@@ -1,8 +1,9 @@
 {
-  "version": "4.6.4",
+  "version": "4.6.5",
   "date": "2026-11-06",
   "notes": [
-    "🛠 AI MODEL düğmesinin kompakt arayüzde gizlenmesine neden olan CSS kuralı düzeltildi",
-    "💠 Üst menüden JARVIS, FRIDAY ve ULTRON seçim penceresi erişilebilir"
+    "⚡ Uzun araç işlemlerinde model cevabını beklerken anında kısa sesli karşılık",
+    "🧠 Konuşma geçmişi için 24.000 karakterlik kayan bağlam penceresi; tam SQLite geçmişi korunur",
+    "🛡 Güncelleme öncesi hızlı konuşma testleri de çalıştırılır"
   ]
 }
