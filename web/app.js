@@ -306,7 +306,7 @@
   $("#t-wake").onclick = () => {
     JV.unlockAudio();
     if (wakeMode) { stopRec(); saveSettings({ wake_word: false }); }
-    else { wakeMode = true; startRec(false); toast('Uyandırma açık: "JARVIS …", "FRIDAY …" veya "ULTRON …" de.'); saveSettings({ wake_word: true }); }
+    else { wakeMode = true; startRec(false); toast('Uyandırma açık: "JARVIS …", "FRIDAY …" de.'); saveSettings({ wake_word: true }); }
     updateToggles();
   };
 
