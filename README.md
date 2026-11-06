@@ -156,6 +156,19 @@ FAST isteklerinde ilk model için 10 saniye, SMART/SEARCH isteklerinde 20 saniye
 
 **Ses motoru notu:** Mark LVI'nin ana konuşması Gemini 3.1 Flash Live (yedek: Gemini 2.5 Native Audio) ile tam çift yönlü ses oturumudur. Bu JARVIS arayüzü ise tarayıcı konuşma tanıma + Edge TTS kullanıyor; Live ses oturumu henüz bu web konuşma hattına bağlı değildir. Bu sürüm aynı FAST/SMART/SEARCH metin modeli dağılımını ve hızlı yedeklemeyi getirir.
 
+
+## Gemini erişimi ve 4.6.8 model sırası
+
+Google, Gemini 2.5 modellerine yeni projelerde erişimi kısıtladığından JARVIS bu modelleri varsayılan ve yedek sıralarından çıkarır.
+
+- **FAST:** Gemini 3.5 Flash-Lite → 3.1 Flash-Lite → 3.8 Flash → 3.6 Flash → 3.5 Flash.
+- **SMART:** Gemini 3.8 Flash → 3.7 Flash → 3.6 Flash → 3.5 Flash → Flash-Lite yedekleri.
+- **SEARCH:** Gemini 3.8 Flash → 3.6 Flash → 3.5 Flash → Flash-Lite yedekleri.
+- 404 döndüren model altı saat beklemeye alınır; sonraki isteklerde yeniden denenmez.
+- Açılış geçişi, kişiliklerdeki veya `.env` dosyasındaki eski Gemini 2.5 model sabitlemelerini temizler.
+
+Kaynak: Google Gemini API model kataloğu ve yeni projeler için 2.5 erişim notu: https://ai.google.dev/gemini-api/docs/models
+
 ## Çok platform
 
 | Nereden | Nasıl |
