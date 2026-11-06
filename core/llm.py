@@ -590,6 +590,9 @@ def _tools_unsupported(err):
 
 
 def light_model(pid):
+    # Background/short tasks use the same FAST ladder as Mark LVI.
+    if pid == "gemini":
+        return pick_model_for_tier("gemini", "fast")
     if env(f"{pid.upper()}_MODEL") or not PROVIDERS[pid].get("light"):
         return ""
     avail = set(list_models(pid))
