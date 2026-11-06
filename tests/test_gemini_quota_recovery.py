@@ -45,7 +45,7 @@ class GeminiRecoveryTests(unittest.TestCase):
         self.assertEqual(req.call_count, 2)
         bodies = [json.loads(c.args[0].data) for c in req.call_args_list]
         self.assertIn("thinkingConfig", bodies[0]["generationConfig"])
-        self.assertNotIn("thinkingConfig", bodies[1]["generationConfig"])
+        self.assertNotIn("thinkingConfig", bodies[1].get("generationConfig", {}))
         self.assertEqual(bodies[0]["tools"], bodies[1]["tools"])
         self.assertEqual(bodies[0]["toolConfig"], bodies[1]["toolConfig"])
         self.assertEqual(bodies[0]["contents"], bodies[1]["contents"])
