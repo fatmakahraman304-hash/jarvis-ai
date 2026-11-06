@@ -1,5 +1,10 @@
 """Smoke checks for the optional Mark LVI-style Gemini Live voice path."""
+import sys
 import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
 
 from core.live_voice import LIVE_MODEL, LIVE_VOICE, SAMPLE_RATE, live_voice_socket
 
