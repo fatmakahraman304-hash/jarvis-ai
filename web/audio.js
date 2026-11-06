@@ -172,15 +172,15 @@
   }
 
   function livePcmBuffer(result) {
-    const size = result.chunks.reduce((n, s) => n + Math.floor((s.length * 3) / 4), 0);
-    const bytes = new Uint8Array(size);
-    let offset = 0;
-    for (const part of result.chunks) {
+    const decoded = result.chunks.map((part) => {
       const raw = atob(part), chunk = new Uint8Array(raw.length);
       for (let i = 0; i < raw.length; i++) chunk[i] = raw.charCodeAt(i);
-      bytes.set(chunk.subarray(0, size - offset), offset);
-      offset += chunk.length;
-    }
+      return chunk;
+    });
+    const size = decoded.reduce((n, chunk) => n + chunk.length, 0);
+    const bytes = new Uint8Array(size);
+    let offset = 0;
+    for (const chunk of decoded) { bytes.set(chunk, offset); offset += chunk.length; }
     const usable = bytes.byteLength - (bytes.byteLength % 2);
     if (!usable) throw new Error("Gemini Live boş PCM ses döndürdü");
     const pcm = new Int16Array(bytes.buffer, bytes.byteOffset, usable / 2);
