@@ -1,9 +1,9 @@
 {
-  "version": "4.6.33",
+  "version": "4.6.34",
   "date": "2026-11-06",
   "notes": [
-    "SpacePlanner aynı kontrollü tarayıcıda açılır; çizim, sürükleme ve kesin ölçü girişi eklendi",
-    "Sürekli dinleme tek komuttan ve geçici kesintilerden sonra geri döner; ses varsayılan açık",
-    "SpacePlanner araç seçimi düzeltildi ve çok adımlı çizim süresi artırıldı"
+    "Ekran analizi ve yazı okuma için Pillow otomatik kurulur",
+    "Yumuşak fare hareketi, tutup sürükleme ve orta düğme desteği eklendi",
+    "Çoklu monitör koordinatları doğrulanır; ekran bulma ve fare kontrolü sağlamlaştırıldı"
   ]
 }

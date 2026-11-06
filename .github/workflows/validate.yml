@@ -23,7 +23,9 @@ jobs:
       - name: Check Python syntax
         run: python -m compileall -q run.py core
       - name: Install test dependencies
-        run: python -m pip install psutil python-dotenv playwright
+        run: python -m pip install psutil python-dotenv playwright pillow
+      - name: Check desktop control
+        run: python tests/test_desktop_control.py
       - name: Check SpacePlanner tools
         run: python tests/test_spaceplanner.py
       - name: Install test browser

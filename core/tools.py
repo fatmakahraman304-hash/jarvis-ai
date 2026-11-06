@@ -718,7 +718,7 @@ TOOL_GROUP.update(_skill_groups)
 
 GROUP_INFO = {
     "google": ("Gmail ve Google Takvim", "mail posta gmail gelen kutu ileti yanıtla cevapla taslak takvim toplantı randevu ajanda etkinlik davet meet program bugün yarın hafta"),
-    "computer": ("ekranı görme, fare/klavye, pencereler, pano, kamera, görsel analiz", "ekran ekranda tıkla tıklat yaz klavye fare mouse pencere sekme pano kopyala yapıştır kamera bak gör görsel resim fotoğraf foto oku ocr buton hata mesajı kullan"),
+    "computer": ("ekranı görme, fare/klavye, pencereler, pano, kamera, görsel analiz", "ekran ekranda tıkla tıklat yaz klavye fare mouse mosue imleç sürükle sürükleme taşı hareket pencere sekme pano kopyala yapıştır kamera bak gör görsel resim fotoğraf foto oku ocr buton hata mesajı kullan"),
     "windows": ("Windows/donanım/güvenlik/dosya bakımı", "parlaklık wifi wi-fi internet ağ bluetooth yazıcı yazdır usb disk sürücü başlangıç açılış program kurulu gpu ekran-kartı sıcaklık fan yavaş kasıyor donuyor yinelenen kopya zip arşiv sıkıştır yedek düzenle temizle güvenlik virüs defender tarama şüpheli güvenlik duvarı izle"),
     "office": ("Word, Excel, PowerPoint, PDF, grafik, veri analizi", "word excel powerpoint sunum slayt pdf belge doküman rapor tablo grafik çizelge analiz veri csv birleştir dönüştür karşılaştır fatura dilekçe cv özgeçmiş fatura proforma kdv"),
     "finance": ("altın, döviz, borsa, kripto, bütçe", "altın gram çeyrek borsa hisse bist dolar euro kur döviz bitcoin kripto fiyat alarm harcama harcadım gider gelir maaş bütçe para ödeme portföy yatırım strateji geri test backtest risk oynaklık monte carlo emeklilik birikim kredi taksit faiz konut mortgage hedef"),

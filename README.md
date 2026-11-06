@@ -1,5 +1,12 @@
 # J.A.R.V.I.S. Personal AI
 
+## 4.6.34 — Ekran analizi ve fare kontrolü
+
+Ekran görüntüsü alma bağımlılığı Pillow ana kuruluma eklendi. Ekran analizi, OCR, öğe bulma, yumuşak fare hareketi, sol/sağ/orta ve çift tıklama, kaydırma ve tutup sürükleme desteklenir. Çoklu monitörün negatif koordinatları korunur, görüntü sınırı dışındaki model yanıtları reddedilir. Her öğe bulma işlemi kendi ekran ölçeğini kullanır. Sürükleme hatayla kesilse bile fare düğmesi bırakılır; acil durdurma fare hareketini keser. Windows masaüstü açık ve erişilebilir olmalıdır.
+
+Örnekler: “JARVIS, ekrandaki hatayı analiz et”, “fareyi Başlat simgesinin üzerine götür”, “bu pencereyi sağa sürükle”. Tıklama, sürükleme ve yazma mevcut ekran kontrolü onay ayarına uyar. Sürekli dinleme ve SpacePlanner özellikleri korunur.
+
+
 ## 4.6.33 — SpacePlanner çizimi ve sürekli ses
 
 SPACEPLANNER düğmesi ve “ev tasarımı” komutu aynı kontrollü Edge/Chrome sekmesini kullanır. Playwright artık gerekli paketlerle kurulur; Windows’ta Edge veya Chrome kurulu olmalıdır. JARVIS görünür çizim tuvalinde tıklama, sürükleme ve ölçü girişi yapabilir; sonucu görüntü ve ölçü alanlarıyla kontrol eder. Örnek: “JARVIS, SpacePlanner’da 4 metreye 3 metre bir oda çiz ve kapı ekle.” Hesap, çıktı, paylaşım ve ücret gerektiren adımlar ayrıca onay isteyebilir.
