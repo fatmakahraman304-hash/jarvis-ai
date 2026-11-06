@@ -811,7 +811,10 @@ async def voices_api(request):
 async def original_voice_api(request):
     """Serve an exact-phrase audio clip supplied by the user under data/voice_assets."""
     q = request.query_params
-    clip = original_voice.find_clip(q.get("persona", ""), q.get("lang", ""), q.get("text", ""))
+    clip_lang = q.get("lang", "auto")
+    if clip_lang == "auto":
+        clip_lang = voice.detect_lang(q.get("text", ""))
+    clip = original_voice.find_clip(q.get("persona", ""), clip_lang, q.get("text", ""))
     if not clip:
         return Response(status_code=404)
     media = {".mp3": "audio/mpeg", ".wav": "audio/wav", ".ogg": "audio/ogg",
