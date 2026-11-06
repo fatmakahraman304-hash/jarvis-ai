@@ -11,7 +11,7 @@ WEB = ROOT / "web"
 DATA.mkdir(exist_ok=True)
 SETTINGS_FILE = DATA / "settings.json"
 
-VERSION = "4.6.32"
+VERSION = "4.6.33"
 
 
 def _load_env():
@@ -107,6 +107,11 @@ def load_settings():
         if not data.get("always_listen_migrated"):
             merged["wake_word"] = True
             merged["always_listen_migrated"] = True
+            changed = True
+        if not data.get("continuous_voice_v2"):
+            merged["wake_word"] = True
+            merged["voice_enabled"] = True
+            merged["continuous_voice_v2"] = True
             changed = True
         if changed and SETTINGS_FILE.exists():
             SETTINGS_FILE.write_text(json.dumps(merged, ensure_ascii=False, indent=2), encoding="utf-8")

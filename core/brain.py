@@ -175,7 +175,7 @@ def _system_prompt(persona, source):
         f"Araç grupların konuya göre açılır; gereken araç elinde yoksa enable_tools ile aç.\n"
         "HIZLI ARAŞTIRMA: web_search tek çağrıda Bing, DuckDuckGo ve gerektiğinde haber kaynaklarını paralel tarar. "
         "Başarılı sonuçtan sonra yeniden web_search/news_search çağırma. Yalnızca cevap için kritik bir ayrıntı eksikse tek read_webpage çağır; ardından sentezle. Aynı konuyu art arda farklı kelimelerle arama.\n"
-        "SPACEPLANNER UZMANI: Kullanıcı SpacePlanner, kat planı, ev/oda/ofis/bahçe tasarımı istediğinde browser araçlarını kullan; önce browser_open ile https://spaceplanner.co/docs/getting-started ve gerekiyorsa https://spaceplanner.co/docs sayfalarını öğren, sonra https://spaceplanner.co/ adresinde Start Drawing veya uygun şablonla editörü aç. browser_read ile gerçek arayüzü ve öğe numaralarını her sayfa değişiminden sonra yeniden oku; browser_click/browser_fill/browser_press ile adım adım çalış, browser_look ile görsel düzeni doğrula. SpacePlanner özellikleri: 2D duvar/oda çizimi (dikdörtgen, L, serbest, yuvarlak), kesin ölçü ve birimler (cm/m/ft-in), grid/snap, duvar kalınlığı/yüksekliği/eğri duvar, kapı-pencere ve açıklık/kemer, ölçülendirme/etiket/not/alan, mobilya ve cihaz kütüphanesi, katlar/bodrum/split-level, merdiven, çatı, balkon/teras, zemin kotu ve tavan yüksekliği, malzeme/doku/boya, bahçe/arsa/çit/havuz/bitki, elektrik (anahtar/priz/ışık/pano/kablo), 2D/3D/elevation, 3D walkthrough/kamera kayıtları/fotogerçekçi render, fotoğraf/PDF üzerinden AI plan içe aktarma ve iz sürme, katmanlar, alan çizelgesi, ölçekli PDF/PNG/SVG/DXF, JSON plan dosyası ve GLB model dışa aktarma/paylaşma. Kullanıcı isteğini mimari gereksinimlere çevir, eksik ölçüleri sor; ölçü uydurma. Her işlem sonrası sayfayı yeniden oku ve sonucu doğrula. Giriş/hesap oluşturma, ücretli kredi harcama, paylaşım, dışa aktarma/indirme veya planı silme gibi hesap/veri/ücret etkili işlemlerden önce kullanıcı onayı al. Şifreleri modele isteme veya yazma. SpacePlanner ayrı kontrollü tarayıcı profilinde açılabilir; kullanıcının normal penceresindeki mevcut oturuma eriştiğini iddia etme.\n"
+        "SPACEPLANNER UZMANI: Ev/oda/kat planı isteğinde spaceplanner_open ile aynı kontrollü plan sekmesini aç veya yeniden kullan. Kullanıcının tarifini uygula; eksik temel ölçüleri sor, pikselden metre uydurma. Gerçek araçları browser_read ile öğren, gerektiğinde resmi https://spaceplanner.co/docs sayfalarını ayrı sekmede oku, sonra browser_tabs ile plana geri dön. browser_look ile tuvali ve CSS piksel koordinatlarını gör. DOM kontrolleri için browser_click/browser_fill, kısayollar için browser_press, çizim ve yerleştirme için spaceplanner_draw kullan. Resmi başlangıç: R oda aracı, dikdörtgeni drag ile çiz; mevcut birim cm ise 4x3 metre için size=400x300 gir (birimi önce kontrol et). D kapı, N pencere; aracı seçip duvara click ile yerleştir. B mobilya kütüphanesi; gerçek öğeyi seçip tuvale click ile yerleştir. 2D/3D ve diğer özellikleri gerçek arayüzden öğren. Her çizim sonrası browser_look ile geometriyi, browser_read ile ölçüleri doğrula; doğrulanmadan tamamlandı deme. Giriş/hesap, ücretli render, paylaşım, dışa aktarma ve silme onay ister. Mevcut çizimi koru; ayrı kontrollü profildeki oturumu kullanırsın. İş bitmediyse kalan adımları açıkça belirt.\n"
         f"KULLANICI HAKKINDA BİLDİKLERİN:\n{fact_txt}"
     )
 
@@ -288,9 +288,12 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
     research_search_done = False
     research_page_reads = 0
     step_budget = min(MAX_STEPS, 4) if tier == "search" else MAX_STEPS
+    if "browser" in groups and tier != "search":
+        step_budget = max(step_budget, 32)
+    turn_budget = 300 if "browser" in groups and tier != "search" else TURN_BUDGET
     for _step in range(step_budget):
-        if time.time() - turn_t0 > TURN_BUDGET:
-            print(f"[beyin] {TURN_BUDGET} sn doldu, eldeki bilgiyle cevaplanıyor")
+        if time.time() - turn_t0 > turn_budget:
+            print(f"[beyin] {turn_budget} sn doldu, eldeki bilgiyle cevaplanıyor")
             break
         if _estop() and source == "auto":
             yield {"type": "error", "text": "Acil durdurma etkin: otomatik işlem yapılmadı."}

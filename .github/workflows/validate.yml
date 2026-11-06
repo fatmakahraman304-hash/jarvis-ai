@@ -15,8 +15,20 @@ jobs:
         with:
           node-version: 22
       - name: Check JavaScript syntax
-        run: node --check web/lab.js
+        run: |
+          node --check web/lab.js
+          node --check web/app.js
+          node --check web/worlds.js
+          node tests/test_continuous_listening.js
       - name: Check Python syntax
-        run: python -m py_compile core/skills/holo.py
+        run: python -m compileall -q run.py core
+      - name: Install test dependencies
+        run: python -m pip install psutil python-dotenv playwright
+      - name: Check SpacePlanner tools
+        run: python tests/test_spaceplanner.py
+      - name: Install test browser
+        run: python -m playwright install --with-deps chromium
+      - name: Check real canvas input
+        run: python tests/test_spaceplanner_canvas.py
       - name: Validate release metadata
         run: node -e "const v=require('./version.json'); if(!/^\\d+\\.\\d+\\.\\d+$/.test(v.version)) process.exit(1); console.log('JARVIS version:',v.version)"

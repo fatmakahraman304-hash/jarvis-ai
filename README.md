@@ -1,5 +1,13 @@
 # J.A.R.V.I.S. Personal AI
 
+## 4.6.33 — SpacePlanner çizimi ve sürekli ses
+
+SPACEPLANNER düğmesi ve “ev tasarımı” komutu aynı kontrollü Edge/Chrome sekmesini kullanır. Playwright artık gerekli paketlerle kurulur; Windows’ta Edge veya Chrome kurulu olmalıdır. JARVIS görünür çizim tuvalinde tıklama, sürükleme ve ölçü girişi yapabilir; sonucu görüntü ve ölçü alanlarıyla kontrol eder. Örnek: “JARVIS, SpacePlanner’da 4 metreye 3 metre bir oda çiz ve kapı ekle.” Hesap, çıktı, paylaşım ve ücret gerektiren adımlar ayrıca onay isteyebilir.
+
+SİSTEMİ BAŞLAT’a bir kez basıp mikrofon iznini verdikten sonra JARVIS/FRIDAY uyandırması açık kalır. Tek komut mikrofonu kullanıldıktan, tanıma oturumu bittikten veya geçici bağlantı hatasından sonra sürekli dinleme geri döner. Bu sürüme ilk geçişte ses çıkışı ve uyandırma etkinleştirilir; sonrasında elle kapatma tercihi korunur. JARVIS sayfası açık, bilgisayar uyanık kalmalıdır; tarayıcı/işletim sistemi arka planda mikrofonu durdurabilir.
+
+Resmi çizim akışı: https://spaceplanner.co/docs/getting-started
+
 ## 4.6.14 — İki kişilik mod, sürekli dinleme ve sadeleştirilmiş arayüz
 
 - Yalnızca J.A.R.V.I.S. ve F.R.I.D.A.Y. kaldı; kaldırılan kişiliğin ses, model, Telegram, makro ve kayıtlı ayarları temizlenir.

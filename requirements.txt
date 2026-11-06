@@ -3,6 +3,7 @@ uvicorn>=0.29
 psutil>=5.9
 edge-tts>=6.1
 python-dotenv>=1.0
+playwright>=1.48,<2  # SpacePlanner kontrollü Edge/Chrome penceresi ve çizim
 truststore>=0.9        # Windows sertifika deposu (antivirüs HTTPS taraması olan bilgisayarlar)
 cryptography>=42.0     # Yerel ağda telefon kamera/mikrofonu için HTTPS sertifikası
 google-genai>=2.8.0,<3   # Gemini Live voice output (optional feature, imported lazily)

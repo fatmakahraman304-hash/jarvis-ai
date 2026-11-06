@@ -4,9 +4,11 @@ tıklanabilir öğeleri numaralandırır, tıklar, form doldurur, tuşa basar, s
 Güvenlik: şifre alanlarına yazmaz (şifreler için kasadaki vault_type kullanılır); 'satın al, öde, sipariş, gönder, sil, onayla'
 gibi düğmeler ve form gönderme her zaman onay ister. JARVIS profili kendi çerezlerini tutar (data/browser_profile)."""
 import os
+import math
 import queue
 import re
 import threading
+from urllib.parse import urlparse
 
 from ..config import DATA, load_settings
 from ..tools import S, _schema
@@ -232,10 +234,90 @@ def browser_tabs(action="list", index=0):
 
 def browser_look(question="Bu sayfada ne var?"):
     def run():
-        return _page().screenshot(type="jpeg", quality=80)
-    img = _call(run)
+        p = _page()
+        return p.screenshot(type="jpeg", quality=80), p.evaluate("() => ({width: innerWidth, height: innerHeight})")
+    img, viewport = _call(run)
     from .. import llm
-    return llm.vision(question, img, "image/jpeg")
+    return llm.vision(f"{question}\nGörüntü viewport: {viewport}. Koordinatları sol üstten CSS piksel olarak belirt.", img, "image/jpeg")
+
+
+def _is_spaceplanner(url):
+    parsed = urlparse(url)
+    return parsed.scheme == "https" and parsed.hostname in ("spaceplanner.co", "www.spaceplanner.co", "app.spaceplanner.co")
+
+
+def spaceplanner_open():
+    """Aynı kontrollü sekmeyi yeniden kullan; mevcut planı yeniden yükleme."""
+    def run():
+        ctx = _ctx()
+        for p in ctx.pages:
+            if not p.is_closed() and _is_spaceplanner(p.url) and not urlparse(p.url).path.startswith("/docs"):
+                _state["page"] = p
+                p.bring_to_front()
+                return _read(4000)
+        # İşçi içinden _call çağırmak kilitlenir; gezinme burada yapılır.
+        p = ctx.new_page()
+        _state["page"] = p
+        p.goto("https://spaceplanner.co/", wait_until="domcontentloaded", timeout=30000)
+        p.bring_to_front()
+        return _read(4000)
+    return _call(run)
+
+
+def spaceplanner_draw(points, action="drag", size=""):
+    """Yalnızca görünür çizim tuvalinde gözlenmiş CSS koordinatlarıyla çalışır."""
+    def run():
+        p = _page()
+        if not _is_spaceplanner(p.url):
+            raise ValueError("Önce spaceplanner_open ile SpacePlanner editörünü aç.")
+        if action not in ("click", "double_click", "drag", "move"):
+            raise ValueError("Geçersiz çizim hareketi.")
+        if not isinstance(points, list) or not 1 <= len(points) <= 60:
+            raise ValueError("1–60 nokta gerekli.")
+        if action == "drag" and len(points) < 2:
+            raise ValueError("Sürüklemek için en az iki nokta gerekli.")
+        coords = []
+        for point in points:
+            x, y = float(point["x"]), float(point["y"])
+            if not math.isfinite(x) or not math.isfinite(y):
+                raise ValueError("Koordinatlar sonlu olmalı.")
+            coords.append({"x": x, "y": y})
+        if size and (action != "drag" or not re.fullmatch(r"[0-9.,xX* /'\"cmftin-]{1,40}", size)):
+            raise ValueError("Ölçü yalnızca sürüklerken sayısal olarak girilebilir (ör. 400x300).")
+        # DOM düğmeleri için browser_click kullanılır. Buradaki her nokta aynı,
+        # görünür canvas üzerinde olmalı; hesap/ödeme düğmelerine tıklanamaz.
+        valid = p.evaluate("""points => {
+          let canvas = null;
+          return points.every(({x,y}) => {
+            if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) return false;
+            const hit = document.elementFromPoint(x,y);
+            const c = hit && hit.closest('canvas');
+            if (!c || (canvas && canvas !== c)) return false;
+            canvas = c; return true;
+          });
+        }""", coords)
+        if not valid:
+            raise ValueError("Noktalar aynı görünür çizim tuvalinde olmalı; browser_look ile yeniden bak.")
+        p.mouse.move(**coords[0])
+        if action == "drag":
+            p.mouse.down()
+            try:
+                for point in coords[1:]:
+                    p.mouse.move(**point, steps=12)
+                if size:
+                    p.keyboard.type(size)
+                    p.keyboard.press("Enter")
+            finally:
+                p.mouse.up()
+        elif action != "move":
+            for point in coords:
+                (p.mouse.dblclick if action == "double_click" else p.mouse.click)(**point)
+        else:
+            for point in coords[1:]:
+                p.mouse.move(**point, steps=12)
+        return {"hareket": action, "nokta_sayısı": len(coords), "ölçü": size,
+                "doğrulama": "browser_look ile çizimi ve gerçek ölçüleri kontrol et.", **_read(2000)}
+    return _call(run)
 
 
 def browser_close():
@@ -250,11 +332,27 @@ def browser_close():
 
 
 def _click_crit(a):
+    # SpacePlanner'da rutin çizim araçları kesintisiz kullanılabilir.
+    # Hesap, paylaşım, çıktı ve ücret etkili kontroller yine onay ister.
+    if _state["page"]:
+        try:
+            def planner_check():
+                p = _page()
+                if not _is_spaceplanner(p.url):
+                    return None
+                label = _label_of(p, a.get("target", ""))
+                return bool(RISKY.search(label) or re.search(
+                    r"export|download|share|sign.?in|log.?in|sign.?up|register|render|credit|print|dışa|indir|paylaş|giriş|hesap|yazdır", label, re.I))
+            decision = _call(planner_check, timeout=10)
+            if decision is not None:
+                return decision
+        except Exception:
+            return True
     if RISKY.search(str(a.get("target", ""))):
         return True
     if str(a.get("target", "")).strip().lstrip("#[").rstrip("]").isdigit() and _state["page"]:
         try:
-            if RISKY.search(_call(_label_of, _page(), a.get("target"), timeout=10)):
+            if RISKY.search(_call(lambda: _label_of(_page(), a.get("target")), timeout=10)):
                 return True
         except Exception:
             pass
@@ -262,10 +360,27 @@ def _click_crit(a):
 
 
 def _fill_crit(a):
-    return str(a.get("submit", "")).lower() in ("true", "1") or not load_settings().get("auto_control", False)
+    if str(a.get("submit", "")).lower() in ("true", "1"):
+        return True
+    if _state["page"]:
+        try:
+            def planner_field():
+                p = _page()
+                return _is_spaceplanner(p.url) and _loc(p, a.get("field", "")).evaluate(
+                    "e => e.tagName === 'SELECT' || e.type === 'number' || e.type === 'range'")
+            if _call(planner_field, timeout=10):
+                return False
+        except Exception:
+            return True
+    return not load_settings().get("auto_control", False)
 
 
 TOOLS = {
+    "spaceplanner_open": (spaceplanner_open, _schema("SpacePlanner'ı JARVIS'in kontrol ettiği pencerede açar; varsa aynı plan sekmesini yeniden yüklemeden kullanır.", {}), False),
+    "spaceplanner_draw": (spaceplanner_draw, _schema("SpacePlanner canvas üzerinde çizim/yerleştirme/sürükleme. Önce browser_look ile koordinatları gör, browser_click veya browser_press ile aracı seç; sonra sonucu görsel doğrula. Ölçü için size kullan, pikselden metre tahmin etme.", {
+        "points": {"type": "array", "items": {"type": "object", "properties": {"x": {"type": "number"}, "y": {"type": "number"}}, "required": ["x", "y"]}},
+        "action": {"type": "string", "enum": ["click", "double_click", "drag", "move"]},
+        "size": S("Sürükleme sırasında kesin ölçü; ör. cm biriminde 400x300")}, ["points"]), False),
     "browser_open": (browser_open, _schema("Tarayıcıda (JARVIS'in Edge/Chrome profili) adres ya da arama açar ve sayfayı okur; tıklanabilir öğeleri numaralı listeler.",
                                            {"url": S("adres ya da aranacak şey"), "new_tab": {"type": "boolean"}}, ["url"]), False),
     "browser_read": (browser_read, _schema("Açık sayfanın metnini ve numaralı tıklanabilir öğelerini okur.", {"max_chars": {"type": "integer"}}), False),
