@@ -1,6 +1,6 @@
 """Uçtan uca test: sahte bir model sunucusu açar, gerçek JARVIS sunucusunu başlatır ve API'yi dener.
 
-Çalıştır:  python tests/test_smoke.py
+Çalıştır:  python tests/test_ci_smoke.py
 """
 import json
 import os
