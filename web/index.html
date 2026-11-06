@@ -195,7 +195,9 @@
       <label class="row">Sistem kilidi PIN'i (boş = PIN yok; sadece bu tarayıcıda, şifreli saklanır) <input id="lk-pinset" type="password" inputmode="numeric" maxlength="12" style="width:120px" autocomplete="new-password"></label>
       <label class="row">AR efektte 👍 (1 sn) komutu <input id="ar-cmd" placeholder="Bana bugün için kısa bir brifing ver"></label>
       <label class="row">Tanıma dili <select id="v-stt"><option value="tr-TR">Türkçe</option><option value="en-US">English</option></select></label>
-      <div id="voice-sliders"></div>
+      <h4>SES KARAKTERLERİ</h4>
+      <p class="note">Her kişiliğin ayrı Gemini Live sesi vardır. Live kullanılamazsa JARVIS, FRIDAY ve ULTRON kendi Neural yedek seslerine döner.</p>
+      <div id="persona-voice-picks"></div>
       <h4>SES KİMLİĞİ</h4>
       <p class="note">JARVIS seni sesinden tanır; ailedeki diğer kişileri de ayrı ayrı tanıtabilirsin. Ses kaydı saklanmaz, sadece ses parmak izi tutulur.</p>
       <label class="row">Konuşanı sesinden tanı <input type="checkbox" id="vid-on"></label>
@@ -315,6 +317,5 @@
 <script src="/static/music.js"></script>
 <script src="/static/ambient.js"></script>
 <script src="/static/update.js"></script>
-<script src="/static/voicelab.js"></script>
 </body>
 </html>

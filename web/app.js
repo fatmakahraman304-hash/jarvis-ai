@@ -380,6 +380,41 @@
     if (b.dataset.tab === "files") loadFiles("");
   });
 
+  const LIVE_VOICE_OPTIONS = [
+    ["Charon", "Charon · tok ve dengeli"],
+    ["Aoede", "Aoede · yumuşak ve kadınsı"],
+    ["Fenrir", "Fenrir · derin ve güçlü"],
+    ["Puck", "Puck · canlı ve enerjik"],
+    ["Kore", "Kore · net ve sıcak"],
+    ["Orus", "Orus · otoriter ve tok"],
+    ["Leda", "Leda · hafif ve zarif"],
+    ["Zephyr", "Zephyr · aydınlık ve akıcı"],
+  ];
+  function renderPersonaVoices() {
+    const box = $("#persona-voice-picks");
+    if (!box) return;
+    box.innerHTML = "";
+    const current = JV.settings.live_voice_names || { jarvis: "Charon", friday: "Aoede", ultron: "Fenrir" };
+    const labels = { jarvis: "J.A.R.V.I.S.", friday: "F.R.I.D.A.Y.", ultron: "ULTRON" };
+    ["jarvis", "friday", "ultron"].forEach((id) => {
+      const row = el("label", "row persona-voice-row");
+      row.append(el("span", "", labels[id]));
+      const select = el("select");
+      LIVE_VOICE_OPTIONS.forEach(([value, label]) => {
+        const option = el("option", "", label); option.value = value; select.append(option);
+      });
+      select.value = current[id] || ({ jarvis: "Charon", friday: "Aoede", ultron: "Fenrir" })[id];
+      select.onchange = async () => {
+        try {
+          await saveSettings({ live_voice_names: { [id]: select.value } });
+          JV.resetLiveVoice && JV.resetLiveVoice();
+          toast(labels[id] + " ses profili kaydedildi.");
+        } catch (e) { toast("Ses profili kaydedilemedi: " + e.message); }
+      };
+      row.append(select); box.append(row);
+    });
+  }
+
   async function openSettings() {
     $("#settings").classList.remove("hidden");
     await refreshState();
@@ -460,7 +495,7 @@
     if (JV.loadMics) JV.loadMics();
     JV.api("/api/autostart").then((r) => { $("#o-autostart").checked = !!r.açık; }).catch(() => {});
     $("#b-on").checked = !!(JV.settings.briefing || {}).on; $("#b-time").value = (JV.settings.briefing || {}).time || "08:00";
-    if (JV.voiceLab) JV.voiceLab.render($("#voice-sliders"));
+    renderPersonaVoices();
     loadVoiceIds();
     $("#tts-note").textContent = JV.state.tts ? "Film tarzı sinir ağı sesleri aktif (Microsoft Neural, ücretsiz)." : "edge-tts kurulu değil: tarayıcının kendi sesi kullanılıyor. Kurulum için: pip install edge-tts";
     // platformlar

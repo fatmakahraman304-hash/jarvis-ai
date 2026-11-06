@@ -110,8 +110,7 @@
         }
       }
       if (!JV.state || !JV.state.tts) return null;
-      const extra = (o.voice ? "&voice=" + encodeURIComponent(o.voice) : "") + (o.rate != null ? "&rate=" + o.rate : "") + (o.pitch != null ? "&pitch=" + o.pitch : "");
-      const r = await JV.api(`/api/tts?persona=${persona}&mood=${mood(text)}${lang ? "&lang=" + lang : ""}${extra}&text=${encodeURIComponent(text)}`, { raw: true });
+      const r = await JV.api(`/api/tts?persona=${persona}&mood=${mood(text)}${lang ? "&lang=" + lang : ""}&text=${encodeURIComponent(text)}`, { raw: true });
       if (!r.ok) return null;
       const buf = await r.arrayBuffer();
       if (myGen !== gen) return null;
@@ -121,17 +120,25 @@
 
   // Mark LVI-style Gemini Live speech output. Keep one persistent session and
   // serialize sentences; Edge TTS remains the fallback and voice-lab preview.
-  let liveSocket = null, liveConnect = null, liveReady = false;
+  let liveSocket = null, liveConnect = null, liveReady = false, liveVoicePersona = "";
   let liveCurrent = null, liveSequence = 0, liveQueue = Promise.resolve();
   let liveFailureUntil = 0, liveWarned = false;
 
-  function liveEnsureSocket() {
+  function liveEnsureSocket(persona) {
+    const wanted = ["jarvis", "friday", "ultron"].includes(persona) ? persona : "jarvis";
+    if (liveSocket && liveVoicePersona !== wanted) {
+      const previous = liveSocket;
+      liveSocket = null; liveReady = false; liveConnect = null;
+      try { previous.close(); } catch (_) {}
+    }
     if (liveSocket && liveSocket.readyState === WebSocket.OPEN && liveReady) return Promise.resolve();
     if (liveConnect) return liveConnect;
     liveConnect = new Promise((resolve, reject) => {
       const scheme = location.protocol === "https:" ? "wss:" : "ws:";
       const url = new URL(scheme + "//" + location.host + "/api/live-voice");
       if (JV.token) url.searchParams.set("token", JV.token);
+      url.searchParams.set("persona", wanted);
+      liveVoicePersona = wanted;
       const ws = new WebSocket(url.toString());
       liveSocket = ws;
       let settled = false;
@@ -163,7 +170,8 @@
         if (liveCurrent) { const job = liveCurrent; liveCurrent = null; clearTimeout(job.timer); job.reject(err); }
       };
       ws.onclose = () => {
-        liveReady = false; liveSocket = null; liveConnect = null;
+        if (liveSocket !== ws) return;
+        liveReady = false; liveSocket = null; liveConnect = null; liveVoicePersona = "";
         if (!settled) { settled = true; clearTimeout(timer); reject(new Error("Gemini Live bağlantısı kapandı")); }
         if (liveCurrent) { const job = liveCurrent; liveCurrent = null; clearTimeout(job.timer); job.reject(new Error("Gemini Live bağlantısı kapandı")); }
       };
@@ -190,9 +198,9 @@
     return buffer;
   }
 
-  function liveRequest(text, myGen) {
+  function liveRequest(text, myGen, persona) {
     if (Date.now() < liveFailureUntil) return Promise.reject(new Error("Gemini Live kısa süreliğine beklemeye alındı"));
-    return liveEnsureSocket().then(() => {
+    return liveEnsureSocket(persona).then(() => {
       if (myGen !== gen) return null;
       const id = String(++liveSequence);
       return new Promise((resolve, reject) => {
@@ -214,11 +222,16 @@
     });
   }
 
-  function liveSynthesize(text, myGen) {
-    const task = liveQueue.then(() => liveRequest(text, myGen));
+  function liveSynthesize(text, myGen, persona) {
+    const task = liveQueue.then(() => liveRequest(text, myGen, persona));
     liveQueue = task.catch(() => null);
     return task;
   }
+  JV.resetLiveVoice = function () {
+    const previous = liveSocket;
+    liveSocket = null; liveConnect = null; liveReady = false; liveVoicePersona = "";
+    try { previous && previous.close(); } catch (_) {}
+  };
   addEventListener("pagehide", () => { try { liveSocket && liveSocket.close(); } catch (_) {} });
 
   function browserSpeak(text, persona, forceLang) {
@@ -264,7 +277,7 @@
       let buf = item.promise ? await item.promise : null;
       if (myGen !== gen) break;
       if (!buf && item.live && JV.settings.live_voice !== false) {
-        try { buf = await liveSynthesize(item.text, myGen); }
+        try { buf = await liveSynthesize(item.text, myGen, item.persona); }
         catch (e) {
           if (!liveWarned) {
             liveWarned = true;
@@ -293,15 +306,6 @@
     ensureCtx();
     const myGen = gen;
     queue.push({ text, persona, lang, live: true, promise: JV.settings.live_voice === false ? fetchTTS(text, persona, myGen, lang, null, true) : null });
-    pump();
-  };
-
-  // Ses laboratuvarı önizlemesi: kaydetmeden belirli ses/hız/ton/efektle konuş
-  JV.sayWith = function (text, persona, opts = {}) {
-    ensureCtx(); if (ctx.state === "suspended") ctx.resume();
-    JV.stopSpeaking(false);
-    const myGen = gen;
-    queue.push({ text, persona, lang: opts.lang, fx: opts.fx, promise: fetchTTS(text, persona, myGen, opts.lang, opts) });
     pump();
   };
 
