@@ -394,7 +394,7 @@ def _bing_url(href):
 
 
 def _search_bing(query, n):
-    page = _http_get("https://www.bing.com/search?" + urllib.parse.urlencode({"q": query, "setlang": "tr", "cc": "TR", "count": 15}))
+    page = _http_get("https://www.bing.com/search?" + urllib.parse.urlencode({"q": query, "setlang": "tr", "cc": "TR", "count": 15}), timeout=5.5)
     out = []
     for blk in re.findall(r'<li class="b_algo"(.*?)</li>', page, re.S):
         m = re.search(r'<h2[^>]*>\s*<a[^>]+href="([^"]+)"[^>]*>(.*?)</a>', blk, re.S)
@@ -410,7 +410,7 @@ def _search_bing(query, n):
 def _search_ddg(query, n):
     req = urllib.request.Request("https://html.duckduckgo.com/html/", data=urllib.parse.urlencode({"q": query, "kl": "tr-tr"}).encode(),
                                  headers={"User-Agent": UA, "Accept-Language": "tr,en;q=0.8", "Content-Type": "application/x-www-form-urlencoded"})
-    with urllib.request.urlopen(req, timeout=12) as r:
+    with urllib.request.urlopen(req, timeout=5.5) as r:
         page = r.read(2_000_000).decode("utf-8", "ignore")
     if "anomaly" in page and "result__a" not in page:
         raise RuntimeError("DuckDuckGo robot doğrulaması istedi")
@@ -427,7 +427,7 @@ def _search_ddg(query, n):
 
 
 def _search_ddg_lite(query, n):
-    page = _http_get("https://lite.duckduckgo.com/lite/?" + urllib.parse.urlencode({"q": query, "kl": "tr-tr"}))
+    page = _http_get("https://lite.duckduckgo.com/lite/?" + urllib.parse.urlencode({"q": query, "kl": "tr-tr"}), timeout=5.5)
     links = re.findall(r"<a[^>]+href=\"([^\"]+)\"[^>]*class=['\"]result-link['\"][^>]*>(.*?)</a>", page, re.S)
     snips = re.findall(r"class=['\"]result-snippet['\"][^>]*>(.*?)</td>", page, re.S)
     out = []
