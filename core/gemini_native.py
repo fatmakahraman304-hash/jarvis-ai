@@ -209,8 +209,21 @@ def stream(key, model, messages, tools=None, temperature=0.7, timeout=20, tool_c
             txt = e.read().decode("utf-8", "ignore")
         except Exception:
             txt = ""
-        if e.code == 400 and "thinking" in txt.lower() and "thinkingConfig" in body["generationConfig"]:
-            _NO_THINK_CFG.add(model)  # bu model ayarı tanımıyor: ayarsız tekrar dene
+        # Some Lite endpoints return only a generic INVALID_ARGUMENT when an optional
+        # thinking setting is rejected. Retry at most once without that setting;
+        # never remove tools, conversation history or function-call signatures.
+        generic_400 = False
+        if e.code == 400:
+            try:
+                detail = json.loads(txt).get("error") or {}
+                generic_400 = (detail.get("status") == "INVALID_ARGUMENT"
+                               and str(detail.get("message", "")).strip().rstrip(".").lower()
+                               == "request contains an invalid argument")
+            except (ValueError, TypeError, AttributeError):
+                pass
+        if (e.code == 400 and "thinkingConfig" in body["generationConfig"]
+                and ("thinking" in txt.lower() or generic_400)):
+            _NO_THINK_CFG.add(model)  # no second optional-setting retry for this model
             yield from stream(key, model, messages, tools, temperature, timeout, tool_choice)
             return
         print(f"[gemini] {model} HTTP {e.code} ({time.time() - t0:.1f} sn): {txt[:160]}")
