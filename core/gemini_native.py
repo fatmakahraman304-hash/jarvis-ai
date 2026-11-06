@@ -150,11 +150,11 @@ class NativeError(Exception):
         self.status, self.body = status, body
 
 
-TIMEOUT = 45  # sn: bu sürede cevap gelmezse sıradaki Gemini modeline geçilir
+TIMEOUT = 20  # görev katmanı 10 sn (FAST) veya 20 sn (SMART) gönderir
 _NO_THINK_CFG = set()  # bu ayarı kabul etmeyen modeller
 
 
-def stream(key, model, messages, tools=None, temperature=0.7, timeout=45):
+def stream(key, model, messages, tools=None, temperature=0.7, timeout=20):
     """("text", parça) ... ("final", {"content", "tool_calls"}) üretir — llm.stream_chat ile aynı sözleşme."""
     sys_inst, contents = convert(messages)
     body = {"contents": contents, "generationConfig": {"temperature": temperature}}
