@@ -1,5 +1,13 @@
 # J.A.R.V.I.S. Personal AI
 
+## 4.6.42 — Google girişi ve elle kullanım
+
+Güncellemeden sonra JARVIS’i tamamen kapatıp aç. SPACEPLANNER görünümündeki **Chrome’da elle kullan / giriş yap** düğmesine bas. Ayrı Chrome penceresinde koşulları kendin inceleyip kabul et ve **Continue with Google** ile girişini tamamla. Şifreyi JARVIS sohbetine yazma. Google ek doğrulama isterse Chrome’da kendin tamamla. Hesap oluşturulması ve koşulların kabulü otomatik yapılmaz.
+
+Elle kullanım sırasında JARVIS’in araçları ve model için ekran analizi durur; canlı görüntü aktarılmaz. **JARVIS’e geri ver** düğmesi açık Google giriş penceresi veya doldurulmuş görünür şifre alanı varsa geri dönüşü reddeder. Dönüş aynı SpacePlanner sekmesini kullanır, planı yeniden yüklemez. Ardından **devam et** de. Girişin başarılı olup olmadığını site belirler; gerçek hesapla Google girişi test edilmemiştir.
+
+SpacePlanner artık ayrı JARVIS profiliyle normal, görünür yapılabilen Chrome sürecinde çalışır; JARVIS içindeki görünüm korunur. Kişisel Chrome profiline bağlanılmaz. Yerel kontrol bağlantısı yalnızca loopback üzerinde açılır. Chrome penceresini kapatmak yerine JARVIS’e geri ver düğmesini kullan.
+
 ## 4.6.41 — Chrome ve JARVIS içinde SpacePlanner
 
 Windows’ta JARVIS penceresi Chrome uygulama moduyla başlar. SpacePlanner için Chrome kurulu olmalıdır; bulunamazsa Edge’e geçmeden kurulum gerektiğini bildirir. Ayrı otomasyon profili korunur.

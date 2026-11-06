@@ -839,6 +839,9 @@ def _run_limited(fn, args, limit):
 
 
 def execute(name, args):
+    from .skills import browser
+    if browser.manual_active():
+        return "Chrome elle kullanımda; araçlar ve ekran analizi duraklatıldı. Girişi bitirince JARVIS’e geri ver düğmesine bas."
     if name not in TOOLS:
         return f"Bilinmeyen araç: {name}"
     fn = TOOLS[name][0]

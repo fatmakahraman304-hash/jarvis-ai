@@ -715,3 +715,9 @@ body.view-design #spaceplanner-view{inset:100px 400px 48px 20px}
 body.view-design #log,body.view-design #right{visibility:visible}
 @media(max-width:1400px){body.view-design #spaceplanner-view{left:20px;right:400px}}
 @media(max-width:850px){body.view-design #spaceplanner-view{inset:95px 8px max(280px, calc(30vh + 190px))}.spaceplanner-bar span{display:none}}
+
+.spaceplanner-bar{height:auto;min-height:48px;flex-wrap:wrap;padding-block:7px;gap:8px}
+.spaceplanner-bar button[hidden]{display:none}
+.spaceplanner-bar button:disabled{opacity:.5;cursor:wait}
+
+#spaceplanner-control-status{margin:0;padding:8px;color:#a9e4ff;font-size:12px}#spaceplanner-control-status:empty{display:none}

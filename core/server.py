@@ -56,6 +56,22 @@ def _sse(gen):
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
+async def spaceplanner_manual_api(request):
+    from urllib.parse import urlparse
+    origin = request.headers.get("origin")
+    if origin and (urlparse(origin).netloc != request.url.netloc or urlparse(origin).scheme != request.url.scheme):
+        return JSONResponse({"error": "Farklı kaynaktan elle kullanım isteği reddedildi."}, status_code=403)
+    if not request.headers.get("content-type", "").startswith("application/json"):
+        return JSONResponse({"error": "JSON istek gerekli."}, status_code=415)
+    from .skills import browser
+    try:
+        body = await request.json()
+        result = await asyncio.to_thread(browser.spaceplanner_manual, body.get("action"))
+        return JSONResponse(result, headers={"Cache-Control": "no-store"})
+    except Exception as exc:
+        return JSONResponse({"error": str(exc)}, status_code=400, headers={"Cache-Control": "no-store"})
+
+
 async def spaceplanner_frame_api(request):
     from .skills import browser
     try:
@@ -1048,6 +1064,7 @@ routes = [
     Route("/manifest.json", manifest),
     Route("/api/state", state),
     Route("/api/spaceplanner/frame", spaceplanner_frame_api),
+    Route("/api/spaceplanner/manual", spaceplanner_manual_api, methods=["POST"]),
     Route("/api/chat", chat, methods=["POST"]),
     Route("/api/confirm", confirm, methods=["POST"]),
     Route("/api/tts", tts),

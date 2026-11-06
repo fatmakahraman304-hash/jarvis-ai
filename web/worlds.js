@@ -80,11 +80,19 @@
   };
   JV.getView = () => view;
   let plannerPollBusy = false;
+  let plannerManual = false;
+  let plannerControlBusy = false;
+  let plannerControlVersion = 0;
   async function refreshPlanner() {
-    if (plannerPollBusy || document.hidden || !document.body.classList.contains("view-design")) return;
+    if (plannerPollBusy || plannerControlBusy || document.hidden || !document.body.classList.contains("view-design")) return;
     plannerPollBusy = true;
+    const generation = plannerControlVersion;
     try {
       const frame = await JV.api("/api/spaceplanner/frame");
+      if (generation !== plannerControlVersion || (plannerManual && !frame.manual)) return;
+      plannerManual = !!frame.manual;
+      document.getElementById("spaceplanner-manual").hidden = plannerManual;
+      document.getElementById("spaceplanner-resume").hidden = !plannerManual;
       const live = document.getElementById("spaceplanner-live");
       const image = document.getElementById("spaceplanner-frame");
       const landing = document.querySelector(".spaceplanner-launch");
@@ -99,6 +107,33 @@
     } finally { plannerPollBusy = false; }
   }
   setInterval(refreshPlanner, 1200);
+  async function plannerControl(action) {
+    plannerControlBusy = true; plannerControlVersion++;
+    const start = document.getElementById("spaceplanner-manual");
+    const resume = document.getElementById("spaceplanner-resume");
+    start.disabled = resume.disabled = true;
+    const status = document.getElementById("spaceplanner-control-status");
+    status.textContent = action === "start" ? "Chrome açılıyor; girişi Chrome penceresinde kendin yap." : "Kontrol geri alınıyor…";
+    if (action === "start") {
+      plannerManual = true;
+      document.getElementById("spaceplanner-frame").removeAttribute("src");
+      document.getElementById("spaceplanner-live").hidden = true;
+      document.querySelector(".spaceplanner-launch").hidden = false;
+      document.getElementById("spaceplanner-idle-status").textContent = "Chrome açılıyor; giriş bilgilerini yalnızca Chrome penceresinde yaz.";
+    }
+    try {
+      const result = await JV.api("/api/spaceplanner/manual", {body: {action}});
+      if (result.error) throw new Error(result.error);
+      plannerManual = !!result.manual;
+      start.hidden = plannerManual; resume.hidden = !plannerManual;
+      status.textContent = result.message || "";
+    } catch (e) {
+      if (action === "start") plannerManual = false;
+      status.textContent = e.message;
+    } finally { plannerControlBusy = false; start.disabled = resume.disabled = false; }
+  }
+  document.getElementById("spaceplanner-manual").onclick = () => plannerControl("start");
+  document.getElementById("spaceplanner-resume").onclick = () => plannerControl("finish");
   const spacePlannerClose = document.getElementById("spaceplanner-close");
   if (spacePlannerClose) spacePlannerClose.onclick = () => JV.setView("core");
   const openSpacePlanner = () => {

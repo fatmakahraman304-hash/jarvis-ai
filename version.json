@@ -1,9 +1,9 @@
 {
-  "version": "4.6.41",
+  "version": "4.6.42",
   "date": "2026-11-06",
   "notes": [
-    "Windows JARVIS ve SpacePlanner Chrome kullanır; Edge otomatik seçilmez",
-    "SpacePlanner gerçek Chrome sekmesinin canlı görüntüsü JARVIS içinde gösterilir; ayrı pencere açılmaz",
-    "Çizimi sesle yönlendirirken mikrofon ve iletişim alanı erişilebilir kalır"
+    "Chrome’da elle kullan / giriş yap düğmesiyle Google girişini kendin tamamlayabilirsin",
+    "Elle kullanım sırasında araçlar, ekran analizi ve canlı görüntü aktarımı duraklatılır",
+    "JARVIS’e geri ver aynı plan sekmesinde devam eder; açık Google giriş penceresi veya dolu şifre alanıyla otomasyon başlamaz"
   ]
 }
