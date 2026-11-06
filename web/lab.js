@@ -251,7 +251,7 @@
   }
 
 
-  function buildHome3D(p) {
+  function buildHome3DParts(p) {
     const width = p.width, depth = p.depth, height = Number(p.wallHeight) || 2.8;
     const rooms = p.roomNames || ["Salon", "Mutfak", "Yatak odası", "Banyo", "Çalışma odası", "Antre"].slice(0, p.rooms);
     const cols = Math.ceil(Math.sqrt(rooms.length)), rows = Math.ceil(rooms.length / cols);
@@ -314,7 +314,20 @@
         parts.push({name:(o.label||o.type)+" "+(i+1),type:"box",size:[ow,s[1],od],pos:[x,s[1]/2+0.12,z],rot:[0,-(Number(o.rotation)||0),0],color:o.color||s[3]});
       }
     });
-    build(parts,"Ev iç mekânı · "+(p.title||"Yeni proje"));
+    return {parts,height};
+  }
+
+  function buildHome3D(p) {
+    const levels=Array.isArray(p.levels)&&p.levels.length?p.levels:[p];
+    const active=Math.max(0,Math.min(levels.length-1,Number(p.activeFloor)||0));
+    const all=[];let totalHeight=0;
+    levels.forEach((stored,index)=>{
+      const level=index===active?Object.assign({},stored,p):Object.assign({},stored);
+      const generated=buildHome3DParts(level),offset=levels.slice(0,index).reduce((sum,v)=>sum+(Number(v.wallHeight)||2.8)+0.3,0);
+      generated.parts.forEach(part=>{const copy=Object.assign({},part,{pos:part.pos.slice()});copy.pos[1]+=offset;copy.name="Kat "+(index+1)+" · "+part.name;all.push(copy);});
+      totalHeight=Math.max(totalHeight,offset+generated.height);
+    });
+    build(all,"Çok katlı ev · "+(p.title||"Yeni proje"));
   }
 
   function renderHomePlan(p) {
@@ -406,8 +419,8 @@
     by("hd-obj-w").onchange=e=>updateObject(o=>o.width=Math.max(.1,Math.min(10,+e.target.value||.9)));
     by("hd-obj-d").onchange=e=>updateObject(o=>o.depth=Math.max(.1,Math.min(10,+e.target.value||.55)));
     by("hd-obj-color").onchange=e=>updateObject(o=>o.color=e.target.value);
-    by("hd-3d").onclick=()=>buildHome3D(p);
-    by("hd-walk").onclick=()=>action("walk");
+    by("hd-3d").onclick=()=>{saveFloor();buildHome3D(p);};
+    by("hd-walk").onclick=()=>{saveFloor();buildHome3D(p);action("walk");};
     by("hd-rooms-apply").onclick=()=>{remember();p.roomNames=by("hd-rooms").value.split(",").map(s=>s.trim().slice(0,40)).filter(Boolean).slice(0,16);if(!p.roomNames.length)p.roomNames=["Salon"];p.rooms=p.roomNames.length;redraw();buildHome3D(p);};
     by("hd-save").onclick=()=>{try{saveFloor();localStorage.setItem("jarvis.homeDesign",JSON.stringify(p));JV.toast&&JV.toast("Ev projesi kaydedildi.");}catch(e){JV.toast&&JV.toast("Proje kaydedilemedi.");}};
     by("hd-load").onclick=()=>{try{const saved=JSON.parse(localStorage.getItem("jarvis.homeDesign")||"null");if(saved){p=Object.assign({},saved);redraw();buildHome3D(p);}else JV.toast&&JV.toast("Kayıtlı proje bulunamadı.");}catch(e){JV.toast&&JV.toast("Kayıt okunamadı.");}};
