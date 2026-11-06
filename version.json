@@ -1,9 +1,9 @@
 {
-  "version": "4.6.44",
+  "version": "4.6.45",
   "date": "2026-11-06",
   "notes": [
-    "Gemini HTTP 400: create_excel.chart boş enum seçeneği kaldırıldı",
-    "Gemini araç şemalarındaki boş enum üyeleri gönderimden önce özyinelemeli temizlenir",
-    "Tüm kayıtlı araç tanımları için Gemini uyumluluk regresyon testi eklendi"
+    "Gemini HTTP 429 kotası dolan modeller soğuma süresince tekrar denenmez",
+    "Gemini 3.5 Flash-Lite genel HTTP 400 durumunda isteği isteğe bağlı düşünme ayarı olmadan en fazla bir kez yeniden dener",
+    "HTTP 400 ve HTTP 429 ayrı raporlanır, kullanıcıya yanlış günlük kota teşhisi verilmez"
   ]
 }
