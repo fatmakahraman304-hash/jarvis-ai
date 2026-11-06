@@ -16,6 +16,51 @@ import time
 import webbrowser
 from pathlib import Path
 
+
+def _is_expected_proactor_reset(context):
+    """Only recognize Windows peer-reset during Proactor socket cleanup."""
+    exc = (context or {}).get("exception")
+    if not isinstance(exc, ConnectionResetError):
+        return False
+    if getattr(exc, "winerror", None) != 10054 and getattr(exc, "errno", None) != 10054:
+        return False
+    handle = (context or {}).get("handle")
+    callback = getattr(handle, "_callback", None)
+    callback_name = getattr(callback, "__qualname__", "")
+    message = str((context or {}).get("message", ""))
+    return (
+        callback_name.endswith("_call_connection_lost")
+        or "_ProactorBasePipeTransport._call_connection_lost" in message
+    )
+
+
+def _install_windows_transport_handler():
+    """Keep Proactor, but silence its known benign WinError 10054 cleanup callback."""
+    if os.name != "nt":
+        return
+    base_policy = getattr(asyncio, "WindowsProactorEventLoopPolicy", None)
+    if base_policy is None:
+        return
+    current = asyncio.get_event_loop_policy()
+    if getattr(current, "_jarvis_reset_handler", False):
+        return
+
+    class JarvisProactorPolicy(base_policy):
+        _jarvis_reset_handler = True
+
+        def new_event_loop(self):
+            loop = super().new_event_loop()
+
+            def handle_exception(loop, context):
+                if _is_expected_proactor_reset(context):
+                    return
+                loop.default_exception_handler(context)
+
+            loop.set_exception_handler(handle_exception)
+            return loop
+
+    asyncio.set_event_loop_policy(JarvisProactorPolicy())
+
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
@@ -190,6 +235,7 @@ def main():
     print("=" * 60)
     if not a.no_browser:
         threading.Thread(target=open_window, args=(url,), daemon=True).start()
+    _install_windows_transport_handler()
     uvicorn.run("core.server:app", host=host, port=a.port, log_level="warning", timeout_graceful_shutdown=2, **ssl)
 
 
