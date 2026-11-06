@@ -26,7 +26,7 @@ def check(name, cond, extra=""):
 BING = '<li class="b_algo"><h2><a href="https://site.com/dolar">Dolar bugün</a></h2><p>Dolar 41,2 TL</p></li>'
 RSS = ('<?xml version="1.0"?><rss><channel><item><title>Faiz kararı açıklandı</title><link>https://n.com/1</link>'
        '<pubDate>Thu, 05 Nov 2026 08:30:00 GMT</pubDate><source url="https://aa.com.tr">AA</source></item></channel></rss>')
-state = {"bing_down": False, "ground": True, "ground_calls": 0}
+state = {"bing_down": False, "lite_down": False, "ground": True, "ground_calls": 0}
 
 
 def fake_get(url, timeout=12):
@@ -73,20 +73,26 @@ llm.configured = lambda pid: pid == "gemini"
 
 print("CANLI ARAMA")
 r = tools.web_search("dolar kuru bugün")
-check("Google canlı cevabı (tarihli) gelir", r.get("canlı_cevap", {}).get("cevap", "").startswith("5 Kasım 2026"), r)
-check("canlı arama hafif modelle (3.8 hakkı korunur)", "gemini-3.5-flash-lite" in state.get("ground_url", ""), state.get("ground_url"))
+check("ilk yararlı arama motoru hızlı döner", r.get("sonuçlar", [{}])[0].get("link") == "https://site.com/dolar", r)
+check("normal web aramasında ikinci Gemini üretimi yapılmaz", state["ground_calls"] == 0, state["ground_calls"])
 check("Bing sonuçları gelir", r.get("motor") == "bing" and r["sonuçlar"][0]["link"] == "https://site.com/dolar", r)
 check("'bugün' geçince tarihli haberler de eklenir", r.get("haberler", [{}])[0].get("tarih", "").startswith("05.11.2026"), r)
-check("modele 'canlı sonuca güven' notu gider", "CANLI" in r.get("not", ""))
+check("CANLI sonuç notu korunur", "CANLI" in r.get("not", ""))
 state.update(bing_down=True, ground=False)
 r = tools.web_search("python nasıl kurulur")
 check("Bing ve DuckDuckGo engellenince DuckDuckGo Lite'a düşer", r.get("motor") == "duckduckgo-lite" and r["sonuçlar"][0]["link"] == "https://lite.com/x", r)
 check("Gemini kotası dolunca arama yine çalışır", "canlı_cevap" not in r)
 n = state["ground_calls"]
 tools.web_search("başka bir şey")
-check("kotası dolan model aramada da boşuna denenmez", state["ground_calls"] == n)
+check("kotası dolan model web motoru sonuç verirken boşuna denenmez", state["ground_calls"] == n)
+
+# Grounded Gemini is a fallback only when all ordinary web engines fail.
+state.update(bing_down=True, lite_down=True, ground=True)
+r = tools.web_search("son çare araması")
+check("bütün web motorları başarısızsa Google Grounding yedeği çalışır",
+      r.get("canlı_cevap", {}).get("cevap", "").startswith("5 Kasım 2026") and state["ground_calls"] == n + 1, r)
 import time as _t  # noqa: E402
-state.update(bing_down=False, ground=True)
+state.update(bing_down=False, lite_down=False, ground=True)
 orig_get = tools._http_get
 
 
