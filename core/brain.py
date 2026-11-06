@@ -78,7 +78,7 @@ def _quick_ack(text, groups):
     if not active:
         return ""
 
-    tokens = set(re.findall(r"[^\\W\\d_]+", (text or "").casefold(), flags=re.UNICODE))
+    tokens = set(re.findall(r"[^\W\d_]+", (text or "").casefold(), flags=re.UNICODE))
     is_turkish = (
         any(ch in (text or "") for ch in "çğıöşüÇĞİÖŞÜ")
         or bool(tokens & _TURKISH_MARKERS)
