@@ -717,6 +717,7 @@ TOOLS.update(_skill_tools)
 TOOL_GROUP.update(_skill_groups)
 
 GROUP_INFO = {
+    "browser": ("SpacePlanner ve web sitelerinde tarayıcıyı görerek kullanma, tıklama, form doldurma, sekme yönetimi", "spaceplanner space planner kat planı katplanı oda çiz ev çiz ev tasarla mimari mimari plan yerleşim planı salon mutfak yatak odası mobilya kapı pencere merdiven çatı bahçe elektrik planı 3d görünüm walkthrough dışa aktar export pdf dxf svg glb floorplan plan çiz oda yerleştir"),
     "google": ("Gmail ve Google Takvim", "mail posta gmail gelen kutu ileti yanıtla cevapla taslak takvim toplantı randevu ajanda etkinlik davet meet program bugün yarın hafta"),
     "computer": ("ekranı görme, fare/klavye, pencereler, pano, kamera, görsel analiz", "ekran ekranda tıkla tıklat yaz klavye fare mouse pencere sekme pano kopyala yapıştır kamera bak gör görsel resim fotoğraf foto oku ocr buton hata mesajı kullan"),
     "windows": ("Windows/donanım/güvenlik/dosya bakımı", "parlaklık wifi wi-fi internet ağ bluetooth yazıcı yazdır usb disk sürücü başlangıç açılış program kurulu gpu ekran-kartı sıcaklık fan yavaş kasıyor donuyor yinelenen kopya zip arşiv sıkıştır yedek düzenle temizle güvenlik virüs defender tarama şüpheli güvenlik duvarı izle"),
