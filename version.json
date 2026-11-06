@@ -1,9 +1,9 @@
 {
-  "version": "4.6.34",
+  "version": "4.6.35",
   "date": "2026-11-06",
   "notes": [
-    "Ekran analizi ve yazı okuma için Pillow otomatik kurulur",
-    "Yumuşak fare hareketi, tutup sürükleme ve orta düğme desteği eklendi",
-    "Çoklu monitör koordinatları doğrulanır; ekran bulma ve fare kontrolü sağlamlaştırıldı"
+    "Ekran ve tarayıcı işlemlerinden sonra otomatik yeni analiz yapılır",
+    "Açık kapat/atla düğmeli reklam ve açılır pencereler kaldırılıp asıl göreve devam edilir",
+    "Eski ekran okuma önbelleği kaldırıldı; aynı turda körlemesine birden fazla arayüz adımı çalıştırılmaz"
   ]
 }

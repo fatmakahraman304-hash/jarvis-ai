@@ -145,7 +145,7 @@
       case "tool":
         if (ev.status === "running") {
           const t = el("div", "msg tool", `⚙ ${ev.name} …`); body.parentElement.before(t); scrollLog();
-          const nice = { web_search: "İNTERNETTE ARIYOR", news_search: "HABERLERE BAKIYOR", read_webpage: "SAYFAYI OKUYOR", weather: "HAVA DURUMUNA BAKIYOR" }[ev.name];
+          const nice = { browser_observe: "SAYFAYI YENİDEN ANALİZ EDİYOR", screen_look: "EKRANI ANALİZ EDİYOR", screen_find: "EKRANDA HEDEFİ BULUYOR", browser_read: "SAYFAYI KONTROL EDİYOR", spaceplanner_open: "SPACEPLANNER AÇILIYOR", web_search: "İNTERNETTE ARIYOR", news_search: "HABERLERE BAKIYOR", read_webpage: "SAYFAYI OKUYOR", weather: "HAVA DURUMUNA BAKIYOR" }[ev.name];
           setStatus("thinking", nice || ("ÇALIŞIYOR: " + ev.name));
         }
         if (ev.status === "done" && ev.result && ev.result.startsWith("{") && ev.result.includes('"ui"') && JV.uiCommand) { try { JV.uiCommand(ev.name, ev.args, ev.result); } catch (e) { console.warn(e); } }

@@ -1,5 +1,12 @@
 # J.A.R.V.I.S. Personal AI
 
+## 4.6.35 — Gör, işlem yap, yeniden analiz et
+
+Ekran ve tarayıcı görevlerinde her etkileşimden sonra yeni analiz modele verilir. Ekran okuma ve etkileşim sonuçları eski önbellekten getirilmez; modelin aynı turda verdiği ikinci arayüz eylemi, yeni görüntü değerlendirilene kadar çalıştırılmaz. İlk masaüstü eyleminden önce de ekran analizi alınır. Onaylanan işlemden sonra asıl görev sürdürülür.
+
+Tarayıcı gözlem aracı görünür modal/çerez/reklam alanındaki açık Kapat, Atla, Şimdi değil veya Tümünü reddet düğmelerini en fazla üç kez kullanıp yeni görüntüyü analiz eder. Hesap, ödeme ve kaydedilmemiş veri pencereleri otomatik kapatılmaz. Yeni reklam sekmesi çalışma sekmesinin yerini almaz; sekmeler analiz edilerek doğru sekmede devam edilir. Özel iframe/canvas engellerinde masaüstü ekran araçları kullanılabilir. Belirsiz engellerin otomatik çözüleceği garanti edilmez; giriş ve CAPTCHA kullanıcı yardımı gerektirebilir.
+
+
 ## 4.6.34 — Ekran analizi ve fare kontrolü
 
 Ekran görüntüsü alma bağımlılığı Pillow ana kuruluma eklendi. Ekran analizi, OCR, öğe bulma, yumuşak fare hareketi, sol/sağ/orta ve çift tıklama, kaydırma ve tutup sürükleme desteklenir. Çoklu monitörün negatif koordinatları korunur, görüntü sınırı dışındaki model yanıtları reddedilir. Her öğe bulma işlemi kendi ekran ölçeğini kullanır. Sürükleme hatayla kesilse bile fare düğmesi bırakılır; acil durdurma fare hareketini keser. Windows masaüstü açık ve erişilebilir olmalıdır.
