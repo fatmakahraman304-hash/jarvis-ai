@@ -225,6 +225,7 @@
   }
 
   function offlineWake() {
+    if (JV.settings.voice_id || JV.settings.voice_lock) JV.voiceId.start();
     clearTimeout(recRetry); oneShot = false; sttHandoff = true; offlineActive = true;
     if (rec) { rec.onend = rec.onerror = rec.onresult = rec.onstart = null; try { rec.abort(); } catch (e) {} rec = null; }
     recognizing = true;

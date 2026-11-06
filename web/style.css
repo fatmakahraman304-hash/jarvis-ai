@@ -699,3 +699,5 @@ html[data-theme="light"] #settings .s-card,html[data-theme="light"] #ai-model-pi
 html[data-theme="light"] input,html[data-theme="light"] select,html[data-theme="light"] textarea,html[data-theme="light"] .mini{background:#fff;color:#17334b;border-color:#91adbf}
 html[data-theme="light"] .msg .body,html[data-theme="light"] #log{color:#17334b}
 .adv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin:12px 0}.adv-grid label{display:flex;flex-direction:column;gap:5px}.adv-grid input,.adv-grid select{width:100%;min-width:0;padding:6px}
+
+html[data-theme="light"] .s-tabs button.active{background:#076d9b;color:#fff}
