@@ -1,15 +1,10 @@
 # J.A.R.V.I.S. Personal AI
 
-## 4.6.36 — Genişleme paketi
+## 4.6.37 — Ev tasarımı yalnızca SpacePlanner
 
-Ayarlar → PLAN / ARAÇLAR: yerel oda/mobilya şeması, alan ve çakışma hesabı, değişmez proje sürümleri, SVG/JSON/DXF/OBJ aktarımı, tema, cevap uzunluğu ve süreç ölçümleri. Yeni hesap araçları: math_solve, math_verify, linear_optimize; bağlantılar: model_compare, mqtt_message, docker_manage, vm_manage, browser_upload/browser_download. SQLite salt okunur inceleme, sezgisel kaynak denetimi, enerji hesabı ve halka açık depo takibi eklendi.
+PLAN / ARAÇLAR sekmesi ve yerel mimari editör, oda/mobilya kataloğu, alan/çakışma/metraj araçları, yerel proje sürümleme ve aktarım kodları kaldırıldı. Ev tasarımı için “SpacePlanner aç” veya “ev tasarımı” de: JARVIS kontrollü SpacePlanner sekmesinde çalışır, engelleri kontrol edip her işlemden sonra yeniden analiz eder.
 
-Vosk için cihazına uygun dil modelini indirip model klasörünü PLAN / ARAÇLAR bölümünden kaydet; SES → Vosk seç. Bu mod PCM WAV kayıtlarını yerelde tanır ve buluta yedek geçmez. Gerçek mikrofon ve model testi cihazında yapılmalıdır. Vosk modelleri: https://alphacephei.com/vosk/models
-
-GPT ve Claude için Ayarlar → MODELLER’de Sadece Gemini seçimini kapatıp kendi API anahtarlarını ekle. Claude Anthropic’in OpenAI uyumluluk katmanını kullanır; tüm sağlayıcı API özellikleri desteklenmez. MQTT için .env: MQTT_HOST, MQTT_PORT, MQTT_USER, MQTT_PASSWORD, MQTT_TLS; Docker/VirtualBox için ilgili yazılımın kurulu ve erişilebilir olması gerekir. Ücretli sağlayıcılar API ücreti doğurabilir.
-
-**İstenen listenin tamamı bitmiş değildir.** Her maddenin gerçek kapsamı ve kalan işleri [FEATURE_STATUS.md](FEATURE_STATUS.md) ve Ayarlar → PLAN / ARAÇLAR → İSTENEN ÖZELLİKLERİN DURUMU bölümünde bulunur. Bu paket bağımsız profesyonel CAD/render, SLAM, drone uçuşu veya imzalı güncelleme sistemi sunduğunu iddia etmez.
-
+Ses, model bağlantıları, matematik ve sistem araçları korunur. Tema, cevap uzunluğu ve Vosk model yolu mevcut SES ayarlarında bulunur. Vosk için yerel dil modeli gerekir; diğer sağlayıcıları kullanmak için MODELLER’de “Sadece Gemini” seçimini kapatıp kendi API anahtarlarını ekle.
 
 ## 4.6.35 — Gör, işlem yap, yeniden analiz et
 

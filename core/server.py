@@ -833,39 +833,6 @@ async def processes(request):
 LOCAL_ONLY_SETTINGS = {"allow_remote_commands", "allow_remote_camera", "allow_remote_screen", "telegram_voice", "guest_mode", "voice_lock", "disabled_groups", "robot_port", "robot_url"}
 
 
-async def feature_status_api(request):
-    from .config import ROOT
-    return JSONResponse(json.loads((ROOT / "feature_status.json").read_text(encoding="utf-8")))
-
-
-async def architecture_api(request):
-    if request.method == "POST" and not _is_local(request):
-        return JSONResponse({"error":"Yerel plan düzenleme bu bilgisayardan yapılmalıdır."}, status_code=403)
-    from .skills import architecture as a
-    from starlette.concurrency import run_in_threadpool
-    raw = await request.body()
-    if len(raw) > 512000:
-        return JSONResponse({"error":"Plan verisi çok büyük."},status_code=413)
-    try:
-        body = json.loads(raw or b'{}')
-        if not isinstance(body, dict):
-            raise ValueError("Plan isteği bir nesne olmalı.")
-        action = body.pop("action", "list")
-        if action == "analyze": result = await run_in_threadpool(a.analyze_plan, **body)
-        elif action == "export": result = await run_in_threadpool(a.plan_export, **body)
-        elif action in ("list","catalog","save","load","history"): result = await run_in_threadpool(a.plan_project, action=action, **body)
-        else: raise ValueError("Geçersiz plan işlemi.")
-        return JSONResponse(result)
-    except (ValueError, TypeError, KeyError, FileNotFoundError) as e:
-        return JSONResponse({"error":str(e)},status_code=400)
-
-
-async def diagnostics_api(request):
-    from .skills.integrations import runtime_diagnostics
-    from starlette.concurrency import run_in_threadpool
-    return JSONResponse(await run_in_threadpool(runtime_diagnostics))
-
-
 async def settings(request):
     if request.method == "POST":
         patch = await request.json()
@@ -1078,9 +1045,6 @@ routes = [
     Route("/api/original-voice", original_voice_api),
     Route("/api/system", system),
     Route("/api/processes", processes),
-    Route("/api/features", feature_status_api),
-    Route("/api/architecture", architecture_api, methods=["POST"]),
-    Route("/api/diagnostics", diagnostics_api),
     Route("/api/settings", settings, methods=["GET", "POST"]),
     Route("/api/memory", memory_api, methods=["GET", "POST"]),
     Route("/api/memory/{fid:int}", memory_api, methods=["DELETE"]),

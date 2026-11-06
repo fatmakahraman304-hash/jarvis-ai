@@ -14,10 +14,9 @@ from unittest.mock import Mock,patch
 sys.path.insert(0,str(Path(__file__).resolve().parent.parent))
 os.environ['JARVIS_DATA']=tempfile.mkdtemp(prefix='jv_expansion_')
 from core import tools,llm,offline_stt
-from core.skills import architecture as a, engineering as e, integrations as i, operations as o, reasoning as r, media
+from core.skills import engineering as e, integrations as i, operations as o, reasoning as r, media
 
 
-def doc():return {'units':'m','rooms':[{'id':'salon','name':'Salon','points':[[0,0],[4,0],[4,3],[0,3]]}],'furniture':[]}
 
 class ExpansionTests(unittest.TestCase):
     def test_symbolic_roots_and_residuals(self):
@@ -35,28 +34,6 @@ class ExpansionTests(unittest.TestCase):
     def test_linear_optimization(self):
         result=e.linear_optimize({'c':[-1,-1],'A_ub':[[1,1],[1,0],[0,1]],'b_ub':[4,2,3]})
         self.assertTrue(result['success']);self.assertAlmostEqual(result['objective'],-4)
-    def test_area_and_cost(self):
-        result=a.analyze_plan(doc(),{'floor_m2':100})
-        self.assertEqual(result['quantities']['floor_m2'],12)
-        self.assertEqual(result['total_cost'],1200)
-    def test_collisions_and_outside(self):
-        d=doc();d['furniture']=[{'id':'s','kind':'sofa','room':'salon','x':0,'y':0},{'id':'t','kind':'table','room':'salon','x':1,'y':0},{'id':'b','kind':'bed_double','room':'salon','x':3.5,'y':2}]
-        result=a.analyze_plan(d);self.assertIn(['s','t'],result['collisions']);self.assertIn('b',result['outside_room'])
-    def test_polygon_validation(self):
-        d=doc();d['rooms'][0]['points']=[[0,0],[4,3],[4,0],[0,3]]
-        with self.assertRaises(ValueError):a.validate(d)
-        with self.assertRaises(ValueError):a.plan_project('load','../outside')
-    def test_revision_history_and_exports(self):
-        d=doc();first=a.plan_project('save','test',d);d['rooms'][0]['name']='Changed';second=a.plan_project('save','test',d)
-        self.assertEqual((first['revision'],second['revision']),(1,2));self.assertEqual(a.plan_project('load','test',revision=1)['document']['rooms'][0]['name'],'Salon')
-        for format in ['svg','json','dxf','obj']:
-            path=Path(a.plan_export('test',format)['path']);self.assertTrue(path.is_file());self.assertGreater(path.stat().st_size,10)
-        old_export=Path(a.plan_export('test','json',revision=1)['path'])
-        self.assertEqual(json.loads(old_export.read_text())['rooms'][0]['name'],'Salon')
-        self.assertEqual(a.plan_project('history','test'),[1,2])
-    def test_alternatives_preserve_area(self):
-        result=a.plan_alternatives(8,6,3)
-        for d in result['alternatives']:self.assertAlmostEqual(a.analyze_plan(d)['quantities']['floor_m2'],48)
     def test_database_read_only_and_quoted_table(self):
         path=Path(tempfile.mkdtemp())/'test.db'
         with sqlite3.connect(path) as db:db.execute('CREATE TABLE "odd table"(id INTEGER)');db.execute('INSERT INTO "odd table" VALUES (7)')
@@ -102,21 +79,19 @@ class ExpansionTests(unittest.TestCase):
         with patch.dict(sys.modules,{'vosk':fake}),patch.object(offline_stt,'env',return_value=str(folder)):
             self.assertEqual(offline_stt.transcribe(data.getvalue()),'jarvis merhaba')
     def test_feature_tools_registered(self):
-        for name in ['math_solve','linear_optimize','analyze_plan','plan_project','model_compare','browser_upload','browser_download','mqtt_message','database_inspect','runtime_diagnostics']:
+        for name in ['math_solve','linear_optimize','model_compare','browser_upload','browser_download','mqtt_message','database_inspect','runtime_diagnostics']:
             self.assertIn(name,tools.TOOLS)
-    def test_architecture_api_roundtrip(self):
+    def test_local_plan_removed_spaceplanner_preserved(self):
         from starlette.testclient import TestClient
         from core.server import app
+        self.assertNotIn('plan_project',tools.TOOLS)
+        self.assertNotIn('analyze_plan',tools.TOOLS)
+        self.assertNotIn('architecture',tools.GROUP_INFO)
+        self.assertIn('spaceplanner_open',tools.TOOLS)
+        self.assertIn('spaceplanner_draw',tools.TOOLS)
         client=TestClient(app)
         try:
-            saved=client.post('/api/architecture',json={'action':'save','project_id':'api_test','document':doc()})
-            self.assertEqual(saved.status_code,200)
-            loaded=client.post('/api/architecture',json={'action':'load','project_id':'api_test'}).json()
-            self.assertEqual(loaded['revision'],1)
-            self.assertEqual(client.post('/api/architecture',json=[]).status_code,400)
-            status=client.get('/api/features').json()
-            self.assertEqual(status['actual_listed_count'],len(status['features']))
-            self.assertTrue(any(x['status']=='pending' for x in status['features']))
+            self.assertEqual(client.post('/api/architecture',json={'action':'list'}).status_code,404)
         finally:client.close()
     def test_mqtt_publish_waits_for_ack(self):
         seen=[]
