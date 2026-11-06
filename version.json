@@ -1,9 +1,9 @@
 {
-  "version": "4.6.25",
+  "version": "4.6.26",
   "date": "2026-11-06",
   "notes": [
-    "🪟 SpacePlanner iframe kaldırıldı; gömülme engeli nedeniyle JARVIS içinden ayrı planlama penceresi açılır",
-    "↗ SPACEPLANNER düğmeleri SpacePlanner.co adresini ayrı pencerede açar; JARVIS penceresi açık kalır",
-    "🧹 Eski yerel EV TASARIM editörü kaldırılmış olarak kalır"
+    "🛠️ Güncelleme penceresindeki yerel sürüm numarası düzeltildi; uygulama artık v4.6.26 olarak raporlanır",
+    "🔄 Güncelleme kontrolü kurulu sürüm ile GitHub sürümünü doğru karşılaştırır",
+    "🪟 SpacePlanner ayrı pencerede açılır; JARVIS penceresi açık kalır"
   ]
 }
