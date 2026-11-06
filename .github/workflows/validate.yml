@@ -34,6 +34,8 @@ jobs:
         run: python tests/test_tool_execution.py
       - name: Check Gemini tool schemas
         run: python tests/test_gemini_tool_schema.py
+      - name: Check Gemini tool declaration budget
+        run: python tests/test_gemini_tool_budget.py
       - name: Check Gemini Lite wire compatibility
         run: python tests/test_gemini_lite_wire.py
       - name: Check Gemini quota and 400 recovery
