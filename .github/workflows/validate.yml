@@ -30,12 +30,16 @@ jobs:
         run: python tests/test_expansion.py
       - name: Check desktop control
         run: python tests/test_desktop_control.py
+      - name: Check native tool execution
+        run: python tests/test_tool_execution.py
       - name: Check observe-act loop
         run: python tests/test_observe_loop.py
       - name: Check SpacePlanner tools
         run: python tests/test_spaceplanner.py
       - name: Install test browser
         run: python -m playwright install --with-deps chromium
+      - name: Check native agent with real browser
+        run: python tests/test_agent_browser_execution.py
       - name: Check real canvas input
         run: python tests/test_spaceplanner_canvas.py
       - name: Check overlay recovery in browser

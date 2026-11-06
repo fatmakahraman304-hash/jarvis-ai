@@ -154,7 +154,7 @@ TIMEOUT = 20  # görev katmanı 10 sn (FAST) veya 20 sn (SMART) gönderir
 _NO_THINK_CFG = set()  # bu ayarı kabul etmeyen modeller
 
 
-def stream(key, model, messages, tools=None, temperature=0.7, timeout=20):
+def stream(key, model, messages, tools=None, temperature=0.7, timeout=20, tool_choice="auto"):
     """("text", parça) ... ("final", {"content", "tool_calls"}) üretir — llm.stream_chat ile aynı sözleşme."""
     sys_inst, contents = convert(messages)
     body = {"contents": contents, "generationConfig": {"temperature": temperature}}
@@ -166,7 +166,7 @@ def stream(key, model, messages, tools=None, temperature=0.7, timeout=20):
     t = _tools(tools)
     if t:
         body["tools"] = t
-        body["toolConfig"] = {"functionCallingConfig": {"mode": "AUTO"}}
+        body["toolConfig"] = {"functionCallingConfig": {"mode": "ANY" if tool_choice == "required" else "AUTO"}}
     # Akış yerine TEK PARÇA istek: bazı bilgisayarlarda antivirüs/ağ HTTPS taramaları akışlı (SSE) cevabı tutup
     # bekletiyor ve JARVIS "İŞLENİYOR"da kalıyordu. Cevaplar zaten kısa; tek parça çok daha güvenilir.
     t0 = time.time()
@@ -182,7 +182,7 @@ def stream(key, model, messages, tools=None, temperature=0.7, timeout=20):
             txt = ""
         if e.code == 400 and "thinking" in txt.lower() and "thinkingConfig" in body["generationConfig"]:
             _NO_THINK_CFG.add(model)  # bu model ayarı tanımıyor: ayarsız tekrar dene
-            yield from stream(key, model, messages, tools, temperature, timeout)
+            yield from stream(key, model, messages, tools, temperature, timeout, tool_choice)
             return
         print(f"[gemini] {model} HTTP {e.code} ({time.time() - t0:.1f} sn): {txt[:160]}")
         raise NativeError(e.code, txt)

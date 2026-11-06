@@ -1,9 +1,10 @@
 {
-  "version": "4.6.37",
+  "version": "4.6.38",
   "date": "2026-11-06",
   "notes": [
-    "PLAN / ARAÇLAR sekmesi ve yerel mimari editör kodları tamamen kaldırıldı",
-    "Yerel plan API, hesaplama, katalog, sürümleme ve aktarım araçları kaldırıldı",
-    "Ev tasarımı yalnızca kontrollü SpacePlanner penceresinde yapılır; ekran analizi ve sürekli dinleme korunur"
+    "SpacePlanner aç ve çizim komutlarında gerçek araç çağrısı zorunlu; metindeki araç adları işlem sayılmaz",
+    "Araç desteklenmediğinde araçsız sahte yanıt üreten geri dönüş kaldırıldı",
+    "Görev hatası, onay bekleme ve süre/adım sınırı mikrofonun dinleme durumundan ayrı gösterilir",
+    "Kesilmiş işlem akışı başarı sayılmaz; önceki isteğin kapanışı yeni görevi dinleme durumuna düşürmez"
   ]
 }

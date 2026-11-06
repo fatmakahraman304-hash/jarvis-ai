@@ -757,7 +757,7 @@ GROUP_INFO = {
     "cams": ("telefon kameraları (JARVIS'in gözü), güvenlik modu", "kamera kameraya kameradan mutfak mutfakta salon salonda kapı kapıya bahçe oda odada bak göz izle güvenlik hareket alarm bebek ne var"),
     "library": ("kitaplık: kitaplarım, raf taraması, notlar, alıntılar, okuma durumu", "kitap kitabı kitaplık kitaplığım kitaplığımı raf raftan okudum okuyorum okunacak sayfa sayfadayım alıntı roman yazar bitirdim öner"),
     "arfx": ("kamera AR el efektleri, gezegen, kahve falı, uyku modu", "el efekt efektleri gezegen mars jüpiter satürn güneş ateş şimşek mühür büyü sihir hologram fal falıma falımı kahve fincan uyku uyu uyut alkış"),
-    "browser": ("SpacePlanner çizimi ve tarayıcı otomasyonu", "spaceplanner space planner kat planı katplanı oda çiz ev tasarla mimari yerleşim salon mutfak yatak mobilya kapı pencere merdiven çatı bahçe elektrik floorplan tarayıcı tarayıcıda site sitesine sitesinde sayfa sayfada form doldur tıkla sekme sekmeyi giriş rezervasyon bilet uçak otel sepet ürün sipariş edge chrome web"),
+    "browser": ("SpacePlanner çizimi ve tarayıcı otomasyonu", "spaceplanner spacelanner spaceplaner spacepllaner space planner kat planı katplanı oda çiz ev tasarla mimari yerleşim salon mutfak yatak mobilya kapı pencere merdiven çatı bahçe elektrik floorplan tarayıcı tarayıcıda site sitesine sitesinde sayfa sayfada form doldur tıkla sekme sekmeyi giriş rezervasyon bilet uçak otel sepet ürün sipariş edge chrome web"),
     "plugins": ("eklentiler", ""),
 }
 

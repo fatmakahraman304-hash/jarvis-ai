@@ -70,7 +70,7 @@ MODE["m"] = "tool"; CALLS.clear()
 txt, _, _ = brain.collect(brain.chat("saat kaç", "friday", session="t2"))
 check("araç çağrılır, sonucu ile cevap verilir", txt == "Saat bilgisini aldım efendim." and len(CALLS) == 2, (txt, CALLS))
 MODE["m"] = "hang"; CALLS.clear(); gemini_native.TIMEOUT = 2
-t0 = time.time(); txt, _, meta = brain.collect(brain.chat("Merhaba", "friday", session="t3"))
+t0 = time.time(); txt, _, meta = brain.collect(brain.chat("Bu sonucu neden aldığımı analiz et", "friday", session="t3"))
 check("takılan 3.8 beklenmez → 3.6 cevap verir", txt == "Merhaba efendim." and "gemini-3.6-flash" in CALLS and time.time() - t0 < 8, (txt, CALLS, round(time.time() - t0, 1)))
 gemini_native.TIMEOUT = 45; llm._cooldown.clear()
 MODE["m"] = "loop"; CALLS.clear()
