@@ -118,7 +118,7 @@ class ExecutionTests(unittest.TestCase):
     def route_fixture(self,stream):
         from contextlib import ExitStack
         stack=ExitStack()
-        patches=[patch.object(llm,'configured',side_effect=lambda p:p=='gemini'),patch.object(llm,'allowed',return_value=True),patch.object(llm,'key_bad',return_value=''),patch.object(llm,'only_gemini',return_value=True),patch.object(llm,'pick_model_for_tier',return_value='bad'),patch.object(llm,'ranked_models_for_tier',return_value=['bad','good']),patch.object(llm,'next_model_for_tier',side_effect=lambda p,m,u,t:'good' if m=='bad' else ''),patch.object(llm,'report_bad_key',return_value=False),patch.object(llm,'stream_chat',side_effect=stream)]
+        patches=[patch.dict(llm._cooldown, {}, clear=True),patch.object(llm,'configured',side_effect=lambda p:p=='gemini'),patch.object(llm,'allowed',return_value=True),patch.object(llm,'key_bad',return_value=''),patch.object(llm,'only_gemini',return_value=True),patch.object(llm,'pick_model_for_tier',return_value='bad'),patch.object(llm,'ranked_models_for_tier',return_value=['bad','good']),patch.object(llm,'next_model_for_tier',side_effect=lambda p,m,u,t:'good' if m=='bad' else ''),patch.object(llm,'report_bad_key',return_value=False),patch.object(llm,'stream_chat',side_effect=stream)]
         for p in patches:stack.enter_context(p)
         return stack
 

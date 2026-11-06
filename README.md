@@ -1,5 +1,9 @@
 # J.A.R.V.I.S. Personal AI
 
+## 4.6.45 — Gemini HTTP 429 ve genel HTTP 400 teşhisi
+
+Kota veya hız sınırıyla HTTP 429 döndüren modeller, soğuma süresinde tekrar seçilmez; bu Google kotasını artırmaz. Gemini, yalnızca genel `Request contains an invalid argument` hatası döndürürse isteğe bağlı `thinkingConfig` kaldırılarak, araçlar ve konuşma geçmişi korunarak en fazla bir kez yeniden denenir. Hata sürüyorsa gerçek HTTP 400 gösterilir; başka modellerin HTTP 429 hatasıyla karıştırılmaz. Yeni regresyon testleri tekrarlı isteği ve hata gösterimini kontrol eder. Kota durumunu Google AI Studio Rate limits bölümünden incele. Gerçek hesapla API testi yapılmamıştır.
+
 ## 4.6.44 — Gemini araç şeması HTTP 400 düzeltmesi
 
 Gemini'nin `function_declarations[..].parameters.properties[chart].enum[0]: cannot be empty` hatasına neden olan `create_excel.chart` araç tanımındaki boş enum seçeneği kaldırıldı. Parametre artık isteğe bağlıdır: grafik istenmiyorsa hiç gönderilmez, grafik istenirse `bar`, `line` veya `pie` olur. Google Gemini'ye gönderilen tüm iç içe araç şemalarında boş enum seçenekleri de otomatik olarak temizlenir. Tüm kayıtlı araç bildirimlerini tarayan ve boş seçenekleri reddeden regresyon testi eklendi. Güncellemeden sonra JARVIS'i tamamen yeniden başlat.

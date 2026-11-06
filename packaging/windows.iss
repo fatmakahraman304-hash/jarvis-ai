@@ -1,5 +1,5 @@
 #define MyAppName "J.A.R.V.I.S."
-#define MyAppVersion "4.6.44"
+#define MyAppVersion "4.6.45"
 #define MyAppPublisher "JARVIS"
 
 [Setup]
