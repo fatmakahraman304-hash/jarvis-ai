@@ -17,7 +17,7 @@
       svg.append(shape('polygon',{points:room.points.map(p=>p.join(',')).join(' '),fill:'#eef7ff',stroke:'#135','stroke-width':'.06'}));
       const t=shape('text',{x:room.points[0][0]+.15,y:room.points[0][1]+.4,'font-size':'.22',fill:'#123'});t.textContent=room.name||room.id;svg.append(t);
     }
-    for(const item of plan.furniture){const c=catalog[item.kind];if(c)svg.append(shape('rect',{x:item.x,y:item.y,width:c.width,height:c.depth,fill:'#b7dccd',stroke:'#345','stroke-width':'.025'}));}
+    for(const item of plan.furniture){const c=catalog[item.kind];if(c)svg.append(shape('rect',{x:item.x,y:item.y,width:[90,270].includes(item.rotation)?c.depth:c.width,height:[90,270].includes(item.rotation)?c.width:c.depth,fill:'#b7dccd',stroke:'#345','stroke-width':'.025'}));}
     const rooms=$('#plan-room');rooms.replaceChildren();for(const r of plan.rooms){const o=document.createElement('option');o.value=r.id;o.textContent=r.name||r.id;rooms.append(o);}
   }
   JV.applyPreferences=()=>{
