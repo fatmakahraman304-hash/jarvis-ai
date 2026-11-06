@@ -1,9 +1,9 @@
 {
-  "version": "4.6.47",
+  "version": "4.6.48",
   "date": "2026-11-06",
   "notes": [
-    "Geniş komutlarda Gemini'ye tek istekle 231 araç göndermek yerine görevle ilişkili en fazla 24 araç bildirimi kullanılır",
-    "enable_tools ile yeni yetenek grubu açma ve mevcut SpacePlanner çizim akışı korunur",
-    "Konsolda [araç-seçimi] satırı seçilen araç sayısını gösterir; regresyon testleri geniş komutlarda araç bütçesini doğrular"
+    "Görev kurmadan gelecek çalışma saatlerini gösteren schedule_preview aracı eklendi",
+    "Geçersiz saat, gün, tekrar aralığı ve geçmiş tek seferlik tarihleri görev kaydetmeden reddeder",
+    "Hafta sonu, ay sonu ve önizleme/kayıt tutarlılığı için çevrimdışı regresyon testleri eklendi"
   ]
 }
