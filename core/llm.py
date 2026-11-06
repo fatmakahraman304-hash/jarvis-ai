@@ -311,6 +311,46 @@ def ranked_models(pid):
     return out + [m for m in available if m not in out]
 
 
+def ranked_models_for_tier(pid, tier="smart"):
+    """Rank one provider for the requested job; Gemini follows Mark LVI's tiers."""
+    if pid != "gemini" or tier not in GEMINI_LADDERS:
+        return ranked_models(pid)
+    prefer = GEMINI_LADDERS[tier]
+    available = [m for m in list_models(pid) if is_chat_model(m)]
+    if not available:
+        return list(prefer)
+    out = []
+    for wanted in prefer:
+        for model in available:
+            if model == wanted and model not in out:
+                out.append(model)
+        for model in available:
+            if model not in out and (model.startswith(wanted + "-") or model.startswith(wanted + ":")):
+                out.append(model)
+    # Keep not-yet-listed chat models as last-resort fallbacks, never ahead of the measured ladder.
+    return out + [m for m in ranked_models(pid) if m not in out]
+
+
+def pick_model_for_tier(pid, tier="smart", override=""):
+    """Honor an explicit pin; otherwise select the measured task-specific ladder."""
+    if override:
+        return override
+    env_model = env(f"{pid.upper()}_MODEL")
+    if env_model:
+        return env_model
+    models = ranked_models_for_tier(pid, tier)
+    ready = [m for m in models if not cooling(pid, m)]
+    return (ready or models or [""])[0]
+
+
+def next_model_for_tier(pid, current, tried, tier="smart"):
+    """Move to the next healthy rung in the same task-specific model ladder."""
+    for model in ranked_models_for_tier(pid, tier):
+        if model != current and model not in tried and not cooling(pid, model):
+            return model
+    return ""
+
+
 # ---- ücretsiz kota takibi: kotası dolan model, kota yenilenene kadar atlanır (her mesajda boşuna denenmez) ----
 _cooldown = {}  # (pid, model) -> bu zamana kadar kullanma
 
