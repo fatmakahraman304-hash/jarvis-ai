@@ -242,6 +242,19 @@
     entries.forEach(([k, v], i) => { const s = U.label(`${k} ${U.fmt(+v, 1)}`, "#e8f8ff", 40); const b = inner.children[i]; s.position.set(b.position.x, b.position.y * 2 + 0.35, 0.4); s.scale.set(0.25 * s.userData.aspect, 0.25, 1); inner.add(s); });
   }
 
+
+  function renderHomePlan(p) {
+    let el = document.getElementById("home-plan");
+    if (!el) { el = document.createElement("section"); el.id = "home-plan"; document.body.appendChild(el); }
+    const w = 520, h = 360, pad = 28, sx = (w - pad * 2) / p.width, sy = (h - pad * 2) / p.depth;
+    const rooms = ["Salon", "Mutfak", "Yatak odası", "Banyo", "Çalışma odası", "Antre", "Çocuk odası", "Depo"].slice(0, p.rooms);
+    const cols = Math.ceil(Math.sqrt(p.rooms)), rows = Math.ceil(p.rooms / cols), cw = p.width / cols, ch = p.depth / rows;
+    const cells = rooms.map((name, i) => { const x = pad + (i % cols) * cw * sx, y = pad + Math.floor(i / cols) * ch * sy;
+      return '<g><rect x="'+x+'" y="'+y+'" width="'+(cw*sx)+'" height="'+(ch*sy)+'" fill="#102b3a" stroke="#42d9ff" stroke-width="2"/><text x="'+(x+cw*sx/2)+'" y="'+(y+ch*sy/2)+'" fill="#e6f8ff" text-anchor="middle" dominant-baseline="middle" font-size="13">'+name+'</text></g>'; }).join("");
+    el.innerHTML = '<header><b>2D KAT PLANI</b><span>'+p.title+' · '+p.width+' × '+p.depth+' m · '+(p.width*p.depth).toFixed(1)+' m²</span><button id="home-plan-close">KAPAT ✕</button></header><svg viewBox="0 0 '+w+' '+h+'" role="img" aria-label="Ölçülü ev kat planı">'+cells+'</svg><p>3D görünüm için modeli fareyle döndürüp yakınlaştır. Oda yerleşimini konuşarak değiştirebilirsin.</p>';
+    el.classList.add("open"); document.getElementById("home-plan-close").onclick = () => el.classList.remove("open");
+  }
+
   // ---- yüzen panel ----
   function renderPanel() {
     const p = document.getElementById("holo-panel");
@@ -339,6 +352,14 @@
     },
     cmd(ui, r, args) {
       if (ui === "holo_design") { const f = D[r.kind] || D.robot; build(f(r.params || {}), ({ building: "Gökdelen", house: "Ev", car: "Araç", robot: "Robot", arm: "Robot kol", rover: "Gezgin robot", rocket: "Roket", bridge: "Köprü", table: "Masa", drone: "Dron" })[r.kind] || r.kind); }
+      else if (ui === "home_design") {
+        const p = r.params || {};
+        const width = Math.max(4, Math.min(30, Number(p.width) || 10));
+        const depth = Math.max(4, Math.min(30, Number(p.depth) || 8));
+        const rooms = Math.max(2, Math.min(8, Number(p.rooms) || 4));
+        build(D.house({ width: width / 2, depth: depth / 2, height: 2.8, rooms: 0, roof: p.roof || "#34495e" }), "Ev tasarımı · " + (r.title || "Yeni proje"));
+        renderHomePlan({ width, depth, rooms, title: r.title || "Yeni ev", style: p.style || "Modern" });
+      }
       else if (ui === "holo_scene") { let parts = args.parts; try { parts = typeof parts === "string" ? JSON.parse(parts) : parts; } catch (e) { return; } build(parts, r.title || args.title); }
       else if (ui === "holo_action") action(r.action, r.value);
       else if (ui === "holo_model") loadModel(r.url, r.ext, r.ad);
