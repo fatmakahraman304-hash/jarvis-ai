@@ -1,11 +1,10 @@
 {
-  "version": "4.6.15",
+  "version": "4.6.24",
   "date": "2026-11-06",
   "notes": [
-    "👥 Yalnızca JARVIS ve FRIDAY kaldı; kaldırılan kişiliğin ses, model, Telegram, makro ve kayıtlı ayarları temizlenir",
-    "🎙 Uyandırma varsayılan açık: sistem başlatma tıklamasından sonra JARVIS veya FRIDAY kelimesini bekleyerek sürekli dinler",
-    "🏙 3D ŞEHİR simülasyonu, komutu, görünümü, CSS ve web/city.js dosyası kaldırıldı; diğer 3D modlar ve fizik hesapları korundu",
-    "🧹 Eski kullanıcı ayarları tek seferlik göçte temizlenir; bilinmeyen kişilik seçimi JARVIS'e döner"
+    "🏠 EV TASARIM modülü kaldırıldı; EV TASARIM komutu ve menüsü SpacePlanner.co arayüzünü açar",
+    "🧹 JARVIS içindeki eski ev tasarım editörü ve ilgili 2D/3D planlama kodları, stilleri ve komut yönlendirmesi temizlendi",
+    "🔗 SpacePlanner sayfası JARVIS içinde açılır; harici sekmede açma ve JARVIS'e dönme seçenekleri eklendi",
+    "🧰 Hologram Atölyesi'nin diğer 3D modelleme özellikleri korundu"
   ]
-
 }

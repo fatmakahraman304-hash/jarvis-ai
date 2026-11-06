@@ -18,6 +18,7 @@
   beam.position.y = 2; table.add(beam);
 
   let model = null, title = "", explodeK = 0, explodeTarget = 0, autoRotate = true, wire = false, selected = null;
+  let walkMode = false, walkKeys = Object.create(null), doorParts = [];
 
   function tint() { const c = U.color(); grid.material.color = c; disc.material.color = c; rings.forEach((r) => (r.material.color = c)); beam.material.color = c; rim.color = c; }
 
@@ -53,10 +54,17 @@
     const root = new T.Group(), inner = new T.Group(); root.add(inner);
     parts.forEach((p, i) => {
       const m = holoMesh(geometry(p), p.color);
-      m.position.fromArray(p.pos || [0, 0, 0]);
-      if (p.rot) m.rotation.set(p.rot[0] * DEG, (p.rot[1] || 0) * DEG, (p.rot[2] || 0) * DEG);
-      m.userData.name = p.name || `parça ${i + 1}`; m.userData.home = m.position.clone();
-      inner.add(m);
+      if (p.hinge) {
+        const pivot = new T.Group(); pivot.position.fromArray(p.pos || [0,0,0]);
+        m.position.set(0.44,0,0); pivot.add(m);
+        pivot.userData.name = p.name || 'Kapı kanadı'; pivot.userData.home = pivot.position.clone();
+        pivot.userData.door = true; pivot.userData.doorOpen = false;
+        inner.add(pivot); doorParts.push(pivot);
+      } else {
+        m.position.fromArray(p.pos || [0,0,0]);
+        if (p.rot) m.rotation.set(p.rot[0]*DEG,(p.rot[1]||0)*DEG,(p.rot[2]||0)*DEG);
+        m.userData.name = p.name || ('parça '+(i+1)); m.userData.home = m.position.clone(); inner.add(m);
+      }
     });
     fit(root, inner);
     model = root; scene.add(model);
@@ -78,7 +86,7 @@
 
   function clear() {
     if (model) { scene.remove(model); U.disposeTree(model); model = null; }
-    selected = null;
+    selected = null; doorParts = [];
   }
 
   // ---- parametrik tasarımlar ----
@@ -243,19 +251,6 @@
   }
 
 
-  function renderHomePlan(p) {
-    let el = document.getElementById("home-plan");
-    if (!el) { el = document.createElement("section"); el.id = "home-plan"; document.body.appendChild(el); }
-    const w = 520, h = 360, pad = 28, sx = (w - pad * 2) / p.width, sy = (h - pad * 2) / p.depth;
-    const rooms = ["Salon", "Mutfak", "Yatak odası", "Banyo", "Çalışma odası", "Antre", "Çocuk odası", "Depo"].slice(0, p.rooms);
-    const cols = Math.ceil(Math.sqrt(p.rooms)), rows = Math.ceil(p.rooms / cols), cw = p.width / cols, ch = p.depth / rows;
-    const cells = rooms.map((name, i) => { const x = pad + (i % cols) * cw * sx, y = pad + Math.floor(i / cols) * ch * sy;
-      return '<g><rect x="'+x+'" y="'+y+'" width="'+(cw*sx)+'" height="'+(ch*sy)+'" fill="#102b3a" stroke="#42d9ff" stroke-width="2"/><text x="'+(x+cw*sx/2)+'" y="'+(y+ch*sy/2)+'" fill="#e6f8ff" text-anchor="middle" dominant-baseline="middle" font-size="13">'+name+'</text></g>'; }).join("");
-    el.innerHTML = '<header><b>2D KAT PLANI</b><span>'+p.title+' · '+p.width+' × '+p.depth+' m · '+(p.width*p.depth).toFixed(1)+' m²</span><button id="home-plan-close">KAPAT ✕</button></header><svg viewBox="0 0 '+w+' '+h+'" role="img" aria-label="Ölçülü ev kat planı">'+cells+'</svg><p>3D görünüm için modeli fareyle döndürüp yakınlaştır. Oda yerleşimini konuşarak değiştirebilirsin.</p>';
-    el.classList.add("open"); document.getElementById("home-plan-close").onclick = () => el.classList.remove("open");
-  }
-
-  // ---- yüzen panel ----
   function renderPanel() {
     const p = document.getElementById("holo-panel");
     if (!model) { p.classList.add("hidden"); return; }
@@ -279,7 +274,15 @@
   }
 
   function action(a, v) {
-    if (a === "explode") explodeTarget = v ? +v : 1;
+    if (a === "walk") {
+      walkMode = true; autoRotate = false;
+      const from=camera.position.clone(),to=new T.Vector3(0,0.85,1.15);
+      U.tween(700,e=>camera.position.lerpVectors(from,to,e));
+      if(controls&&controls.target){controls.target.set(0,0.8,0);controls.update();}
+      U.caption("İç mekân görünümü · fareyle bakış yönünü değiştir");
+    } else if (a === "walk_exit") { walkMode=false; walkKeys=Object.create(null); controls.minDistance=2; U.caption("Gezinti modu kapatıldı");
+    } else if (a === "door_toggle") { const near=doorParts.reduce((best,d)=>{const dist=d.getWorldPosition(new T.Vector3()).distanceTo(camera.position);return !best||dist<best.dist?{door:d,dist}:best;},null); if(near&&near.dist<2.4)near.door.userData.doorOpen=!near.door.userData.doorOpen; else U.caption("Yakında açılabilir kapı yok");
+    } else if (a === "explode") explodeTarget = v ? +v : 1;
     else if (a === "assemble") explodeTarget = 0;
     else if (a === "rotate") autoRotate = v === "" || v == null ? !autoRotate : /on|aç|true|1/.test(v);
     else if (a === "wireframe") { wire = !wire; if (model) model.traverse((o) => o.userData.fill && (o.userData.fill.visible = !wire)); }
@@ -322,6 +325,10 @@
     action,
   };
 
+  window.addEventListener("keydown",e=>{if(!walkMode)return;if(["KeyW","KeyA","KeyS","KeyD","ArrowUp","ArrowDown","ArrowLeft","ArrowRight","ShiftLeft"].includes(e.code)){walkKeys[e.code]=true;e.preventDefault();}if(e.code==="KeyE")action("door_toggle");if(e.code==="Escape")action("walk_exit");});
+  window.addEventListener("keyup", e => { if (walkMode) walkKeys[e.code]=false; });
+  window.addEventListener("blur", () => { walkKeys=Object.create(null); });
+
   JV.worlds.lab = {
     scene,
     enter() {
@@ -330,8 +337,25 @@
       if (!model) build(D.robot({}), "Holografik robot (örnek)");
       renderPanel();
     },
-    exit() { document.getElementById("holo-panel").classList.add("hidden"); },
+    exit() { walkMode=false; walkKeys=Object.create(null); document.getElementById("holo-panel").classList.add("hidden"); },
     update(dt, t) {
+      doorParts.forEach(d=>{const target=d.userData.doorOpen?Math.PI/2:0;d.rotation.y+=(target-d.rotation.y)*Math.min(1,dt*7);});
+      if (walkMode) {
+        const forward = new T.Vector3(); camera.getWorldDirection(forward); forward.y = 0; forward.normalize();
+        const right = new T.Vector3().crossVectors(forward, new T.Vector3(0,1,0)).normalize();
+        const move = new T.Vector3();
+        if (walkKeys.KeyW || walkKeys.ArrowUp) move.add(forward);
+        if (walkKeys.KeyS || walkKeys.ArrowDown) move.sub(forward);
+        if (walkKeys.KeyD || walkKeys.ArrowRight) move.add(right);
+        if (walkKeys.KeyA || walkKeys.ArrowLeft) move.sub(right);
+        if (move.lengthSq()) {
+          move.normalize().multiplyScalar(dt*(walkKeys.ShiftLeft?3.2:1.8));
+          const next=camera.position.clone().add(move);
+          if(model&&model.userData.size){const hw=Math.max(.8,model.userData.size.x*.43),hd=Math.max(.8,model.userData.size.z*.43);next.x=Math.max(-hw,Math.min(hw,next.x));next.z=Math.max(-hd,Math.min(hd,next.z));}
+          next.y=.85;const delta=next.clone().sub(camera.position);camera.position.copy(next);
+          if(controls.target){controls.target.add(delta);controls.target.y=.8;}
+        }
+      }
       rings[0].rotation.z += dt * 0.3; rings[1].rotation.z -= dt * 0.2;
       beam.material.opacity = 0.03 + 0.015 * Math.sin(t * 2);
       if (model) {
@@ -352,14 +376,6 @@
     },
     cmd(ui, r, args) {
       if (ui === "holo_design") { const f = D[r.kind] || D.robot; build(f(r.params || {}), ({ building: "Gökdelen", house: "Ev", car: "Araç", robot: "Robot", arm: "Robot kol", rover: "Gezgin robot", rocket: "Roket", bridge: "Köprü", table: "Masa", drone: "Dron" })[r.kind] || r.kind); }
-      else if (ui === "home_design") {
-        const p = r.params || {};
-        const width = Math.max(4, Math.min(30, Number(p.width) || 10));
-        const depth = Math.max(4, Math.min(30, Number(p.depth) || 8));
-        const rooms = Math.max(2, Math.min(8, Number(p.rooms) || 4));
-        build(D.house({ width: width / 2, depth: depth / 2, height: 2.8, rooms: 0, roof: p.roof || "#34495e" }), "Ev tasarımı · " + (r.title || "Yeni proje"));
-        renderHomePlan({ width, depth, rooms, title: r.title || "Yeni ev", style: p.style || "Modern" });
-      }
       else if (ui === "holo_scene") { let parts = args.parts; try { parts = typeof parts === "string" ? JSON.parse(parts) : parts; } catch (e) { return; } build(parts, r.title || args.title); }
       else if (ui === "holo_action") action(r.action, r.value);
       else if (ui === "holo_model") loadModel(r.url, r.ext, r.ad);
