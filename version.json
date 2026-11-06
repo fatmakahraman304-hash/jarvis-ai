@@ -1,10 +1,9 @@
 {
-  "version": "4.6.8",
+  "version": "4.6.9",
   "date": "2026-11-06",
   "notes": [
-    "🧹 Gemini 2.5 modelleri bu proje için tüm FAST/SMART/SEARCH ve yedek sıralarından çıkarıldı",
-    "⚡ FAST Gemini 3.5 Flash-Lite ile başlar; SMART ve SEARCH Gemini 3.8 Flash ile başlar",
-    "🧯 404 alan model altı saat devre dışı kalır, sonraki isteklerde tekrar denenmez",
-    "🔧 Eski GEMINI_MODEL / kişilik model sabitlemeleri 2.5 ise otomatik temizlenir"
+    "🛠 Windows Proactor bağlantı kapanışında gelen WinError 10054 artık yalnızca bu beklenen durumda sessiz ele alınır",
+    "🔒 Diğer asyncio hataları normal şekilde loglanmaya devam eder",
+    "🧪 Windows bağlantı reseti için regresyon testi eklendi ve GÜNCELLE ön kontrolüne bağlandı"
   ]
 }
