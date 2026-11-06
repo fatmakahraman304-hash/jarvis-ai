@@ -977,6 +977,8 @@ MODEL_MIGRATIONS = [  # (bayrak, eski model kalıbı, .env anahtarları) — her
     ("3.5.3-groq", r"^(llama-3\.3-70b|llama-3\.1-8b|moonshotai/kimi-k2|mixtral|gemma2|llama3-)", ("GROQ_MODEL",)),
     # Clear the stale 3.3 pin; 4.6.7 now selects Gemini by FAST/SMART/SEARCH job tier.
     ("4.6.7-tier-routing", r"^(models/)?gemini-3\.3-", ("GEMINI_MODEL", "GEMINI_VISION_MODEL")),
+    # Google restricts Gemini 2.5 APIs to projects with prior model usage; avoid startup 404s.
+    ("4.6.8-gemini-25-access", r"^(models/)?gemini-2\.5-", ("GEMINI_MODEL", "GEMINI_VISION_MODEL")),
 ]
 
 
