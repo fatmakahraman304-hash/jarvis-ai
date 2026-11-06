@@ -1,14 +1,9 @@
 {
-  "version": "4.6.1",
+  "version": "4.6.2",
   "date": "2026-11-06",
   "notes": [
-    "📱 iPhone/telefon kamerası: start-lan.bat artık otomatik HTTPS açar; HTTP kaynaklı getUserMedia hatası giderildi",
-    "🔒 Kamera API'si yoksa anlaşılır HTTPS/izin yönergesi gösterilir; cryptography bağımlılığı kurulum listesine eklendi",
-    "📱 Telefon ekranları: eski telefonlarda JARVIS adresini sonuna ?rol=ekran ekleyerek aç — JARVIS onlara komut verir",
-    "▶ \"Tüm telefonlarda … aç\" → hepsinde aynı video; \"a | b | c\" → her telefonda farklı video. Yazı göster, sesli konuş, animasyon, durdur",
-    "📞 JARVIS seni ARAR: \"beni ara\" → telefonda (ya da bilgisayarda) gelen arama ekranı çalar; CEVAPLA → mesajı söyler, sesli görüşme başlar",
-    "🎙 Sesli görüşme: \"JARVIS'i ara\" / telefonda 📞 düğmesi — eller serbest, kesintisiz konuşma (sessize al, hoparlör, kapat; \"görüşürüz\" deyince kapanır)",
-    "🔒 SİSTEM KİLİTLİ ekranı: \"sistemi kilitle\" — iki elle çimdikle ve ellerini açarak (kamera) aç; ya da basılı tut. Ayarlar'dan PIN koyarsan PIN gerekir",
-    "⊞ Uygulamalar'a eklendi: 📱 Telefon Ekranları paneli, 📞 JARVIS'i Ara, 🔒 Sistemi Kilitle"
+    "🔊 JARVIS / FRIDAY / ULTRON: Türkçe ve İngilizce özel ses kayıtları desteği eklendi",
+    "🎙 Kayıtlı cümleler birebir ses dosyasından çalınır; diğer cümlelerde Neural TTS devam eder",
+    "📁 Kendi lisanslı ses kayıtlarını data/voice_assets klasörüne ekleyebilirsin"
   ]
 }
