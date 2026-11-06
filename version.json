@@ -1,7 +1,8 @@
 {
-  "version": "4.6.18",
+  "version": "4.6.19",
   "date": "2026-11-06",
   "notes": [
+    "🏠 EV TASARIM PRO: mobilya sürükle-bırak, ölçü/renk/döndür/kopyala/sil, serbest duvar çizimi ve 3D eşleme, ızgara yakalama, oda alanları, kat planı SVG/PDF çıktısı ve çalışan geri al/yinele eklendi",
     "🚪 EV TASARIM: menteşe eksenli animasyonlu kapılar, E ile kapı etkileşimi, Shift hızlı yürüme ve oda sınırları eklendi; JSON içe aktarma dosya boyutu/ölçü/öğe doğrulamasıyla güçlendirildi",
     "🚶 EV TASARIM: 3D iç mekânda WASD/ok tuşlarıyla birinci şahıs gezinti ve JSON proje içe aktarma eklendi",
     "🏠 Gelişmiş EV TASARIM: etkileşimli 2D kat planı, gerçek duvar açıklıklı kapı/pencere geometrisi, mobilya yerleşimi, oda adlarını düzenleme, duvar yüksekliği ve yüzey renkleri, 3D iç mekân/gezinti, tarayıcıda kaydet-yükle ve JSON dışa aktar",
