@@ -40,16 +40,17 @@
 <section id="spaceplanner-view" aria-label="SpacePlanner">
   <div class="spaceplanner-bar">
     <strong>SPACEPLANNER</strong>
-    <span>Harici planlama aracı · JARVIS ayrı penceresi</span>
-    <button type="button" id="spaceplanner-open">SPACEPLANNER'I AÇ ↗</button>
+    <span>Chrome · JARVIS içinde canlı görünüm</span>
+    <button type="button" id="spaceplanner-open">SPACEPLANNER'I AÇ</button>
     <button type="button" id="spaceplanner-close">JARVIS'e dön ✕</button>
   </div>
+  <div id="spaceplanner-live" hidden><img id="spaceplanner-frame" alt="Chrome’daki gerçek SpacePlanner sayfasının canlı görüntüsü"><p id="spaceplanner-live-status" role="status"></p></div>
   <div class="spaceplanner-launch">
     <div class="spaceplanner-mark">⌂</div>
     <h2>SPACEPLANNER</h2>
-    <p>SpacePlanner JARVIS'in kontrol ettiği ayrı pencerede açılır. JARVIS'e ölçüleri söyle; planı çizip sonucu kontrol etsin.</p>
-    <button type="button" id="spaceplanner-open-main">SPACEPLANNER'I JARVIS İÇİNDEN AÇ ↗</button>
-    <small>JARVIS açık kalır ve dinlemeyi sürdürür. Örnek: “JARVIS, 4 metreye 3 metre bir oda çiz.”</small>
+    <p>SpacePlanner gerçek Chrome sekmesinde çalışır; canlı görüntüsü burada görünür. JARVIS’e ölçüleri söyle; çizimi yapıp her adımda kontrol etsin.</p>
+    <button type="button" id="spaceplanner-open-main">SPACEPLANNER'I JARVIS İÇİNDE AÇ</button>
+    <small id="spaceplanner-idle-status">JARVIS açık kalır ve dinlemeyi sürdürür. Örnek: “JARVIS, 4 metreye 3 metre bir oda çiz.”</small>
   </div>
 </section>
 

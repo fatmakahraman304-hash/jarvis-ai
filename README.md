@@ -1,5 +1,11 @@
 # J.A.R.V.I.S. Personal AI
 
+## 4.6.41 — Chrome ve JARVIS içinde SpacePlanner
+
+Windows’ta JARVIS penceresi Chrome uygulama moduyla başlar. SpacePlanner için Chrome kurulu olmalıdır; bulunamazsa Edge’e geçmeden kurulum gerektiğini bildirir. Ayrı otomasyon profili korunur.
+
+SpacePlanner açıldığında gerçek Chrome sekmesi arka planda çalışır; sayfanın canlı görüntüsü JARVIS’in SPACEPLANNER görünümünde yenilenir. Sesle verilen çizim komutları aynı sekmeyi kontrol eder. Görünüm mikrofon ve iletişim alanını kapatmaz. Bu alan canlı izleme içindir; fare/klavye etkileşimini JARVIS araçları yapar. Siteyi engellenen iframe içine gömme veya yerel plan editörü kullanılmaz. Görünümü kapatmak planı kapatmaz; tekrar açmak mevcut sekmeyi korur. Görüntü alma API’si mevcut erişim anahtarı denetimine tabidir, sayfa açmaz ve önbelleğe alınmaz.
+
 ## 4.6.40 — Çizim boyunca gerçek araç çağrısı
 
 SpacePlanner çizim görevinde ilk açılışla sınırlı kalmadan her model turunda gerçek araç çağrısı gerekir. Model işi sürdürecekse aracı kullanır; duracaksa task_report ile son ekranda gördüğü sonucu/engeli ve kalan işleri bildirir. Yalnızca başlangıç düğmesine basmak tamamlanmış çizim sayılmaz: finished raporu için başarılı tuval çizimi veya masaüstü sürüklemesi ve işlem sonrası gözlem gerekir. Bu asgari kontrol tüm odaların doğruluğunu tek başına kanıtlamaz; son ekranı model değerlendirir.

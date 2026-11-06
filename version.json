@@ -1,9 +1,9 @@
 {
-  "version": "4.6.40",
+  "version": "4.6.41",
   "date": "2026-11-06",
   "notes": [
-    "SpacePlanner çiziminde her tur gerçek araç çağrısı gerektirir; metinle başlıyorum deyip durmaz",
-    "Görev sonu raporu gerçek engeli ve kalan işleri bildirir; yalnızca sayfa açmak çizim başarısı sayılmaz",
-    "Başarılı araç adımı ardışık bozuk yanıt sayacını sıfırlar; süre ve adım sınırları korunur"
+    "Windows JARVIS ve SpacePlanner Chrome kullanır; Edge otomatik seçilmez",
+    "SpacePlanner gerçek Chrome sekmesinin canlı görüntüsü JARVIS içinde gösterilir; ayrı pencere açılmaz",
+    "Çizimi sesle yönlendirirken mikrofon ve iletişim alanı erişilebilir kalır"
   ]
 }

@@ -4,6 +4,7 @@ tıklanabilir öğeleri numaralandırır, tıklar, form doldurur, tuşa basar, s
 Güvenlik: şifre alanlarına yazmaz (şifreler için kasadaki vault_type kullanılır); 'satın al, öde, sipariş, gönder, sil, onayla'
 gibi düğmeler ve form gönderme her zaman onay ister. JARVIS profili kendi çerezlerini tutar (data/browser_profile)."""
 import os
+import base64
 import math
 import queue
 import re
@@ -63,9 +64,10 @@ def _ctx():
         st["pw"] = sync_playwright().start()
     prof = DATA / "browser_profile"
     prof.mkdir(parents=True, exist_ok=True)
-    headless = os.environ.get("JARVIS_BROWSER_HEADLESS") == "1"
+    headless = st.get("embedded", False) or os.environ.get("JARVIS_BROWSER_HEADLESS") == "1"
     last = None
-    for ch in ([os.environ.get("JARVIS_BROWSER_CHANNEL")] if os.environ.get("JARVIS_BROWSER_CHANNEL") else []) + ["msedge", "chrome", None]:
+    channels = ["chrome"] if st.get("embedded") or os.name == "nt" else ([os.environ.get("JARVIS_BROWSER_CHANNEL")] if os.environ.get("JARVIS_BROWSER_CHANNEL") else ["chrome", None])
+    for ch in channels:
         try:
             kw = {"headless": headless, "viewport": None if not headless else {"width": 1280, "height": 860}, "locale": "tr-TR"}
             if ch:
@@ -77,7 +79,7 @@ def _ctx():
             return st["ctx"]
         except Exception as e:
             last = e
-    raise RuntimeError(f"Tarayıcı açılamadı: {last}")
+    raise RuntimeError(f"Chrome açılamadı. Google Chrome kurulu olmalı; Chrome kurup JARVIS’i yeniden başlat. Ayrıntı: {last}")
 
 
 def _page():
@@ -355,18 +357,33 @@ def _is_spaceplanner(url):
 def spaceplanner_open():
     """Aynı kontrollü sekmeyi yeniden kullan; mevcut planı yeniden yükleme."""
     def run():
+        _state["embedded"] = True
         ctx = _ctx()
         for p in ctx.pages:
             if not p.is_closed() and _is_spaceplanner(p.url) and not urlparse(p.url).path.startswith("/docs"):
                 _state["page"] = p
                 p.bring_to_front()
-                return _read(4000)
+                return {"ui": "spaceplanner", **_read(4000)}
         # İşçi içinden _call çağırmak kilitlenir; gezinme burada yapılır.
         p = ctx.new_page()
         _state["page"] = p
         p.goto("https://spaceplanner.co/", wait_until="domcontentloaded", timeout=30000)
         p.bring_to_front()
-        return _read(4000)
+        return {"ui": "spaceplanner", **_read(4000)}
+    return _call(run)
+
+
+def spaceplanner_frame():
+    """Same controlled Chrome page, rendered in JARVIS; never launch or navigate from polling."""
+    if not _state.get("ctx"):
+        return {"active": False, "message": "SpacePlanner’ı açmak için AÇ düğmesine bas veya sesle iste."}
+    def run():
+        p = _state.get("page")
+        if not p or p.is_closed() or not _is_spaceplanner(p.url):
+            return {"active": False, "message": "SpacePlanner sekmesi etkin değil; JARVIS’e SpacePlanner’a dön de."}
+        image = p.screenshot(type="jpeg", quality=70, timeout=5000)
+        return {"active": True, "image": "data:image/jpeg;base64," + base64.b64encode(image).decode("ascii"),
+                "title": p.title(), "url": p.url, "message": "Chrome · canlı görünüm · sesle kontrol"}
     return _call(run)
 
 

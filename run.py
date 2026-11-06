@@ -10,6 +10,7 @@ import asyncio
 import os
 import secrets
 import socket
+import shutil
 import subprocess
 import sys
 import threading
@@ -127,13 +128,19 @@ def ensure_cert(ip):
 def open_window(url):
     time.sleep(1.5)
     if sys.platform.startswith("win"):
-        # Edge uygulama modu: adres çubuğu olmayan, ayrı bir JARVIS penceresi
-        for exe in ("msedge", "chrome"):
-            try:
-                subprocess.Popen(f'start "" {exe} --app={url} --window-size=1400,900', shell=True)
-                return
-            except Exception:
-                pass
+        candidates = [shutil.which("chrome")]
+        for root in (os.environ.get("PROGRAMFILES"), os.environ.get("PROGRAMFILES(X86)"), os.environ.get("LOCALAPPDATA")):
+            if root:
+                candidates.append(str(Path(root) / "Google/Chrome/Application/chrome.exe"))
+        for exe in candidates:
+            if exe and Path(exe).is_file():
+                try:
+                    subprocess.Popen([exe, "--app=" + url, "--window-size=1400,900"])
+                    return
+                except OSError:
+                    continue
+        print(f"Google Chrome bulunamadı. Chrome kur veya bu adresi Chrome’da aç: {url}")
+        return
     webbrowser.open(url)
 
 

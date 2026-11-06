@@ -79,6 +79,26 @@
     document.querySelectorAll("[data-view]").forEach((b) => b.classList.toggle("on", b.dataset.view === v));
   };
   JV.getView = () => view;
+  let plannerPollBusy = false;
+  async function refreshPlanner() {
+    if (plannerPollBusy || document.hidden || !document.body.classList.contains("view-design")) return;
+    plannerPollBusy = true;
+    try {
+      const frame = await JV.api("/api/spaceplanner/frame");
+      const live = document.getElementById("spaceplanner-live");
+      const image = document.getElementById("spaceplanner-frame");
+      const landing = document.querySelector(".spaceplanner-launch");
+      document.getElementById("spaceplanner-live-status").textContent = frame.message || "";
+      document.getElementById("spaceplanner-idle-status").textContent = frame.message || "SpacePlanner açılmayı bekliyor.";
+      live.hidden = !frame.active;
+      landing.hidden = !!frame.active;
+      if (frame.active && frame.image && frame.image.startsWith("data:image/jpeg;base64,")) image.src = frame.image;
+      else image.removeAttribute("src");
+    } catch (e) {
+      document.getElementById("spaceplanner-live-status").textContent = "Canlı görüntü bağlantısı kesildi; yeniden deneniyor.";
+    } finally { plannerPollBusy = false; }
+  }
+  setInterval(refreshPlanner, 1200);
   const spacePlannerClose = document.getElementById("spaceplanner-close");
   if (spacePlannerClose) spacePlannerClose.onclick = () => JV.setView("core");
   const openSpacePlanner = () => {
@@ -102,7 +122,7 @@
     if (ui === "command") return JV.command && (r.open === false ? JV.command.close() : JV.command.open());
     if (ui === "panel") return JV.openPanel && JV.openPanel(r.panel, r.open);
     if (ui.startsWith("globe") || ui === "map") { JV.setView("globe"); return W.globe.cmd(ui, r, args); }
-    if (ui === "home_design" || ui === "spaceplanner") return JV.setView("design");
+    if (ui === "home_design" || ui === "spaceplanner") { JV.setView("design"); refreshPlanner(); return; }
     if (ui.startsWith("holo") || ui === "chart3d") { JV.setView("lab"); return W.lab.cmd(ui, r, args); }
     if (ui === "sim") { JV.setView("science"); return W.science.cmd(r.kind, r.params || {}, r); }
     if (ui === "space") { JV.setView("space"); return W.space.cmd(r); }
