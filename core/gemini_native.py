@@ -47,6 +47,11 @@ def _schema(s):
             v = {pk: _schema(pv) for pk, pv in (v or {}).items()}
         elif k == "items":
             v = _schema(v)
+        elif k == "enum":
+            # Gemini rejects empty enum entries even in an optional tool field.
+            v = [x for x in v if x is not None and (not isinstance(x, str) or x.strip())] if isinstance(v, list) else v
+            if not v:
+                continue
         elif k == "type" and isinstance(v, list):  # ["string","null"] → string
             v = next((t for t in v if t != "null"), "string")
         out[k] = v
