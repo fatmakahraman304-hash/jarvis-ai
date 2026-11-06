@@ -577,10 +577,10 @@ def vision(prompt, image_bytes, mime="image/png", system="", light=False):
                 if e.status == 429:
                     mark_exhausted(pid, model, e.body)
                 elif e.status in (500, 502, 503, 504):
-                    _cooldown[(pid, model)] = time.time() + 120
+                    _cooldown[(pid, model)] = time.time() + (30 * 60 if e.status in (503, 504) else 120)
                 if e.status not in (404, 429, 500, 502, 503, 504) or not PROVIDERS[pid].get("prefer"):
                     break
-                model = next_model(pid, model, tried)
+                model = (next_model_for_tier(pid, model, tried, "smart") if pid == "gemini" else next_model(pid, model, tried))
     raise RuntimeError("Görüntü analizi yapılamadı. " + ", ".join(errors))
 
 
@@ -636,7 +636,7 @@ def route(order, messages, tools, model_override="", light=False, tier="legacy",
             model = pick_model(pid, override)
         if light and not override:
             model = light_model(pid) or model
-        call_timeout = int(timeout or GEMINI_TIMEOUTS.get(tier, 20))
+        call_timeout = int(timeout or (10 if light else GEMINI_TIMEOUTS.get(tier, 20)))
         if not model:
             continue
         use_tools = tools
