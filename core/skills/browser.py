@@ -543,45 +543,85 @@ def browser_close():
     return _call(run)
 
 
+# Routine browsing should not interrupt a multi-step design task. These
+# checks are intentionally independent of unrestricted desktop auto_control.
+SENSITIVE_UI = re.compile(
+    r"accept|agree|consent|terms|privacy|authorize|authorise|permission|grant|"
+    r"izin ver|kabul|koşullar|şartlar|gizlilik|yetkilendir|"
+    r"continue with google|google ile|sign.?in|log.?in|sign.?up|register|"
+    r"hesap|giriş|oturum aç|kimlik doğrula|verify|verification|"
+    r"export|download|share|render|credit|print|dışa|indir|paylaş|yazdır",
+    re.I,
+)
+SENSITIVE_FIELD = re.compile(
+    r"password|passcode|otp|verification|two.?factor|secret|token|"
+    r"email|e.?posta|phone|telefon|iban|card|credit|cvv|billing|"
+    r"address|adres|identity|kimlik|şifre|parola|ödeme|consent|terms|koşul",
+    re.I,
+)
+
+
 def _click_crit(a):
-    # SpacePlanner'da rutin çizim araçları kesintisiz kullanılabilir.
-    # Hesap, paylaşım, çıktı ve ücret etkili kontroller yine onay ister.
-    if _state["page"]:
+    target = str(a.get("target", ""))
+    if RISKY.search(target) or SENSITIVE_UI.search(target):
+        return True
+    if _state.get("page"):
         try:
-            def planner_check():
+            def classify():
                 p = _page()
-                if not _is_spaceplanner(p.url):
-                    return None
-                label = _label_of(p, a.get("target", ""))
-                return bool(RISKY.search(label) or re.search(
-                    r"export|download|share|sign.?in|log.?in|sign.?up|register|render|credit|print|dışa|indir|paylaş|giriş|hesap|yazdır", label, re.I))
-            decision = _call(planner_check, timeout=10)
+                label = _label_of(p, target)
+                if RISKY.search(label) or SENSITIVE_UI.search(label):
+                    return True
+                # Keep the existing uninterrupted SpacePlanner drawing workflow.
+                if _is_spaceplanner(p.url):
+                    return False
+                # Only trusted, currently resolvable DOM controls can be automatic.
+                _loc(p, target)
+                host = (urlparse(p.url).hostname or "").lower()
+                if host.startswith(("accounts.", "login.", "auth.")):
+                    return True
+                if load_settings().get("routine_browser_auto", True):
+                    return False
+                return None
+            decision = _call(classify, timeout=10)
             if decision is not None:
                 return decision
         except Exception:
+            # When an element cannot be inspected, do not waive confirmation.
             return True
-    if RISKY.search(str(a.get("target", ""))):
-        return True
-    if str(a.get("target", "")).strip().lstrip("#[").rstrip("]").isdigit() and _state["page"]:
-        try:
-            if RISKY.search(_call(lambda: _label_of(_page(), a.get("target")), timeout=10)):
-                return True
-        except Exception:
-            pass
     return not load_settings().get("auto_control", False)
 
 
 def _fill_crit(a):
     if str(a.get("submit", "")).lower() in ("true", "1"):
         return True
-    if _state["page"]:
+    if _state.get("page"):
         try:
-            def planner_field():
+            def classify():
                 p = _page()
-                return _is_spaceplanner(p.url) and _loc(p, a.get("field", "")).evaluate(
-                    "e => e.tagName === 'SELECT' || e.type === 'number' || e.type === 'range'")
-            if _call(planner_field, timeout=10):
-                return False
+                loc = _loc(p, a.get("field", ""))
+                field = loc.evaluate("""e => ({
+                    kind: e.tagName === 'SELECT' ? 'select' : e.tagName === 'TEXTAREA' ? 'textarea' : (e.type || 'text').toLowerCase(),
+                    hint: [e.name, e.id, e.getAttribute('aria-label'), e.getAttribute('placeholder'), e.getAttribute('autocomplete')].filter(Boolean).join(' ')
+                })""")
+                if not isinstance(field, dict):
+                    return True
+                kind = str(field.get("kind", "")).lower()
+                hint = str(field.get("hint", ""))
+                host = (urlparse(p.url).hostname or "").lower()
+                if (kind in {"password", "email", "tel", "file", "hidden"}
+                        or SENSITIVE_FIELD.search(hint)
+                        or host.startswith(("accounts.", "login.", "auth."))):
+                    return True
+                if _is_spaceplanner(p.url) and kind in {"select", "number", "range"}:
+                    return False
+                if (load_settings().get("routine_browser_auto", True)
+                        and kind in {"text", "search", "textarea", "number", "range", "select"}):
+                    return False
+                return None
+            decision = _call(classify, timeout=10)
+            if decision is not None:
+                return decision
         except Exception:
             return True
     return not load_settings().get("auto_control", False)
