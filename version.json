@@ -4,6 +4,6 @@
   "notes": [
     "⚡ Uzun araç işlemlerinde model cevabını beklerken anında kısa sesli karşılık",
     "🧠 Konuşma geçmişi için 24.000 karakterlik kayan bağlam penceresi; tam SQLite geçmişi korunur",
-    "🛡 Güncelleme öncesi hızlı konuşma testleri de çalıştırılır"
+    "🧪 Hızlı konuşma regresyon testi eklendi; güncelleyici sonraki sürümlerde bunu ön kontrolde çalıştırır"
   ]
 }
