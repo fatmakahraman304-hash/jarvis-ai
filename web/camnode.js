@@ -37,9 +37,20 @@
     const c = document.createElement("canvas"), cx = c.getContext("2d"), m = document.createElement("canvas"), mx = m.getContext("2d", { willReadFrequently: true });
     m.width = 32; m.height = 24;
     async function start() {
+      // iOS Safari, güvensiz HTTP/IP sayfalarında mediaDevices API'sini hiç sunmayabilir.
+      if (!window.isSecureContext || !navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== "function") {
+        $("#cn-note").textContent = "Kamera için güvenli HTTPS bağlantısı gerekli. JARVIS'i bilgisayarda yeniden başlat; start-lan.bat artık HTTPS açar. Ekrandaki yeni https:// adresini telefonda kullan ve ilk sertifika uyarısında Gelişmiş > Devam et seç.";
+        $("#cn-live").textContent = "⚠ GÜVENLİ HTTPS GEREKLİ";
+        return;
+      }
       try {
         stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: $("#cn-face").value, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
-      } catch (e) { $("#cn-note").textContent = "Kamera açılamadı: " + e.message + " (kamera yalnızca https:// adreste çalışır — bilgisayarda start-vr.bat)"; return; }
+      } catch (e) {
+        const reason = e && e.name === "NotAllowedError" ? "Kamera izni verilmedi. Safari site ayarlarından Kamera: İzin Ver seç." : (e && e.message) || "Bilinmeyen kamera hatası";
+        $("#cn-note").textContent = "Kamera açılamadı: " + reason;
+        $("#cn-live").textContent = "⚠ KAMERA AÇILAMADI";
+        return;
+      }
       v.srcObject = stream; LS("jv_role", "kamera"); $("#cn-start").textContent = "DURDUR";
       try { wake = await navigator.wakeLock.request("screen"); } catch (e) { $("#cn-note").textContent = "Ekran açık tutulamıyor: telefonda otomatik kilidi kapat."; }
       tick();
