@@ -641,7 +641,9 @@ def route(order, messages, tools, model_override="", light=False, tier="legacy",
             continue
         use_tools = tools
         used = []
-        for attempt in range(7):
+        max_fallbacks = (min(7, max(0, len(ranked_models_for_tier(pid, tier)) - 1))
+                         if pid == "gemini" and tier in GEMINI_LADDERS else 3)
+        for attempt in range(max_fallbacks + 1):
             emitted = False
             try:
                 yield ("provider", {"provider": pid, "model": model, "label": PROVIDERS[pid]["label"]})
@@ -673,7 +675,7 @@ def route(order, messages, tools, model_override="", light=False, tier="legacy",
                 if e.status in (500, 502, 503, 504):
                     # Mirror Mark LVI: rest unavailable models, then advance the ladder immediately.
                     _cooldown[(pid, model)] = time.time() + (30 * 60 if e.status in (503, 504) else 120)
-                if e.status in (403, 404, 429, 500, 502, 503, 504) and len(used) < 3:
+                if e.status in (403, 404, 429, 500, 502, 503, 504) and len(used) < max_fallbacks:
                     # bu model kotada/erişilemez: aynı sağlayıcının bir sonraki en iyi modeline geç (ör. 3.8 → 3.6)
                     nm = (next_model_for_tier(pid, model, used, tier) if pid == "gemini" and tier in GEMINI_LADDERS else next_model(pid, model, used))
                     if nm:
