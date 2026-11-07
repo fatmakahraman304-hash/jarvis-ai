@@ -38,6 +38,10 @@ SOURCE_PATCHES['packages/render3d/src/TopViewIconRenderer.ts'].append((
     '      context.drawImage(this.renderer.domElement, 0, 0, canvas.width, canvas.height);',
     '      context.drawImage(this.renderer.domElement, 0, this.renderer.domElement.height - canvas.height, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);',
 ))
+SOURCE_PATCHES['packages/render3d/src/TopViewIconRenderer.test.ts'] = [(
+    '    void updateStyle;\n  }\n  setPixelRatio(ratio: number): void {',
+    '    void updateStyle;\n  }\n  setViewport(_x: number, _y: number, _width: number, _height: number): void {}\n  setPixelRatio(ratio: number): void {',
+)]
 
 BUNDLE_PATCHES = (
     ('m.setAreaVisible(!0),m.setLevel(g.getSelectedLevel())',
