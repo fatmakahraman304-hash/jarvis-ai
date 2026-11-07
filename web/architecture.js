@@ -33,7 +33,7 @@
    if(next.job){
     const job=next.job;let result,error;
     try{JV.setView('design');await init();result=await bridge().run(job.command);if(['apply','undo','redo'].includes(job.command.op))await save();}
-    catch(e){error=e.message;status.textContent='İşlem uygulanmadı / kayıt başarısız: '+error;}
+    catch(e){console.error('[architecture] command failed: '+job.command.op, e && (e.stack || e.message || e));error=e.message;status.textContent='İşlem uygulanmadı / kayıt başarısız: '+error;}
     await json('ack',{client,id:job.id,result,error});
    }else if(loaded&&Date.now()-lastSave>4000&&bridge().modified())await save();
   }catch(e){status.textContent=e.message;}finally{running=false;}
