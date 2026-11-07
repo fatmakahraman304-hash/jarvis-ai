@@ -60,7 +60,7 @@
  async function studioRun(op,args={}){
   if(studioBusy)return;studioBusy=true;studioButtons.forEach(b=>b.disabled=true);
   status.textContent='JARVIS tasarımı uyguluyor…';
-  try{await init();const r=await json('run',{op,args});if(!r?.result?.verified)throw Error('Tasarım işlemi doğrulanamadı');updateMetrics();status.textContent='Tasarım uygulandı ve kaydedildi.';}
+  try{await init();const r=await json('run',{op,args});if(!r?.verified)throw Error('Tasarım işlemi doğrulanamadı');updateMetrics();status.textContent='Tasarım uygulandı ve kaydedildi.';}
   catch(e){status.textContent='Tasarım hatası: '+e.message;console.warn('[studio] '+op,e);}
   finally{studioBusy=false;studioButtons.forEach(b=>b.disabled=false);}
  }
