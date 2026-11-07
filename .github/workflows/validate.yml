@@ -19,6 +19,11 @@ jobs:
           node --check web/lab.js
           node --check web/app.js
           node --check web/worlds.js
+          node --check web/gesture.js
+          node --check web/handfx.js
+          node --check web/ardesk.js
+          node --check web/shell.js
+          node --check web/library.js
           node --check web/preferences.js
           node --check web/stt.js
           node tests/test_continuous_listening.js
@@ -64,5 +69,7 @@ jobs:
         run: python tests/test_browser_observe.py
       - name: Check SpacePlanner settings UI
         run: python tests/test_spaceplanner_settings_ui.py
+      - name: Verify isolated camera and AR modes
+        run: python tests/test_camera_mode_isolation.py
       - name: Validate release metadata
         run: node -e "const v=require('./version.json'); if(!/^\\d+\\.\\d+\\.\\d+$/.test(v.version)) process.exit(1); console.log('JARVIS version:',v.version)"
