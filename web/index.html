@@ -39,7 +39,7 @@
 
 <section id="architecture-view" aria-label="Mimari tasarım">
  <header><strong>JARVIS · TASARIM STÜDYOSU</strong><span id="architecture-status" role="status">2D plan · gerçek 3D modeller · yerel proje</span><button id="architecture-expand" type="button" aria-pressed="false" title="Mimari çalışma alanını genişlet">⛶ Tam ekran</button><button id="architecture-download">Projeyi indir</button><button id="architecture-close">JARVIS’e dön</button></header>
- <iframe id="architecture-frame" title="SweetHomeJS 2D ve 3D mimari editör" allow="clipboard-write" loading="lazy"></iframe>
+ <div id="architecture-tools" role="toolbar" aria-label="JARVIS mimari araçları"><label>GENİŞLİK <input id="studio-width" type="number" min="7" max="40" value="10" step="1"></label><label>DERİNLİK <input id="studio-depth" type="number" min="7" max="40" value="12" step="1"></label><label>YATAK ODASI <select id="studio-bedrooms"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option></select></label><label>BANYO <select id="studio-bathrooms"><option selected>1</option><option>2</option><option>3</option></select></label><button id="studio-house" type="button">⌂ Ölçülü ev oluştur</button><button id="studio-undo" type="button">↶ Geri al</button><button id="studio-redo" type="button">↷ İleri al</button><span id="studio-metrics" aria-live="polite">Proje hazırlanıyor…</span></div>\n <iframe id="architecture-frame" title="SweetHomeJS 2D ve 3D mimari editör" allow="clipboard-write" loading="lazy"></iframe>
  <footer>Metre cinsinden ölçülü model · JARVIS’e sesle değişiklik söyle veya araçları elle kullan · <a href="/api/architecture/source" target="_blank">GPL kaynak ve lisanslar</a></footer>
 </section>
 
