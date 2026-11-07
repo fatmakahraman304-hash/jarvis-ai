@@ -1,5 +1,5 @@
 """Real 2D/3D editor, local catalog, transaction rollback and durable project roundtrip."""
-import json,os,socket,subprocess,sys,tempfile,time,urllib.request
+import json,os,socket,subprocess,sys,tempfile,time,urllib.request,re
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parent.parent
@@ -21,12 +21,16 @@ try:
   if os.environ.get('JARVIS_TEST_CHROMIUM'):kwargs['executable_path']=os.environ['JARVIS_TEST_CHROMIUM']
   b=pw.chromium.launch(**kwargs)
   try:
-   p=b.new_page(viewport={'width':1600,'height':1000});errors=[];p.on('pageerror',lambda e:errors.append(str(e)))
-   p.route('**/*',lambda r:r.continue_() if r.request.url.startswith(base) else r.abort())
+   p=b.new_page(viewport={'width':1600,'height':1000});errors=[];requests=[]
+   p.on('pageerror',lambda e:errors.append(str(e)))
+   p.on('requestfailed',lambda r:requests.append(f'{r.method} {r.url}: {r.failure}'))
+   # Block external resources, but let localhost requests run natively: routing
+   # every poll through Python can starve the synchronous APIRequestContext test.
+   p.route(re.compile(r'^https?://(?!127\.0\.0\.1:'+str(port)+r'(?:/|$))'),lambda r:r.abort())
    p.goto(base);p.wait_for_function('window.JV && JV.state.personas.length>0');p.click('#boot-btn');p.wait_for_timeout(1200)
    def run(op,args=None):
     response=p.request.post(base+'/api/architecture/run',data={'op':op,'args':args or {}},timeout=65000)
-    assert response.ok,response.text()
+    assert response.ok, f'{response.text()}\nJS errors: {errors}\nFailed requests: {requests}\nArchitecture status: {p.locator("#architecture-status").text_content()}'
     return response.json()['result']
    # First voice/model command must open the editor from the core view automatically.
    catalog=run('catalog');assert len(catalog)>80
