@@ -64,6 +64,19 @@
   catch(e){status.textContent='Tasarım hatası: '+e.message;console.warn('[studio] '+op,e);}
   finally{studioBusy=false;studioButtons.forEach(b=>b.disabled=false);}
  }
+ const presets={compact:{width:8,depth:9,bedrooms:1,bathrooms:1},family:{width:10,depth:12,bedrooms:2,bathrooms:1},villa:{width:16,depth:18,bedrooms:4,bathrooms:2}};
+ const preset=document.getElementById('studio-preset');
+ preset.onchange=()=>{
+  const p=presets[preset.value];if(!p)return;
+  for(const [key,value] of Object.entries(p)){
+   const id=key==='bedrooms'?'studio-bedrooms':key==='bathrooms'?'studio-bathrooms':'studio-'+key;
+   document.getElementById(id).value=String(value);
+  }
+  studioMetrics.textContent='Şablon hazır · '+p.width*p.depth+' m² dış alan';
+ };
+ for(const id of ['studio-width','studio-depth','studio-bedrooms','studio-bathrooms']){
+  document.getElementById(id).addEventListener('change',()=>{preset.value='custom';});
+ }
  studioHouse.onclick=()=>{
   const width=Number(document.getElementById('studio-width').value),depth=Number(document.getElementById('studio-depth').value);
   const bedrooms=Number(document.getElementById('studio-bedrooms').value),bathrooms=Number(document.getElementById('studio-bathrooms').value);
