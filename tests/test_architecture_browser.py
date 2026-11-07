@@ -26,7 +26,7 @@ try:
    probe.goto(base+'/designer/',wait_until='domcontentloaded',timeout=30000)
    probe.wait_for_function('window.jarvisDesigner && typeof window.jarvisDesigner.run === "function"',timeout=30000)
    probe.close()
-   p=b.new_page(viewport={'width':1600,'height':1000});errors=[];requests=[]
+   p=b.new_page(viewport={'width':1600,'height':1000});errors=[];requests=[];measurements=[]
    p.on('pageerror',lambda e:errors.append(str(e)))
    p.on('crash',lambda _:errors.append('Page/renderer crashed'))
    p.on('console',lambda m:errors.append('Browser '+m.type+': '+m.text[:1800]) if m.type=='error' else None)
@@ -36,8 +36,10 @@ try:
    p.route(re.compile(r'^https?://(?!127\.0\.0\.1:'+str(port)+r'(?:/|$))'),lambda r:r.abort())
    p.goto(base);p.wait_for_function('window.JV && JV.state.personas.length>0');p.click('#boot-btn');p.wait_for_timeout(1200)
    def run(op,args=None):
+    started=time.perf_counter()
     response=p.request.post(base+'/api/architecture/run',data={'op':op,'args':args or {}},timeout=65000)
     assert response.ok, f'{response.text()}\nJS errors: {errors}\nFailed requests: {requests}'
+    measurements.append({'operation':op,'elapsed_ms':round((time.perf_counter()-started)*1000,2)})
     return response.json()['result']
    # First voice/model command must open the editor from the core view automatically.
    print('Opening model catalog from real UI...',flush=True)
@@ -80,6 +82,25 @@ try:
    assert run('state')['rooms'][0]['name']=='Yeni Salon'
    run('undo');assert run('state')['rooms'][0]['name']!='Yeni Salon'
    run('redo');assert run('state')['rooms'][0]['name']=='Yeni Salon'
+   p.locator('#studio-inspect').click()
+   p.wait_for_function("document.querySelector('#studio-object').options.length>1")
+   editable=run('state',{'details':True})['furniture'][0]
+   p.locator('#studio-object').select_option(editable['id'])
+   p.locator('#studio-properties input[name="name"]').fill('Ölçülü test mobilyası')
+   p.locator('#studio-properties input[name="x"]').fill('2.75')
+   p.locator('#studio-properties input[name="angle"]').fill('45')
+   p.locator('#studio-properties button').click()
+   p.wait_for_function("document.querySelector('#studio-object-status').textContent.includes('doğrulandı')",timeout=65000)
+   changed=next(f for f in run('state',{'details':True})['furniture'] if f['id']==editable['id'])
+   assert changed['name']=='Ölçülü test mobilyası' and abs(changed['x']-2.75)<.001 and abs(changed['angle']-45)<.001,changed
+   p.locator('#studio-inspect').click()
+   for selector,mode in [('#studio-walk','walk'),('#studio-top','top')]:
+    p.locator(selector).click()
+    p.wait_for_function("document.querySelector('#studio-house').disabled===false",timeout=65000)
+    assert run('state')['view_3d']==mode
+   with p.expect_download() as exported:p.locator('#studio-svg').click()
+   svg=Path(exported.value.path()).read_text()
+   assert '<svg' in svg and 'Ölçülü test mobilyası' in svg and 'rotate(45' in svg,svg[:1000]
    count=run('state')['counts']['walls']
    bad=p.request.post(base+'/api/architecture/run',data={'op':'apply','args':{'operations':[{'kind':'wall','start':[0,0],'end':[2,0]},{'kind':'INVALID'}]}},timeout=65000)
    assert bad.status==400
@@ -89,15 +110,46 @@ try:
    assert p.locator('#mic').is_visible() and p.locator('#send').is_visible()
    box=p.locator('#architecture-view').bounding_box();chat=p.locator('#right').bounding_box();assert box['x']+box['width']<=chat['x']
    Path('test-results').mkdir(exist_ok=True);p.screenshot(path='test-results/architecture-2d3d.png',full_page=True)
+   for width,height in [(1920,1080),(2560,1440),(3840,2160)]:
+    p.set_viewport_size({'width':width,'height':height})
+    p.wait_for_timeout(300)
+    assert p.locator('#studio-house').is_visible() and p.locator('#studio-svg').is_visible()
+    assert p.locator('#architecture-frame').bounding_box()['height']>300
+    p.screenshot(path=f'test-results/studio-{width}x{height}.png')
+   p.set_viewport_size({'width':1600,'height':1000})
    p.reload();p.wait_for_function('window.JV && JV.state.personas.length>0');p.click('#boot-btn');p.wait_for_timeout(1000);p.evaluate("JV.setView('design')")
    p.wait_for_function("document.querySelector('#architecture-frame').contentWindow.jarvisDesigner",timeout=45000)
    # Browser reload releases the old client lease after ten seconds.
    p.wait_for_timeout(10500)
    restored=run('state');assert restored['counts']['rooms']==6 and restored['rooms'][0]['name']=='Yeni Salon'
+   # Restore a previous version through the visible controls. The replaced
+   # current project must remain recoverable as a newly retained snapshot.
+   versions=p.request.get(base+'/api/architecture/history').json()
+   assert versions
+   p.locator('#studio-history').focus()
+   p.wait_for_function("document.querySelector('#studio-history').options.length>1")
+   target=versions[0]['revision']
+   p.locator('#studio-history').select_option(str(target))
+   prior_revision=p.request.get(base+'/api/architecture/info').json()['revision']
+   p.once('dialog',lambda dialog:dialog.accept())
+   p.locator('#studio-restore').click()
+   p.wait_for_function("document.querySelector('#studio-house').disabled===false",timeout=65000)
+   assert p.request.get(base+'/api/architecture/info').json()['revision']>prior_revision
+   assert any(row['revision']>=prior_revision for row in p.request.get(base+'/api/architecture/history').json())
    # Both new persistent stores are available through the existing memory API.
    mem=p.request.get(base+'/api/memory').json();assert 'tasks' in mem and 'projects' in mem
    assert p.locator('#o-initiative').count()==1
-   # The deliberately rejected INVALID transaction logs a browser console error.\n   # External resources are intentionally aborted by the test's offline route.\n   unexpected=[e for e in errors if not (\n    e=='Browser error: Failed to load resource: net::ERR_FAILED' or\n    (e.startswith('Browser error: [architecture] command failed: apply ') and\n     'Unsupported architecture operation: INVALID' in e)\n   )]\n   assert not unexpected,unexpected\n   print('Real editor: 90+ model catalog, measured 10x12 house, 2D+3D triangles, update/undo/redo, atomic rollback, saved/reloaded SH3D, visible voice/chat.')
+   # Only expected errors from the deliberately rejected transaction and
+   # the intentionally offline external-resource route may be ignored.
+   unexpected=[e for e in errors if not (
+    e=='Browser error: Failed to load resource: net::ERR_FAILED' or
+    (e.startswith('Browser error: [architecture] command failed: apply ') and
+     'Unsupported architecture operation: INVALID' in e) or
+    e=='Browser error: Failed to load resource: the server responded with a status of 400 (Bad Request)'
+   )]
+   Path('test-results/architecture-timings.json').write_text(json.dumps({'environment':'Linux Chromium; software WebGL, no live model/voice','measurements':measurements},indent=2))
+   assert not unexpected,unexpected
+   print('Real editor: catalog, measured house, 2D+3D geometry, inspector, cameras, SVG, undo/redo, atomic rollback and durable SH3D.')
   finally:b.close()
 finally:
  server.terminate()

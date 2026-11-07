@@ -725,3 +725,23 @@ body.view-design.architecture-expanded #architecture-view footer{padding:8px 16p
 #architecture-tools button:disabled{opacity:.45;cursor:wait}
 #studio-metrics{margin-left:auto;color:#8de4ee;font-size:11px;font-family:var(--mono)}
 @media(max-width:1100px){#architecture-tools{gap:5px;padding:7px}#architecture-tools label{font-size:9px}#studio-metrics{width:100%;margin-left:0}}
+
+/* The editor owns its canvases; its host uses flexible layout at every DPI. */
+#studio-workspace{display:flex;flex:1;min-height:0;position:relative;container-type:inline-size}
+#studio-workspace #architecture-frame{min-width:0;height:100%}
+#studio-inspector{flex:0 0 252px;width:252px;box-sizing:border-box;overflow:auto;background:#102537;color:#e8f6ff;padding:18px;border-left:1px solid #365b70;font:13px/1.5 system-ui,sans-serif}
+#studio-inspector[hidden]{display:none}
+#studio-inspector h2{font-size:16px;margin:0 0 8px}
+#studio-inspector p{font-size:12px;color:#b2c9d8;overflow-wrap:anywhere}
+#studio-inspector label{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+#studio-inspector input,#studio-inspector select{box-sizing:border-box;width:100%;min-height:34px;padding:5px 8px;background:#081a29;color:#effaff;border:1px solid #4f7289;border-radius:5px;font:inherit}
+#studio-inspector fieldset{margin:16px 0 0;padding:0;border:0;min-width:0}
+#studio-inspector fieldset:disabled{opacity:.55}
+.studio-fields{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+#studio-inspector button{width:100%;font:inherit}
+#architecture-view :focus-visible{outline:2px solid #6be6ff;outline-offset:2px}
+#architecture-tools label{font-size:11px;letter-spacing:.025em}
+#architecture-tools input,#architecture-tools select{font-size:12px}
+#architecture-tools #studio-preset{width:145px}
+@container(max-width:1000px){#studio-inspector{position:absolute;right:0;top:0;bottom:0;z-index:5;box-shadow:-8px 0 28px #0004}}
+@media(prefers-reduced-motion:reduce){#architecture-view *{transition:none!important;animation:none!important}}

@@ -130,6 +130,24 @@ def project_info():
     return json.loads(REPORT.read_text()) if REPORT.exists() else {'revision':0,'report':None}
 
 
+def project_history():
+    """Bounded local snapshots, newest first; never expose arbitrary paths."""
+    with _LOCK:
+        return [{'revision': int(p.stem[1:]), 'bytes': p.stat().st_size,
+                 'saved_at': p.stat().st_mtime}
+                for p in sorted((STORE / 'history').glob('r[0-9]*.sh3d'), reverse=True)
+                if p.stem[1:].isdigit()][:50]
+
+
+def project_version(revision):
+    if isinstance(revision, bool) or not str(revision).isdigit() or int(revision) < 1:
+        raise ValueError('Geçersiz proje sürümü.')
+    path = STORE / 'history' / f'r{int(revision):06}.sh3d'
+    if not path.is_file():
+        raise ValueError('Kayıtlı proje sürümü bulunamadı.')
+    return path
+
+
 def house_operations(width=10,depth=12,bedrooms=2,bathrooms=1,name='Ev projesi',replace=False):
     width,depth=float(width),float(depth)
     if not all(math.isfinite(x) and 7<=x<=40 for x in (width,depth)):raise ValueError('Ev ölçüleri 7–40 metre olmalı.')

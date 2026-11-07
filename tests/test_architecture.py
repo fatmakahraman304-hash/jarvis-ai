@@ -44,6 +44,18 @@ class WorkspaceTests(unittest.TestCase):
   with self.assertRaises(ValueError):a.save_project(payload,before,{})
   a.save_project(payload,before+1,{})
   self.assertTrue((a.STORE/'history'/f'r{before+1:06}.sh3d').exists())
+ def test_history_is_bounded_and_revision_cannot_traverse_files(self):
+  b=io.BytesIO()
+  with zipfile.ZipFile(b,'w') as z:z.writestr('Home.xml','<home version="7500"/>')
+  before=a.project_info()['revision']
+  a.save_project(b.getvalue(),before,{})
+  a.save_project(b.getvalue(),before+1,{})
+  rows=a.project_history()
+  self.assertLessEqual(len(rows),50)
+  self.assertEqual(rows[0]['revision'],before+1)
+  self.assertEqual(a.project_version(before+1).read_bytes(),b.getvalue())
+  for bad in ['../current','1/../../current','-1','0',True,'1.5',9999999]:
+   with self.assertRaises(ValueError):a.project_version(bad)
  def test_room_words_do_not_hijack_camera_or_smart_home_requests(self):
   for text in ['Mutfak ışığını aç','Salondaki kameraya bak','Kapıyı kilitle','Chrome penceresini aç']:
    self.assertFalse(brain._architecture_requested(text),text)

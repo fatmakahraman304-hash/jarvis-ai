@@ -37,6 +37,25 @@ değişir. MİMARİ görünümünde mikrofon ve sohbet açık kalır.
 banyolu ev tasarla; kapı, pencere ve temel mobilyaları yerleştir.” Ardından “Salonun
 zeminini ahşap tonuna çevir”, “Üst kat ekle”, “Projeyi kontrol et” denebilir.
 
+### Tasarım stüdyosu kontrolleri (4.8 geliştirme dalı)
+
+- **Nesne ölçüleri:** gerçek proje kimliğiyle mobilya seç; ad, X/Y konumu,
+  genişlik, derinlik, yükseklik ve açıyı değiştir. Değerler metre/derecedir.
+  Uygulama ve disk kaydı onaylanmadan başarı bildirilmez; işlem geri alınabilir.
+- **Üstten 3D / İç mekân 3D:** editörün gerçek kamera modunu değiştirir.
+- **SVG plan indir:** oda çokgenleri, duvar kalınlıkları ve döndürülmüş mobilya
+  ayak izlerini vektörel dosyaya aktarır. Bu, 3D render veya ruhsat çizimi değildir;
+  çok katlı projelerde bütün katların aynı düzleme izdüşümünü içerir.
+- **Kayıtlar / Sürüme dön:** son 50 otomatik yedeği listeler. Seçilen sürüm
+  açılmadan önce mevcut çizim kaydedilir; dönüş yeni kayıt sürümü oluşturur.
+  Mevcut çizim geçmişte korunur. Eksik/bozuk sürüm başarı olarak bildirilmez.
+- Editör kabuğu okunabilir araçlar, klavye odakları ve dar ekran uyarlamaları
+  içerir. 4K görünüm, FPS ve Windows DPI sonucu ancak ilgili ortamda ölçülür.
+
+Eşzamanlı kayıt çağrıları aynı işlemin bitmesini bekler. Kayıt sırasında yapılan
+elle değişiklikler kayıt bekleyen değişiklik olarak kalır. Yeni ev oluşturulurken
+önce kayıtlı proje yüklenir, ardından mevcut çizimi değiştirme onayı istenir.
+
 ## Ekran ve fare
 
 `desktop_inspect` Windows UI Automation ile etkin pencerenin gerçek öğelerini,
