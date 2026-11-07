@@ -218,6 +218,13 @@
     scene.add(faceGroup);
     dust = new THREE.Points(buildDust(), matDust); scene.add(dust);
     JV._three = { faceGroup, aS, aF, aR };
+    // The architecture editor owns GPU resources while displayed. Park this
+    // otherwise hidden WebGL context and restore it when the core returns.
+    let parkedForDesigner = false;
+    JV.coreGpu = {
+      park() { if (parkedForDesigner || !renderer) return; parkedForDesigner = true; try { renderer.forceContextLoss(); } catch (e) { console.warn("core context park", e); } },
+      resume() { if (!parkedForDesigner || !renderer) return; parkedForDesigner = false; try { renderer.forceContextRestore(); } catch (e) { console.warn("core context restore", e); } }
+    };
   }
 
   // çekirdeğin merkezi: komuta düzeninde orta sahnenin ortası, değilse ekranın ortası
