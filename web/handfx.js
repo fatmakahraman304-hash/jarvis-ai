@@ -78,11 +78,14 @@
     stage = document.createElement("div"); stage.id = "arstage"; stage.className = "hidden";
     stage.innerHTML = `<video id="ar-video" muted playsinline></video><canvas id="ar-canvas"></canvas>
       <div id="ar-top"><b>AR · TEK MOD</b><label class="ar-mode-label">MOD <select id="ar-profile" aria-label="Aktif AR efekti"></select></label><span id="ar-fps"></span><span id="ar-hint"></span>
+        <button class="mini" id="ar-world-b">🌍 DÜNYA</button><button class="mini" id="ar-camera-b">📷 KAMERA</button>
         <button class="mini" id="ar-desk-b">🖥 MASAÜSTÜ</button><button class="mini" id="ar-opts-b">⚙ AYARLAR</button><button class="mini" id="ar-close">✕ KAPAT</button></div>
       <div id="ar-opts" class="hidden"></div><div id="ar-msg"></div>`;
     document.body.append(stage);
     cv = stage.querySelector("#ar-canvas"); ctx = cv.getContext("2d"); vid = stage.querySelector("#ar-video");
     stage.querySelector("#ar-close").onclick = () => api.stop();
+    stage.querySelector("#ar-world-b").onclick = () => { if (JV.setView) JV.setView("globe"); if (JV.gesture) JV.gesture.start("nesne"); };
+    stage.querySelector("#ar-camera-b").onclick = () => { if (JV.camera) JV.camera.open(); };
     stage.querySelector("#ar-desk-b").onclick = () => setProfile("desktop");
     stage.querySelector("#ar-opts-b").onclick = () => stage.querySelector("#ar-opts").classList.toggle("hidden");
     const picker = stage.querySelector("#ar-profile");
