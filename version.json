@@ -1,9 +1,9 @@
 {
-  "version": "4.6.48",
+  "version": "4.6.49",
   "date": "2026-11-07",
   "notes": [
-    "Ekran analizi başarısızsa yeni çizim/fare adımları kesin olarak duraklatılır; modelden sahte ilerleme özeti istenmez",
-    "Onaylanan işlem sonrası analiz de başarısızsa görev durur; devam et komutunda mevcut ekran yeniden kontrol edilir",
-    "Görsel model seçiminde kota/servis bekleme süreleri korunur; DOM metni tek başına ekran doğrulaması sayılmaz"
+    "Kamera, 3D Dünya el kontrolü ve AR efektleri birbirinden bağımsız çalışır",
+    "AR efekti ekranından Ateş, Gezegen, Şimşek, Kask, Mühür ve diğer modlar tek tek seçilir; efektler birbirine karışmaz",
+    "AR ekranından KAMERA ve DÜNYA düğmeleriyle hızlı geçiş yapılır; mevcut ayarlar ve JARVIS AI görevleri korunur"
   ]
 }
