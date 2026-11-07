@@ -44,6 +44,9 @@ indirme bağlantısındaki pakette yer alır.
 
 ### Tasarım stüdyosu kontrolleri (4.8 geliştirme dalı)
 
+- **Plana sığdır:** 2D planı merkezler; 3D kamerayı yapının tamamını gösterecek
+  uzaklığa alır. Pencere boyutu değişince görünüm otomatik uyarlanır. Plan veya
+  3D içinde elle gezinmek otomatik sığdırmayı durdurur; düğme tekrar açar.
 - **Nesne ölçüleri:** gerçek proje kimliğiyle mobilya seç; ad, X/Y konumu,
   genişlik, derinlik, yükseklik ve açıyı değiştir. Değerler metre/derecedir.
   Uygulama ve disk kaydı onaylanmadan başarı bildirilmez; işlem geri alınabilir.

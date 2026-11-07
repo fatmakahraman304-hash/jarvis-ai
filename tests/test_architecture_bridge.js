@@ -15,12 +15,12 @@ async function main() {
   const frame = {contentWindow:{}};
   Object.defineProperty(frame,'src',{set(value){assert.equal(value,'/designer/');frame.contentWindow.jarvisDesigner=engine;}});
   nodes['architecture-frame']=frame;
-  for(const name of ['architecture-status','architecture-close','architecture-download','architecture-expand','studio-metrics','studio-house','studio-undo','studio-redo','studio-width','studio-depth','studio-bedrooms','studio-bathrooms','studio-preset','studio-inspector','studio-inspect','studio-object','studio-properties','studio-object-status','studio-top','studio-walk','studio-svg','studio-history','studio-restore'])nodes[name]={textContent:'',setAttribute:()=>{},addEventListener:()=>{},disabled:false,value:'2'};
+  for(const name of ['architecture-status','architecture-close','architecture-download','architecture-expand','studio-metrics','studio-house','studio-undo','studio-redo','studio-width','studio-depth','studio-bedrooms','studio-bathrooms','studio-preset','studio-inspector','studio-inspect','studio-object','studio-properties','studio-object-status','studio-top','studio-walk','studio-svg','studio-history','studio-restore','studio-fit'])nodes[name]={textContent:'',setAttribute:()=>{},addEventListener:()=>{},disabled:false,value:'2'};
   nodes['studio-inspector'].hidden=true;
   nodes['studio-history'].replaceChildren=()=>{};nodes['studio-history'].add=()=>{};
   const document = {hidden:false,getElementById:id=>nodes[id],addEventListener:()=>{},body:{classList:{contains:()=>false,toggle:()=>false,remove:()=>{}}}};
   const JV = {token:'',setView:mode=>{events.push('view:'+mode);JV.architecture.open();}};
-  const ctx = {Option:function(text,value){this.text=text;this.value=value;},window:{JV},document,crypto:require('node:crypto'),Uint8Array,console,setTimeout,
+  const ctx = {Option:function(text,value){this.text=text;this.value=value;},window:{JV,JarvisArchitectureViewport:{fit:async()=>({scale:1})}},clearTimeout,document,crypto:require('node:crypto'),Uint8Array,console,setTimeout,
     setInterval:fn=>{poll=fn;},fetch:async(url,options={})=>{
       if(url.includes('command?')) {const job=queued;queued=null;return Response.json({job});}
       if(url.endsWith('/history'))return Response.json([]);
@@ -71,7 +71,7 @@ async function main() {
   engine.load=async()=>{events.push('load');loadedProject=true;};
   for(const [key,value] of Object.entries({'studio-width':'10','studio-depth':'12','studio-bedrooms':'2','studio-bathrooms':'1'}))nodes[key].value=value;
   const coldFetch=ctx.fetch;
-  const cold={...ctx,window:{JV,confirm:()=>{assert(loadedProject,'Replacement checked before saved project loaded');confirmed=true;return false;}},fetch:async(url,options)=>{
+  const cold={...ctx,window:{JV,JarvisArchitectureViewport:{fit:async()=>({scale:1})},confirm:()=>{assert(loadedProject,'Replacement checked before saved project loaded');confirmed=true;return false;}},fetch:async(url,options)=>{
     if(url.endsWith('/project'))return new Response(new Uint8Array([80,75]));
     return coldFetch(url,options);
   }};

@@ -113,13 +113,26 @@ try:
    assert p.locator('#mic').is_visible() and p.locator('#send').is_visible()
    box=p.locator('#architecture-view').bounding_box();chat=p.locator('#right').bounding_box();assert box['x']+box['width']<=chat['x']
    Path('test-results').mkdir(exist_ok=True);p.screenshot(path='test-results/architecture-2d3d.png',full_page=True)
+   p.click('#studio-fit');p.wait_for_function("document.querySelector('#architecture-status').textContent.includes('sığdırıldı')")
    for width,height in [(1920,1080),(2560,1440),(3840,2160)]:
     p.set_viewport_size({'width':width,'height':height})
-    p.wait_for_timeout(300)
+    p.wait_for_function("""()=>{
+     const win=document.querySelector('#architecture-frame').contentWindow,v=win.__planView?.getViewport(),canvas=win.document.querySelector('.sh-plan canvas');if(!v||!canvas)return false;
+     const b=v.getPlanBounds(),x0=v.convertXModelToPixel(b.minX),x1=v.convertXModelToPixel(b.maxX),y0=v.convertYModelToPixel(b.minY),y1=v.convertYModelToPixel(b.maxY);
+     return x0>=20&&y0>=20&&x1<=canvas.clientWidth-20&&y1<=canvas.clientHeight-20&&Math.max((x1-x0)/canvas.clientWidth,(y1-y0)/canvas.clientHeight)>.65&&Math.abs((x0+x1)/2-canvas.clientWidth/2)<5;
+    }""",timeout=15000)
     assert p.locator('#studio-house').is_visible() and p.locator('#studio-svg').is_visible()
     assert p.locator('#architecture-frame').bounding_box()['height']>300
     p.screenshot(path=f'test-results/studio-{width}x{height}.png')
-   p.set_viewport_size({'width':1600,'height':1000})
+   # Manual camera navigation must survive resize; explicit fit re-enables follow.
+   scene=frame.locator('[data-testid="view3d"]').bounding_box()
+   p.mouse.move(scene['x']+scene['width']/2,scene['y']+scene['height']/2);p.mouse.down()
+   p.mouse.move(scene['x']+scene['width']/2+60,scene['y']+scene['height']/2+30,steps=5);p.mouse.up()
+   manual=frame.evaluate('window.__homeController.getHome().getObserverCamera().getYaw()')
+   p.set_viewport_size({'width':1600,'height':1000});p.wait_for_timeout(500)
+   assert abs(frame.evaluate('window.__homeController.getHome().getObserverCamera().getYaw()')-manual)<.0001
+   p.click('#studio-fit');p.wait_for_function("document.querySelector('#architecture-status').textContent.includes('sığdırıldı')")
+   Path('test-results/architecture-stages-before-reload.json').write_text(json.dumps(p.evaluate('JV.architecture.timings'),indent=2))
    p.reload();p.wait_for_function('window.JV && JV.state.personas.length>0');p.click('#boot-btn');p.wait_for_timeout(1000);p.evaluate("JV.setView('design')")
    p.wait_for_function("document.querySelector('#architecture-frame').contentWindow.jarvisDesigner",timeout=45000)
    # Browser reload releases the old client lease after ten seconds.
@@ -151,6 +164,7 @@ try:
      'Unsupported architecture operation: INVALID' in e) or
     e=='Browser error: Failed to load resource: the server responded with a status of 400 (Bad Request)'
    )]
+   Path('test-results/architecture-stages.json').write_text(json.dumps(p.evaluate('JV.architecture.timings'),indent=2))
    Path('test-results/architecture-timings.json').write_text(json.dumps({'environment':'Linux Chromium; software WebGL, no live model/voice','measurements':measurements},indent=2))
    assert not unexpected,unexpected
    print('Real editor: catalog, measured house, 2D+3D geometry, inspector, cameras, SVG, undo/redo, atomic rollback and durable SH3D.')
@@ -158,6 +172,8 @@ try:
    Path('test-results').mkdir(exist_ok=True)
    if 'measurements' in locals():Path('test-results/architecture-timings.json').write_text(json.dumps(measurements,indent=2))
    if 'p' in locals():
+    try:Path('test-results/architecture-stages-failure.json').write_text(json.dumps(p.evaluate('JV.architecture.timings'),indent=2))
+    except Exception:pass
     try:print('Studio failure state:',p.evaluate('({status:document.querySelector("#architecture-status")?.textContent,object:document.querySelector("#studio-object-status")?.textContent})'),flush=True)
     except Exception:pass
     try:p.screenshot(path='test-results/architecture-failure.png',full_page=True,timeout=10000)

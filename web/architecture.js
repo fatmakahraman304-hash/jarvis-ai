@@ -2,6 +2,19 @@
 (function(){
  const JV=window.JV,frame=document.getElementById('architecture-frame'),status=document.getElementById('architecture-status');
  const client=crypto.randomUUID();let running=false,loaded=false,revision=0,lastSave=0,savePromise=null,initPromise=null;
+ const timings=[];
+ async function measured(stage,action){const started=Date.now();try{return await action();}finally{timings.push({stage,elapsed_ms:Date.now()-started});if(timings.length>120)timings.shift();}}
+ let autoFit=true,fitTimer=0,fitPromise=null;
+ function fitView(){
+  if(fitPromise)return fitPromise;
+  fitPromise=window.JarvisArchitectureViewport.fit(frame).finally(()=>{fitPromise=null;});
+  return fitPromise;
+ }
+ function scheduleFit(){
+  clearTimeout(fitTimer);
+  if(!autoFit||!loaded||!document.body.classList.contains('view-design'))return;
+  fitTimer=setTimeout(()=>{if(!autoFit)return;fitView().catch(e=>{status.textContent=e.message;});},180);
+ }
  const headers=()=>({'x-token':JV.token||''});
  const api=async(path,options={})=>{const r=await fetch('/api/architecture/'+path,{...options,headers:{...headers(),...(options.headers||{})}});if(!r.ok){let e;try{e=await r.json();}catch(_){e={error:'HTTP '+r.status};}throw Error(e.error||'HTTP '+r.status);}return r;};
  const json=async(path,body)=>{const r=await api(path,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{});return r.json();};
@@ -13,22 +26,26 @@
    frame.src='/designer/';status.textContent='2D/3D editör ve model kataloğu yükleniyor…';
    const end=Date.now()+30000;while(!bridge()){if(Date.now()>end)throw Error('Editör yüklenemedi. WebGL ve yerel dosyaları kontrol et.');await new Promise(r=>setTimeout(r,150));}
    const info=await json('info');revision=info.revision;
-   const r=await api('project');if(r.status!==204)await bridge().load(new Uint8Array(await r.arrayBuffer()));
+   const r=await api('project');if(r.status!==204){const rBytes=await r.arrayBuffer();await measured('load-project',()=>bridge().load(new Uint8Array(rBytes)));}
    const doc=frame.contentDocument;
    if(doc&&!doc.getElementById('jarvis-designer-theme')){const link=doc.createElement('link');link.id='jarvis-designer-theme';link.rel='stylesheet';link.href='/static/designer-theme.css';doc.head.appendChild(link);}
-   loaded=true;await refreshHistory();status.textContent='Hazır · metre birimi · 2D ve 3D birlikte';
+   if(doc){
+    const hold=e=>{if(e.target.closest?.('.sh-plan,.sh-view3d'))autoFit=false;};
+    doc.addEventListener('pointerdown',hold,true);doc.addEventListener('wheel',hold,{capture:true,passive:true});doc.addEventListener('keydown',hold,true);
+   }
+   await fitView();loaded=true;await refreshHistory();status.textContent='Hazır · metre birimi · 2D ve 3D birlikte';
   })();try{await initPromise;}catch(e){status.textContent=e.message;initPromise=null;throw e;}
  }
  function save(){
   if(savePromise)return savePromise;
   savePromise=(async()=>{
    await init();
-   const bytes=new Uint8Array(await bridge().save()),report=bridge().state();
-   const r=await api('save',{method:'POST',headers:{'Content-Type':'application/octet-stream','x-revision':String(revision),'x-project-report':JSON.stringify({counts:report.counts,area_m2:report.area_m2})},body:bytes});
+   const bytes=new Uint8Array(await measured('serialize-save',()=>bridge().save())),report=bridge().state();
+   const r=await measured('write-project',()=>api('save',{method:'POST',headers:{'Content-Type':'application/octet-stream','x-revision':String(revision),'x-project-report':JSON.stringify({counts:report.counts,area_m2:report.area_m2})},body:bytes}));
    const saved=await r.json();revision=saved.revision;lastSave=Date.now();
    // A manual edit may happen while the network write is pending. Only clear
    // the dirty flag when the model still serializes to the saved snapshot.
-   const current=new Uint8Array(await bridge().save());
+   const current=new Uint8Array(await measured('verify-snapshot',()=>bridge().save()));
    const unchanged=current.length===bytes.length&&current.every((value,i)=>value===bytes[i]);
    if(unchanged)bridge().saved();
    status.textContent='Yerel kayıt · sürüm '+revision+' · '+report.counts.rooms+' oda · '+report.area_m2.toFixed(2)+' m²'+(unchanged?'':' · yeni değişiklikler kayıt bekliyor');
@@ -53,14 +70,16 @@
      await save();const before=await bridge().save();
      try{await bridge().load(bytes);}
      catch(e){await bridge().load(before);throw e;}
-     result=bridge().state();await save();
-    }else{result=await bridge().run(job.command);if(['apply','undo','redo'].includes(job.command.op))await save();}}
+     await fitView();result=bridge().state();await save();
+    }else{result=await measured('engine-'+job.command.op,()=>bridge().run(job.command));if(job.command.op==='apply'&&job.command.operations?.some(op=>op.kind==='new')){autoFit=true;await fitView();}else if(autoFit&&['undo','redo'].includes(job.command.op))await fitView();if(['apply','undo','redo'].includes(job.command.op))await save();}}
     catch(e){console.error('[architecture] command failed: '+job.command.op, e && (e.stack || e.message || e));error=e.message;status.textContent='İşlem uygulanmadı / kayıt başarısız: '+error;}
     await json('ack',{client,id:job.id,result,error});
    }else if(loaded&&Date.now()-lastSave>4000&&bridge().modified())await save();
   }catch(e){status.textContent=e.message;}finally{running=false;}
  }
- JV.architecture={open:()=>init().catch(e=>{status.textContent=e.message;}),save,state:()=>bridge()?.state(true)};
+ JV.architecture={open:()=>init().catch(e=>{status.textContent=e.message;}),save,fit:async()=>{await init();autoFit=true;return fitView();},timings,state:()=>bridge()?.state(true)};
+ if(typeof ResizeObserver!=='undefined')new ResizeObserver(scheduleFit).observe(frame);
+ document.getElementById('studio-fit').onclick=async()=>{try{await JV.architecture.fit();status.textContent='Plan ve kamera görünüm alanına sığdırıldı.';}catch(e){status.textContent=e.message;}};
  const expand=document.getElementById('architecture-expand');
  expand.onclick=()=>{
   const active=document.body.classList.toggle('architecture-expanded');
@@ -151,8 +170,8 @@
   }catch(error){objectStatus.textContent=error.message;}
   finally{properties.querySelector('fieldset').disabled=!objects.value;}
  };
- document.getElementById('studio-top').onclick=()=>studioRun('apply',{operations:[{kind:'camera',mode:'top'}]});
- document.getElementById('studio-walk').onclick=()=>studioRun('apply',{operations:[{kind:'camera',mode:'walk'}]});
+ document.getElementById('studio-top').onclick=()=>{autoFit=false;return studioRun('apply',{operations:[{kind:'camera',mode:'top'}]});};
+ document.getElementById('studio-walk').onclick=()=>{autoFit=false;return studioRun('apply',{operations:[{kind:'camera',mode:'walk'}]});};
  document.getElementById('studio-svg').onclick=async()=>{
   try{
    await init();
