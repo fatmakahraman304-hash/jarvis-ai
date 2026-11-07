@@ -64,6 +64,7 @@ jobs:
       - name: Check real 2D and 3D architecture editor
         env:
           JARVIS_CI_HEADED: "1"
+          JARVIS_BROWSER_CHANNEL: "chrome"
         run: xvfb-run -a -s "-screen 0 1600x1000x24" python tests/test_architecture_browser.py
       - name: Preserve editor test evidence
         if: always()
