@@ -92,6 +92,10 @@ try:
    assert frame.locator('canvas').count()>=2,'2D and 3D canvases missing'
    stats=frame.evaluate('window.jarvisRenderStats')
    assert stats and stats['frames']>0 and stats['triangles']>0,stats
+   assert isinstance(stats.get('resizes'),int),stats
+   frame.wait_for_function('(before)=>window.jarvisRenderStats.frames>before+5',arg=stats['frames'],timeout=15000)
+   steady=frame.evaluate('window.jarvisRenderStats')
+   assert steady['resizes']==stats['resizes'],('Stable frames reallocated the drawing buffer',stats,steady)
    full=run('state',{'details':True});room=full['rooms'][0]
    run('apply',{'operations':[{'kind':'update','id':room['id'],'values':{'name':'Yeni Salon'}}]})
    assert run('state')['rooms'][0]['name']=='Yeni Salon'

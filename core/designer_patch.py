@@ -25,6 +25,16 @@ SOURCE_PATCHES['packages/render3d/src/TopViewIconRenderer.ts'] = [
     ('destroy(): void {\n    this.renderer?.dispose();\n  }', 'destroy(): void {\n    if (this.rendererCreated) this.renderer?.dispose();\n  }'),
 ]
 
+SOURCE_PATCHES['packages/ui/src/view3d/View3DCanvas.tsx'].extend([
+    ('      renderer!.setSize(width, height, false);',
+     '      if (renderer!.domElement.width !== Math.floor(width * renderer!.getPixelRatio()) || renderer!.domElement.height !== Math.floor(height * renderer!.getPixelRatio())) { renderer!.setSize(width, height, false); (globalThis as any).jarvisRenderStats.resizes++; }'),
+    ('{frames:0, triangles:0}', '{frames:0, triangles:0, resizes:0}'),
+])
+SOURCE_PATCHES['packages/render3d/src/TopViewIconRenderer.ts'].append((
+    'this.renderer.setSize(canvas.width, canvas.height, false);\n    this.renderer.setPixelRatio(1);',
+    'if (this.renderer.getPixelRatio?.() !== 1) this.renderer.setPixelRatio(1);\n    if (this.renderer.domElement?.width !== canvas.width || this.renderer.domElement?.height !== canvas.height) this.renderer.setSize(canvas.width, canvas.height, false);',
+))
+
 BUNDLE_PATCHES = (
     ('m.setAreaVisible(!0),m.setLevel(g.getSelectedLevel())',
      'm.setAreaVisible(!0),m.setCeilingVisible(!1),m.setLevel(g.getSelectedLevel())'),
@@ -36,6 +46,12 @@ BUNDLE_PATCHES = (
      't=(e.rendererFactory??(()=>globalThis.__jarvisPlanIconRenderer??=new Ty({antialias:!0})))(),this.rendererCreated=!!e.rendererFactory'),
     ('destroy(){var e;(e=this.renderer)==null||e.dispose()}},u(op,"TopViewIconRenderer")',
      'destroy(){var e;this.rendererCreated&&((e=this.renderer)==null||e.dispose())}},u(op,"TopViewIconRenderer")'),
+    ('c.setSize(G,z,!1),E!==null',
+     '(c.domElement.width!==Math.floor(G*c.getPixelRatio())||c.domElement.height!==Math.floor(z*c.getPixelRatio()))&&(c.setSize(G,z,!1),globalThis.jarvisRenderStats.resizes++),E!==null'),
+    ('globalThis.jarvisRenderStats={frames:0,triangles:0}',
+     'globalThis.jarvisRenderStats={frames:0,triangles:0,resizes:0}'),
+    ('this.renderer.setSize(a.width,a.height,!1),this.renderer.setPixelRatio(1);',
+     'this.renderer.getPixelRatio?.()!==1&&this.renderer.setPixelRatio(1),(this.renderer.domElement?.width!==a.width||this.renderer.domElement?.height!==a.height)&&this.renderer.setSize(a.width,a.height,!1);'),
 )
 
 

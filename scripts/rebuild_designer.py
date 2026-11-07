@@ -104,7 +104,7 @@ def main():
         run("npm", "run", "build", "-w", "@sweethomejs/web", "--", "--base=/designer/", cwd=source)
         run(sys.executable, ROOT / "scripts" / "package_designer.py", source)
         manifest = json.loads((VENDOR / "designer.json").read_text(encoding="utf-8"))
-        manifest["cutaway_fix"] = "studio-v3"
+        manifest["cutaway_fix"] = "studio-v4"
         manifest["catalog_fix"] = "shared-categories-source"
         manifest["xml_constructor_names"] = "preserved-vite-esbuild"
         (VENDOR / "designer.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
