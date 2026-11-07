@@ -189,12 +189,39 @@ def _with_observation(result, observer):
     return json.dumps(payload, ensure_ascii=False, default=str)
 
 
+def _visual_ready(value):
+    if isinstance(value, str):
+        text = value.strip()
+        if text.startswith("{"):
+            try:
+                return _visual_ready(json.loads(text))
+            except (ValueError, TypeError):
+                return False
+        return bool(text) and not text.startswith(("Hata:", "Araç ", "Parametre hatası:", "Bilinmeyen araç:"))
+    if isinstance(value, dict):
+        return not value.get("error") and value.get("ok") is not False and _visual_ready(value.get("ekran_analizi"))
+    return False
+
+
 def _observation_ready(result):
     try:
-        result = json.loads(result).get("güncel_gözlem", "")
+        return _visual_ready(json.loads(result).get("güncel_gözlem"))
     except (ValueError, TypeError, AttributeError):
         return False
-    return bool(result) and not (isinstance(result, str) and result.startswith(("Hata:", "Araç ")))
+
+
+def _vision_pause_text(action, detail, executed=False):
+    try:
+        payload = json.loads(detail)
+        detail = payload.get("güncel_gözlem", payload)
+        if isinstance(detail, dict):
+            detail = detail.get("error") or detail.get("ekran_analizi") or "Görsel analiz sonucu boş veya geçersiz."
+    except (ValueError, TypeError, AttributeError):
+        pass
+    step = f"Son denenen işlem: {action}; sonucu doğrulanamadı, bu işlem otomatik tekrarlanmadı." if executed else "Yeni çizim/fare işlemi yapılmadı."
+    return ("Ekran analizi başarısız olduğu için görev duraklatıldı; tamamlanmadı. " + step +
+            " Mevcut plan korunuyor. Görsel model yeniden kullanılabilir olduğunda devam et de; önce güncel ekran kontrol edilecek. Ayrıntı: " + str(detail)[:1200])
+
 
 NO_PROVIDER_MSG = (
     "Henüz hiçbir yapay zekâ modeli bağlı değil. Ayarlar panelinden veya .env dosyasından "
@@ -580,6 +607,8 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
         for call in calls:
             name = call["function"]["name"]
             args = _parse_args(call["function"].get("arguments"))
+            vision_failure = ""
+            executed_ui = False
             if name == "task_report" and drawing_task:
                 status = args.get("status")
                 summary = str(args.get("summary") or "").strip()
@@ -619,8 +648,9 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
                 yield {"type": "tool", "name": "browser_observe", "args": {}, "status": "running"}
                 observation = tools.execute("browser_observe", {})
                 yield {"type": "tool", "name": "browser_observe", "args": {}, "status": "done", "result": observation[:600]}
-                browser_observed = not observation.startswith(("Hata:", "Araç "))
+                browser_observed = _visual_ready(observation)
                 if not browser_observed:
+                    vision_failure = observation
                     task_outcome = "blocked"
                 performed_tools.add("browser_observe")
                 acted_this_round = True
@@ -629,8 +659,9 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
                 yield {"type": "tool", "name": "screen_look", "args": {}, "status": "running"}
                 observation = tools.execute("screen_look", {})
                 yield {"type": "tool", "name": "screen_look", "args": {}, "status": "done", "result": observation[:600]}
-                desktop_observed = not observation.startswith(("Hata:", "Araç "))
+                desktop_observed = _visual_ready(observation)
                 if not desktop_observed:
+                    vision_failure = observation
                     task_outcome = "blocked"
                 performed_tools.add("screen_look")
                 acted_this_round = True
@@ -663,6 +694,7 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
                     task_outcome = "blocked"
                 observer = _observer_for(name)
                 if observer:
+                    executed_ui = True
                     acted_this_round = True
                     if not _estop():
                         yield {"type": "tool", "name": observer, "args": {}, "status": "running"}
@@ -672,13 +704,18 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
                     browser_observed = observer == "browser_observe" and _observation_ready(result)
                     if ui_task:
                         if not _observation_ready(result):
+                            vision_failure = result
                             task_outcome = "blocked"
                         elif not failed and task_outcome == "blocked":
                             task_outcome = "finished"
                 elif name in {"screen_look", "screen_find", "read_screen_text"}:
-                    desktop_observed = not result.startswith(("Hata:", "Araç "))
-                elif name in {"browser_read", "browser_look", "browser_observe"}:
-                    browser_observed = not result.startswith(("Hata:", "Araç "))
+                    desktop_observed = _visual_ready(result) if name == "screen_look" else not failed
+                    if ui_task and not desktop_observed:
+                        vision_failure = result
+                elif name in {"browser_look", "browser_observe"}:
+                    browser_observed = _visual_ready(result)
+                    if ui_task and not browser_observed:
+                        vision_failure = result
                 if name in _SEARCH_TOOL_NAMES:
                     if _search_result_usable(name, result) or research_search_attempts >= 2:
                         research_search_done = True
@@ -689,6 +726,12 @@ def chat(text, persona_id=None, session="main", source="web", hidden=False, gues
                 yield {"type": "tool", "name": name, "args": args, "status": "done",
                        "result": result[:30000] if (result.startswith('{') and '"ui": "' in result[:30000]) else result[:600]}
             messages.append({"role": "tool", "tool_call_id": call["id"], "name": name, "content": result})
+            if vision_failure:
+                full_text = _vision_pause_text(name, vision_failure, executed_ui)
+                task_outcome = "paused"
+                report_finished = True
+                yield {"type": "token", "text": full_text}
+                break
         if report_finished:
             break
         if full_text and not full_text.endswith((" ", "\n")):
@@ -742,6 +785,12 @@ def resolve(pending_id, approve=True):
         observer = _observer_for(item["name"])
         if observer and not _estop():
             result = _with_observation(result, observer)
+            if not _observation_ready(result):
+                text = _vision_pause_text(item["name"], result, True)
+                memory.add_message(item["session"], "assistant", text, item["persona"], item["source"])
+                yield {"type": "token", "text": text}
+                yield {"type": "done", "text": text, "outcome": "paused"}
+                return
         yield {"type": "tool", "name": item["name"], "args": item["args"], "status": "done", "result": result[:600]}
         note = (f"[SİSTEM NOTU] Kullanıcı {describe(item['name'], item['args'])} işlemini ONAYLADI ve işlem "
                 f"çalıştırıldı. Sonuç: {result[:6000]}\nAsıl kullanıcı görevi: {item.get('task', '')}\n"
