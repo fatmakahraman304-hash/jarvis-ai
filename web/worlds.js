@@ -71,6 +71,16 @@
     }
     if (JV.stage && JV.stage.current()) JV.stage.clear();
     if (v === view && (v === "core" || current)) return;
+    // SweetHomeJS opens its own WebGL scenes. Park the background HUD/world
+    // contexts first to avoid exhausting low-memory software or laptop GPUs.
+    // Restore on exit; THREE's context-restored handler rebuilds GPU buffers.
+    if (v === "design" && view !== "design") {
+      try { renderer.forceContextLoss(); } catch (e) { console.warn("world context park", e); }
+      if (JV.coreGpu && JV.coreGpu.park) JV.coreGpu.park();
+    } else if (view === "design" && v !== "design") {
+      try { renderer.forceContextRestore(); } catch (e) { console.warn("world context restore", e); }
+      if (JV.coreGpu && JV.coreGpu.resume) JV.coreGpu.resume();
+    }
     if (current && current.exit) current.exit();
     view = v; current = W[v] || null;
     if (v === "design") { current = null; if(JV.architecture) JV.architecture.open(); }
