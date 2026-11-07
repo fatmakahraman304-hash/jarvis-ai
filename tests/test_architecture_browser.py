@@ -44,6 +44,11 @@ try:
    with zipfile.ZipFile(ROOT/'vendor/designer.zip') as archive:
     bundle_name=max((n for n in archive.namelist() if n.startswith('assets/index-') and n.endswith('.js')),key=lambda n:archive.getinfo(n).file_size)
     bundle=archive.read(bundle_name).decode('utf8')
+   for pattern in ('async function RE(', 'function RE(', 'RE=async', 'RE='):
+    at=bundle.find(pattern)
+    if at>=0:
+     print('MINIFIED createSession definition: '+bundle[at:at+2200],flush=True)
+     break
    anchor=re.search(r'globalThis\.__devEvent=[^,]{1,30},([\w$]+\(new [\w$]+\)\.then\(async [\w$]+=>\{)',bundle)
    assert anchor, 'Session bootstrap entry not found in compiled bundle'
    boot=anchor.group(1).replace('(new ', '((()=>{console.warn("JARVIS_TRACE entering Home ctor");const home=new ',1).replace(').then(async', ';console.warn("JARVIS_TRACE constructed Home");return home})()).then(async',1)
