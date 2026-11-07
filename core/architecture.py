@@ -159,13 +159,13 @@ def house_operations(width=10,depth=12,bedrooms=2,bathrooms=1,name='Ev projesi',
             ops.append({'kind':'furniture','name':'window','x':.1 if side==0 else width-.1,'y':(y0+y1)/2,'width':1.2,'depth':.2,'height':1.2,'elevation':.9,'angle':90})
             cx=(x0+x1)/2;cy=(y0+y1)/2
             if kind=='bedroom':
-                ops.extend([{'kind':'furniture','name':'Bed 140','x':cx,'y':cy,'width':1.58,'depth':2.08,'height':.7},{'kind':'furniture','name':'Wardrobe','x':x0+.5,'y':y0+.4,'width':.9,'depth':.6,'height':2}])
+                ops.extend([{'kind':'furniture','name':'Double bed','x':cx,'y':cy,'width':1.58,'depth':2.08,'height':.7},{'kind':'furniture','name':'Wardrobe','x':x0+.5,'y':y0+.4,'width':.9,'depth':.6,'height':2}])
             elif kind=='living':
                 ops.extend([{'kind':'furniture','name':'Sofa','x':cx,'y':y0+.65,'width':2.1,'depth':.9,'height':.8},{'kind':'furniture','name':'Square table','x':cx,'y':cy+.3,'width':1,'depth':.6,'height':.4}])
             elif kind=='kitchen':
                 for idx,item in enumerate(['Sink','Cooker','Fridge']):ops.append({'kind':'furniture','name':item,'x':x0+.55+idx*.8,'y':y0+.4,'width':.7,'depth':.6})
                 ops.append({'kind':'furniture','name':'Round table','x':cx,'y':cy+.5,'width':1.2,'depth':.8})
             else:
-                ops.extend([{'kind':'furniture','name':'Toilet','x':x0+.5,'y':y0+.6,'width':.4,'depth':.65},{'kind':'furniture','name':'Washbasin','x':x1-.55,'y':y0+.4,'width':.6,'depth':.5},{'kind':'furniture','name':'Shower','x':cx,'y':y1-.6,'width':.9,'depth':.9}])
+                ops.extend([{'kind':'furniture','name':'Toilet unit','x':x0+.5,'y':y0+.6,'width':.4,'depth':.65},{'kind':'furniture','name':'Washbasin','x':x1-.55,'y':y0+.4,'width':.6,'depth':.5},{'kind':'furniture','name':'Shower','x':cx,'y':y1-.6,'width':.9,'depth':.9}])
     ops.extend([{'kind':'room','name':'Koridor','points':[[left+.07,.2],[right-.07,.2],[right-.07,depth-.2],[left+.07,depth-.2]],'color':'#d9cdbb'}, {'kind':'furniture','name':'door','x':width/2,'y':depth-.1,'width':.95,'depth':.2,'height':2.1}, {'kind':'dimension','start':[0,0],'end':[width,0],'offset':-.5},{'kind':'dimension','start':[0,0],'end':[0,depth],'offset':-.5}])
     return ops
