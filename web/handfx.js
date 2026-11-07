@@ -25,6 +25,7 @@
     face: ["🎯 Yüz takip", "Kameraya bak: yüz hedef çerçevesi"],
     mask: ["🛡 Kask HUD", "Kameraya bak: Iron Man kaskı"],
     draw: ["✏️ Havaya çizim", "☝ Çiz · ✌ yorumla · ✊ temizle"],
+    skeleton: ["🦴 El iskeleti", "El eklemlerini ve çizgilerini göster"],
     library: ["📚 Kitaplık AR", "Rafa bak: kitabı seç ve aç"],
     desktop: ["🖥 AR masaüstü", "✋ Avuçla menüyü ve panelleri kontrol et"],
     controls: ["🎙 El komutları", "👍 komut · ✌ mikrofon · ✊ sustur"],
@@ -32,7 +33,7 @@
     none: ["📷 Sade görüntü", "Hiçbir efekt etkin değil"]
   };
   const EXCLUSIVE = ["fire", "seal", "planet", "lightning", "blast", "trail",
-                     "palm", "face", "mask", "draw", "library", "controls"];
+                     "palm", "face", "mask", "draw", "library", "controls", "skeleton"];
   let profile = "fire";
   try { const saved = localStorage.getItem(PROFILE_KEY); if (Object.prototype.hasOwnProperty.call(PROFILES, saved)) profile = saved; } catch (e) {}
 
@@ -554,7 +555,7 @@
       if (h.pointing && opts.trail && !calm && !opts.draw && H2.filter((x) => x.pointing).length === 1) trail.push({ x: P[8].x, y: P[8].y, t: now });
       // basılı tutma kontrolleri (kitap açıkken: ✊ rafa koy, 👍 özeti oku)
       const HD = holds || (opts.draw ? { peace: [900, "NE ÇİZDİM?", askDrawing], fist: [1200, "SİL", clearDrawing], thumbs_up: [1000, "ÇİZİMİ BİTİR", () => { opts.draw = false; saveOpts(); msg("Çizim modu kapandı"); }] } : HOLDS);
-      if ((opts.controls || holds) && HD[pose] && !h.pinch && !game) {
+      if ((opts.controls || holds || opts.draw) && HD[pose] && !h.pinch && !game) {
         const [ms, label, fn] = HD[pose], k = (now - st.since) / ms;
         if (!st.fired && k > 0.15) holdRing(P[9].x, P[9].y - sc * 1.2, Math.min(1, k), label);
         if (!st.fired && k >= 1) { st.fired = true; fn ? (fn(), snd("lock")) : control(pose, h); }
