@@ -60,9 +60,9 @@ try:
    assert p.locator('#studio-width').input_value()=='8'
    assert p.locator('#studio-depth').input_value()=='9'
    p.locator('#studio-house').click()
-   p.wait_for_function("document.getElementById('studio-metrics').textContent.includes('4 oda')",timeout=90000)
+   p.wait_for_function("document.getElementById('studio-metrics').textContent.includes('5 oda') || document.getElementById('architecture-status').textContent.startsWith('Tasarım hatası:')",timeout=90000)
    studio_state=run('state')
-   assert studio_state['counts']['rooms']==4,studio_state
+   assert studio_state['counts']['rooms']==5,studio_state
    assert studio_state['counts']['furniture']>=12,studio_state
    assert 'Tasarım uygulandı' in p.locator('#architecture-status').inner_text()
    p.locator('#architecture-expand').click()
@@ -150,9 +150,20 @@ try:
    Path('test-results/architecture-timings.json').write_text(json.dumps({'environment':'Linux Chromium; software WebGL, no live model/voice','measurements':measurements},indent=2))
    assert not unexpected,unexpected
    print('Real editor: catalog, measured house, 2D+3D geometry, inspector, cameras, SVG, undo/redo, atomic rollback and durable SH3D.')
+  except BaseException:
+   Path('test-results').mkdir(exist_ok=True)
+   if 'p' in locals():
+    try:p.screenshot(path='test-results/architecture-failure.png',full_page=True,timeout=10000)
+    except Exception as error:print('Could not capture failure screenshot:',error,flush=True)
+    try:Path('test-results/browser-errors.json').write_text(json.dumps({'errors':errors,'failed_requests':requests},ensure_ascii=False,indent=2))
+    except Exception:pass
+   raise
   finally:b.close()
 finally:
  server.terminate()
  try:server.wait(timeout=10)
  except subprocess.TimeoutExpired:server.kill();server.wait()
+ log.seek(0)
+ Path('test-results').mkdir(exist_ok=True)
+ Path('test-results/architecture-server.log').write_text(log.read()[-16000:])
  log.close()

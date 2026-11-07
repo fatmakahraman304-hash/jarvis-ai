@@ -11,6 +11,9 @@ class WorkspaceTests(unittest.TestCase):
   self.assertEqual(len([o for o in ops if o.get('name')=='window']),5)
   self.assertEqual(len([o for o in ops if o.get('name')=='door']),6)
   self.assertTrue(any(o.get('name')=='Koridor' for o in ops))
+ def test_compact_house_counts_corridor_as_a_room(self):
+  ops=a.house_operations(8,9,1,1)
+  self.assertEqual(len([o for o in ops if o['kind']=='room']),5)
  def test_impossible_or_nonfinite_dimensions_rejected(self):
   for width in [float('nan'),float('inf'),-2,4]:
    with self.assertRaises(ValueError):a.house_operations(width,12)

@@ -4,7 +4,7 @@ const vm = require('node:vm');
 const fs = require('node:fs');
 const path = require('node:path');
 async function main() {
-  let poll, queued, saved = false, fail = false, saveGate = null, snapshot = [80,75];
+  let poll, queued, saved = false, fail = false, saveGate = null, failSave = false, snapshot = [80,75];
   const events = [], nodes = {};
   const engine = {
     run: async c => { events.push('run:'+c.op); if(fail)throw Error('Invalid operation'); return {counts:{rooms:1},area_m2:20}; },
@@ -24,7 +24,7 @@ async function main() {
       if(url.includes('command?')) {const job=queued;queued=null;return Response.json({job});}
       if(url.endsWith('/info'))return Response.json({revision:0});
       if(url.endsWith('/project'))return new Response(null,{status:204});
-      if(url.endsWith('/save')){events.push('save');if(saveGate)await saveGate;return Response.json({revision:1});}
+      if(url.endsWith('/save')){events.push('save');if(failSave)return Response.json({error:'Disk write failed'},{status:400});if(saveGate)await saveGate;return Response.json({revision:1});}
       if(url.endsWith('/ack')){events.push('ack');events.push(JSON.parse(options.body));return Response.json({ok:true});}
       throw Error('Unexpected URL '+url);
     }};
@@ -53,8 +53,30 @@ async function main() {
   snapshot=[80,75,1];finishSave();await secondSave;
   assert.equal(saved,false,'Concurrent manual edit must remain dirty');
   saveGate=null;await JV.architecture.save();assert(saved);
+  // A disk error must produce an error ACK, never a successful operation.
+  events.length=0;saved=false;failSave=true;
+  queued={id:'disk-error',command:{op:'apply',operations:[]}};await poll();
+  assert.equal(events.at(-1).error,'Disk write failed');assert.equal(saved,false);
+  failSave=false;await JV.architecture.save();assert(saved,'Failed save must be retryable');
   events.length=0;document.hidden=true;
   queued={id:'hidden',command:{op:'state'}};await poll();assert.equal(events.length,0);assert(queued);
+  // Starting a new plan from a cold page must restore the saved drawing
+  // before checking whether replacement requires confirmation.
+  events.length=0;document.hidden=false;
+  let loadedProject=false,confirmed=false;
+  const previousState=engine.state;
+  engine.state=()=>({counts:loadedProject?{walls:4,rooms:1,furniture:1}:{walls:0,rooms:0,furniture:0},area_m2:20});
+  engine.load=async()=>{events.push('load');loadedProject=true;};
+  for(const [key,value] of Object.entries({'studio-width':'10','studio-depth':'12','studio-bedrooms':'2','studio-bathrooms':'1'}))nodes[key].value=value;
+  const coldFetch=ctx.fetch;
+  const cold={...ctx,window:{JV,confirm:()=>{assert(loadedProject,'Replacement checked before saved project loaded');confirmed=true;return false;}},fetch:async(url,options)=>{
+    if(url.endsWith('/project'))return new Response(new Uint8Array([80,75]));
+    return coldFetch(url,options);
+  }};
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../web/architecture.js'),'utf8'),cold);
+  await nodes['studio-house'].onclick();
+  assert(confirmed);assert(events.includes('load'));assert(!events.some(e=>typeof e==='string'&&e.startsWith('run:')));
+  engine.state=previousState;
   console.log('Architecture bridge: cold command bootstrap, save before ACK, failed operation, shared save completion, dirty edit preservation and hidden-tab lease passed.');
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});
