@@ -1,4 +1,4 @@
-name: Rebuild source-retained SweetHomeJS bundle
+name: Rebuild source-retained SweetHomeJS bundle (XML tag fix)
 
 on:
   push:
