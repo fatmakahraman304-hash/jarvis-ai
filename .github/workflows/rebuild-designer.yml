@@ -1,0 +1,50 @@
+name: Rebuild source-retained SweetHomeJS bundle
+
+on:
+  push:
+    branches:
+      - feature/jarvis-4.7-complete
+    paths:
+      - .github/workflows/rebuild-designer.yml
+
+permissions:
+  contents: write
+
+jobs:
+  build-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build source-fix catalog and preserve SH3D XML constructor names
+        run: python scripts/rebuild_designer.py
+      - name: Verify archives and publish rebuilt GPL bundle on this feature branch
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib, json, pathlib, zipfile
+          p=pathlib.Path('vendor')
+          manifest=json.loads((p/'designer.json').read_text())
+          for filename,key in [('designer.zip','sha256'),('designer-source.zip','source_sha256')]:
+              assert hashlib.sha256((p/filename).read_bytes()).hexdigest()==manifest[key]
+          with zipfile.ZipFile(p/'designer.zip') as z:
+              assert 'catalog.sh3f' in z.namelist()
+          assert manifest['catalog_fix']=='shared-categories-source'
+          assert manifest['xml_constructor_names']=='preserved-vite-esbuild'
+          print('Rebuilt editor and GPL source archives verified')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add vendor/designer.zip vendor/designer-source.zip vendor/designer.json
+          if ! git diff --staged --quiet; then
+            git commit -m "build: publish source-fixed SweetHomeJS with stable SH3D XML tags"
+            git push origin HEAD:feature/jarvis-4.7-complete
+          fi
