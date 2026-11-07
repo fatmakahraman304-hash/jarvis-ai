@@ -89,6 +89,7 @@ try:
    p.locator('#studio-properties input[name="name"]').fill('Ölçülü test mobilyası')
    p.locator('#studio-properties input[name="x"]').fill('2.75')
    p.locator('#studio-properties input[name="angle"]').fill('45')
+   assert p.locator('#studio-properties').evaluate('(form)=>form.checkValidity()'),p.locator('#studio-properties input').evaluate_all('(inputs)=>inputs.map(i=>({name:i.name,value:i.value,valid:i.validity.valid}))')
    p.locator('#studio-properties button').click()
    p.wait_for_function("document.querySelector('#studio-object-status').textContent.includes('doğrulandı')",timeout=65000)
    changed=next(f for f in run('state',{'details':True})['furniture'] if f['id']==editable['id'])
@@ -153,6 +154,8 @@ try:
   except BaseException:
    Path('test-results').mkdir(exist_ok=True)
    if 'p' in locals():
+    try:print('Studio failure state:',p.evaluate('({status:document.querySelector("#architecture-status")?.textContent,object:document.querySelector("#studio-object-status")?.textContent})'),flush=True)
+    except Exception:pass
     try:p.screenshot(path='test-results/architecture-failure.png',full_page=True,timeout=10000)
     except Exception as error:print('Could not capture failure screenshot:',error,flush=True)
     try:Path('test-results/browser-errors.json').write_text(json.dumps({'errors':errors,'failed_requests':requests},ensure_ascii=False,indent=2))
