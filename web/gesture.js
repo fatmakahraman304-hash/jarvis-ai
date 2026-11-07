@@ -91,7 +91,7 @@
     fare: "İşaret parmağı: fare · Kıstır: tıkla / basılı tut-sürükle (pencere taşıma) · Yumruk+yukarı/aşağı: kaydır · Rock 🤘 bekle: sağ tık",
     klavye: "İşaret parmağını tuşun üstüne getir, kıstırarak bas. Hedef: JARVIS kutusu veya bilgisayar.",
     komut: "Sol el kıstır+yukarı/aşağı: ses · Sağ el kıstır+yukarı/aşağı: parlaklık · Pozlar: ✋ dur · ✌ mikrofon · 👍 onayla · ✊(2sn) kilitle · kendi hareketlerin",
-    efekt: "✋ ateş · ✋✋ mühür halkası · 🤏 gezegen (taşı/fırlat) · 🤏🤏 büyüt · ✊→✋ patlat · ☝☝ şimşek · ☝ ışık izi · 👍 1sn komut · ✌ mikrofon · ✊ 2sn sus · Esc kapat",
+    efekt: "AR · TEK MOD: Kamera üstündeki seçiciden Ateş / Gezegen / Mühür / Şimşek / Kask / HUD seç. Yalnızca biri aktiftir. Dünya için 🌍 DÜNYA düğmesine bas.",
     robot: "Elin konumu: taban/omuz · Elin büyüklüğü (kameraya uzaklık): dirsek · Kıstır: kıskaç",
     bas: "Başını çevir: imleç · Uzun göz kırp (yarım sn): tıkla · Sağa/sola bak (1 sn): mod değiştir",
   };
