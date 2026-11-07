@@ -19,6 +19,13 @@ with zipfile.ZipFile(ROOT/'vendor/designer-source.zip') as sources:
 with zipfile.ZipFile(ROOT/'vendor/designer.zip') as archive:
  entries=[(i.filename,i.file_size) for i in archive.infolist() if i.filename.endswith(('.js','.html'))]
  print('DESIGNER files largest: '+repr(sorted(entries,key=lambda x:-x[1])[:12]),flush=True)
+ import io
+ if 'catalog.sh3f' in archive.namelist():
+  data=archive.read('catalog.sh3f')
+  with zipfile.ZipFile(io.BytesIO(data)) as catz:
+   props=[(i.filename,i.file_size,i.compress_size) for i in catz.infolist() if 'FurnitureCatalog.properties' in i.filename]
+   print('CATALOG nested archive: '+str({'bytes':len(data),'entries':len(catz.infolist()),'uncompressed':sum(i.file_size for i in catz.infolist()),'properties':props}),flush=True)
+
  for name,size in entries:
   if size>15_000_000:continue
   raw=archive.read(name)
