@@ -715,3 +715,13 @@ body.view-design.architecture-expanded #architecture-view footer{padding:8px 16p
 #architecture-view header button:hover,#architecture-view header button:focus-visible{background:#215b77;border-color:#69d9ff}
 #architecture-expand[aria-pressed="true"]{background:#17617b;border-color:#62dfff}
 @media(max-width:850px){body.view-design.architecture-expanded #architecture-view{inset:68px 5px 5px}}
+
+#architecture-tools{display:flex;align-items:center;flex-wrap:wrap;gap:9px;padding:10px 12px;background:linear-gradient(110deg,#0c2436,#102e40);border-bottom:1px solid #3b6173;color:#c9e9f7}
+#architecture-tools label{display:flex;align-items:center;gap:6px;font-size:10px;letter-spacing:.08em;white-space:nowrap}
+#architecture-tools input,#architecture-tools select{width:65px;min-height:30px;background:#071622;border:1px solid #416a7e;color:#f1fbff;border-radius:5px;padding:4px 6px}
+#architecture-tools button{padding:7px 10px;background:#15415b;border:1px solid #397b99;color:#e5faff;border-radius:5px;cursor:pointer}
+#architecture-tools #studio-house{background:#0c6075;border-color:#37c5e4;font-weight:700}
+#architecture-tools button:hover{background:#23718b}
+#architecture-tools button:disabled{opacity:.45;cursor:wait}
+#studio-metrics{margin-left:auto;color:#8de4ee;font-size:11px;font-family:var(--mono)}
+@media(max-width:1100px){#architecture-tools{gap:5px;padding:7px}#architecture-tools label{font-size:9px}#studio-metrics{width:100%;margin-left:0}}
