@@ -11,6 +11,31 @@
   const G = () => JV.GestureCore;
   const TAU = Math.PI * 2;
   const OPT_KEY = "jv_handfx_opts";
+  const PROFILE_KEY = "jv_handfx_profile_v1";
+  // These are mutually exclusive AR experiences. The 3D globe lives in the
+  // independent "nesne" gesture mode, never inside camera effects.
+  const PROFILES = {
+    fire: ["🔥 Ateş", "✋ Açık el: yalnızca ateş"],
+    seal: ["⭕ Mühür", "✋✋ İki açık el: mühür halkası"],
+    planet: ["🪐 Avuçta gezegen", "🤏 Çimdikle gezegeni tut / bırak"],
+    lightning: ["⚡ Şimşek", "☝☝ İki işaret parmağını göster"],
+    blast: ["💥 Patlama", "✊ Yumruk yapıp hızla elini aç"],
+    trail: ["✨ Işık izi", "☝ İşaret parmağınla iz çiz"],
+    palm: ["🖐 Avuç HUD", "✋ Avucunu sabit tut: HUD"],
+    face: ["🎯 Yüz takip", "Kameraya bak: yüz hedef çerçevesi"],
+    mask: ["🛡 Kask HUD", "Kameraya bak: Iron Man kaskı"],
+    draw: ["✏️ Havaya çizim", "☝ Çiz · ✌ yorumla · ✊ temizle"],
+    library: ["📚 Kitaplık AR", "Rafa bak: kitabı seç ve aç"],
+    desktop: ["🖥 AR masaüstü", "✋ Avuçla menüyü ve panelleri kontrol et"],
+    controls: ["🎙 El komutları", "👍 komut · ✌ mikrofon · ✊ sustur"],
+    game: ["🎮 El oyunu", "Oyunu uygulamalar menüsünden başlat"],
+    none: ["📷 Sade görüntü", "Hiçbir efekt etkin değil"]
+  };
+  const EXCLUSIVE = ["fire", "seal", "planet", "lightning", "blast", "trail",
+                     "palm", "face", "mask", "draw", "library", "controls"];
+  let profile = "fire";
+  try { const saved = localStorage.getItem(PROFILE_KEY); if (Object.prototype.hasOwnProperty.call(PROFILES, saved)) profile = saved; } catch (e) {}
+
   const DEF = { helmet: true, palm: true, draw: false, mask: false, library: true, fire: true, seal: true, planet: true, blast: true, lightning: true, trail: true, controls: true, face: true, sound: true, skeleton: false };
   let opts = { ...DEF };
   try { Object.assign(opts, JSON.parse(localStorage.getItem(OPT_KEY) || "{}")); } catch (e) {}
@@ -51,17 +76,27 @@
     if (stage) return;
     stage = document.createElement("div"); stage.id = "arstage"; stage.className = "hidden";
     stage.innerHTML = `<video id="ar-video" muted playsinline></video><canvas id="ar-canvas"></canvas>
-      <div id="ar-top"><b>AR · EFEKT</b><span id="ar-fps"></span><span id="ar-hint">✋ ateş · ✋✋ mühür · 🤏 gezegen · ✊→✋ patlat · ☝☝ şimşek · ☝ ışık izi · 👍 komut · ✌ mikrofon</span>
-        <button class="mini" id="ar-desk-b">🖥 MASAÜSTÜ</button><button class="mini" id="ar-opts-b">⚙ EFEKTLER</button><button class="mini" id="ar-close">✕ KAPAT</button></div>
+      <div id="ar-top"><b>AR · TEK MOD</b><label class="ar-mode-label">MOD <select id="ar-profile" aria-label="Aktif AR efekti"></select></label><span id="ar-fps"></span><span id="ar-hint"></span>
+        <button class="mini" id="ar-desk-b">🖥 MASAÜSTÜ</button><button class="mini" id="ar-opts-b">⚙ AYARLAR</button><button class="mini" id="ar-close">✕ KAPAT</button></div>
       <div id="ar-opts" class="hidden"></div><div id="ar-msg"></div>`;
     document.body.append(stage);
     cv = stage.querySelector("#ar-canvas"); ctx = cv.getContext("2d"); vid = stage.querySelector("#ar-video");
     stage.querySelector("#ar-close").onclick = () => api.stop();
-    stage.querySelector("#ar-desk-b").onclick = () => JV.ardesk && JV.ardesk.toggle();
+    stage.querySelector("#ar-desk-b").onclick = () => setProfile("desktop");
     stage.querySelector("#ar-opts-b").onclick = () => stage.querySelector("#ar-opts").classList.toggle("hidden");
-    const LBL = { helmet: "Kask HUD'unda Iron Man kaskı çiz", palm: "Avuçta HUD (saat/hava/etkinlik)", draw: "Havaya çizim", mask: "Iron Man kask HUD'u", library: "Kitaplık (raftan kitap çek)", fire: "Ateş", seal: "Mühür halkası", planet: "Gezegen", blast: "Patlatma", lightning: "Şimşek", trail: "Işık izi", controls: "JARVIS kontrolleri (👍 ✌ ✊)", face: "Yüz kilidi", sound: "Efekt sesleri", skeleton: "El iskeleti" };
+    const picker = stage.querySelector("#ar-profile");
+    for (const [key, info] of Object.entries(PROFILES)) {
+      const option = document.createElement("option"); option.value = key; option.textContent = info[0]; picker.append(option);
+    }
+    picker.value = profile;
+    picker.onchange = () => setProfile(picker.value);
+    stage.querySelector("#ar-hint").textContent = PROFILES[profile][1];
     const box = stage.querySelector("#ar-opts");
-    Object.keys(DEF).forEach((k) => { const l = document.createElement("label"); const c = document.createElement("input"); c.type = "checkbox"; c.checked = !!opts[k]; c.onchange = () => { opts[k] = c.checked; saveOpts(); }; l.append(c, " " + LBL[k]); box.append(l); });
+    const note = document.createElement("p"); note.textContent = "Efektler ayrı modlardır. Aynı anda yalnızca biri çalışır. Dünya döndürme için DÜNYA + EL/NESNE kullan."; box.append(note);
+    const soundLabel = document.createElement("label"), soundCheckbox = document.createElement("input");
+    soundCheckbox.type = "checkbox"; soundCheckbox.checked = !!opts.sound;
+    soundCheckbox.onchange = () => { opts.sound = soundCheckbox.checked; saveOpts(); };
+    soundLabel.append(soundCheckbox, " Sesli efektler"); box.append(soundLabel);
     const pl = document.createElement("div"); pl.className = "ar-planets";
     ["sıradaki", ...ORDER].forEach((p) => { const b = document.createElement("button"); b.className = "mini"; b.textContent = p === "sıradaki" ? "↻ sıradaki" : NAMES[p]; b.onclick = () => { forcePlanet = p === "sıradaki" ? "" : p; if (planets[0] && forcePlanet) morph(planets[0], forcePlanet); }; pl.append(b); });
     box.append(pl);
@@ -73,9 +108,9 @@
       if (!on || e.target.tagName === "INPUT") return;
       if (e.key === "Escape") api.stop();
       if (e.key === "e" || e.key === "E") stage.querySelector("#ar-opts").classList.toggle("hidden");
-      if (e.key === "f" || e.key === "F") { opts.face = !opts.face; saveOpts(); }
-      if (e.key === "d" || e.key === "D") { opts.skeleton = !opts.skeleton; saveOpts(); }
-      if (e.key === "m" || e.key === "M") { opts.sound = !opts.sound; saveOpts(); }
+      if (e.key === "f" || e.key === "F") setProfile("face");
+      if (e.key === "d" || e.key === "D") setProfile("draw");
+      if (e.key === "m" || e.key === "M") { opts.sound = !opts.sound; saveOpts(); const c = stage.querySelector('#ar-opts input[type="checkbox"]'); if (c) c.checked = opts.sound; }
       if ((e.key === "k" || e.key === "K") && JV.library) JV.library.scan();
       if ((e.key === "b" || e.key === "B") && JV.library) JV.library.openPanel();
       if (e.key === "p" || e.key === "P") { const p = ORDER[(ORDER.indexOf((planets[0] || {}).type) + 1) % ORDER.length]; if (planets[0]) morph(planets[0], p); else forcePlanet = p; }
@@ -279,6 +314,31 @@
 
   // ---------------- AR OYUNLARI ----------------
   let game = null;
+
+  function setProfile(name, silent = false) {
+    if (!Object.prototype.hasOwnProperty.call(PROFILES, name)) name = "fire";
+    profile = name;
+    // Migrate old installations which saved ALL effects as enabled.
+    // Preserve only unrelated preferences such as sound.
+    for (const key of EXCLUSIVE) opts[key] = key === name;
+    if (name === "mask") opts.helmet = true;
+    if (name !== "desktop" && JV.ardesk && JV.ardesk.on) JV.ardesk.toggle(false);
+    if (name === "desktop" && JV.ardesk && !JV.ardesk.on) JV.ardesk.toggle(true);
+    if (name !== "game") game = null;
+    parts = []; planets = []; bolts = []; waves = []; trail = []; shakeUntil = 0;
+    strokes = []; curStroke = null;
+    Object.keys(hs).forEach((k) => delete hs[k]);
+    face.box = null; face.locked = false;
+    if (stage) {
+      const picker = stage.querySelector("#ar-profile"), hint = stage.querySelector("#ar-hint");
+      if (picker) picker.value = profile;
+      if (hint) hint.textContent = PROFILES[profile][1];
+    }
+    saveOpts();
+    try { localStorage.setItem(PROFILE_KEY, profile); } catch (e) {}
+    if (!silent && on) msg(PROFILES[profile][0] + " modu", 1800);
+  }
+
   const RPS = { fist: "taş", open: "kağıt", peace: "makas" }, RPS_ICON = { taş: "✊", kağıt: "✋", makas: "✌" };
   const beats = (a, b) => (a === "taş" && b === "makas") || (a === "kağıt" && b === "taş") || (a === "makas" && b === "kağıt");
   const sayG = (t) => JV.say && JV.say(t, JV.currentPersona && JV.currentPersona());
@@ -538,41 +598,47 @@
 
   const api = {
     get active() { return on; },
+    get profile() { return profile; },
+    setProfile,
     video: () => vid,
     opts, frame,
     show(stream) {
       build(); size(); on = true; stage.classList.remove("hidden"); document.body.classList.add("ar-on");
+      setProfile(profile, true);
       if (stream) { vid.srcObject = stream; vid.play().catch(() => {}); }
       msg("AR EFEKT · ellerini kameraya göster", 2200);
     },
     stop() {
-      on = false; demo = false; cancelAnimationFrame(raf); parts = []; planets = []; bolts = []; waves = []; trail = [];
+      on = false; demo = false; game = null; cancelAnimationFrame(raf); parts = []; planets = []; bolts = []; waves = []; trail = [];
+      if (JV.ardesk && JV.ardesk.on) JV.ardesk.toggle(false);
       if (stage) { stage.classList.add("hidden"); stage.style.transform = ""; } document.body.classList.remove("ar-on");
       Object.keys(hs).forEach((k) => delete hs[k]); face.box = null; face.locked = false;
       if (JV.gesture && JV.gesture.isRunning() && JV.gesture.mode && JV.gesture.mode() === "efekt") JV.gesture.stop();
     },
     _synth: (cx, cy, s, kind) => synthHand(cx, cy, s, kind, 0),
-    demo() { build(); size(); on = true; demo = true; demoT = performance.now(); stage.classList.remove("hidden"); demoLoop(); },
+    demo() { build(); size(); on = true; demo = true; demoT = performance.now(); setProfile(profile, true); stage.classList.remove("hidden"); demoLoop(); },
     _setFaces: (f) => (lastFaces = f),
-    _startGame: (k, dur) => { startGame(k); if (dur && game) game.dur = dur; },
+    _startGame: (k, dur) => { setProfile("game"); startGame(k); if (dur && game) game.dur = dur; },
     _game: () => game && { kind: game.kind, phase: game.phase, score: game.score, you: game.you, me: game.me, round: game.round, pick: game.pick, res: game.res, balloons: game.balloons && game.balloons.map((b) => ({ x: b.x, y: b.y, r: b.r })) },
     _toLm: (xs, ys) => { const vw = (vid && vid.videoWidth) || 640, vh = (vid && vid.videoHeight) || 480, sc = Math.max(W / vw, H / vh), dw = vw * sc, dh = vh * sc; return { x: 1 - (xs - (W - dw) / 2) / dw, y: (ys - (H - dh) / 2) / dh }; },
     stats: () => ({ strokes: strokes.length, palm: !!palmData.t, trail: trail.length, parts: parts.length, planets: planets.map((p) => p.type), bolts: bolts.length, face: !!face.box, locked: face.locked }),
     planet(type) { forcePlanet = type || ""; if (planets[0] && type) morph(planets[0], type); else if (type) msg("Sonraki çimdik: " + NAMES[type]); },
     cmd(r) {
       if (r.action === "close") return api.stop();
-      if (r.action === "face") { opts.face = !opts.face; saveOpts(); return; }
-      if (r.action === "desktop") { if (!on && JV.gesture) JV.gesture.start("efekt"); setTimeout(() => JV.ardesk && JV.ardesk.toggle(true, r.panel || ""), on ? 0 : 2500); return; }
-      if (r.action === "game") { if (!on && JV.gesture) JV.gesture.start("efekt"); setTimeout(() => startGame(r.game || "rps"), on ? 0 : 2500); return; }
+      if (r.action === "face") { setProfile(profile === "face" ? "none" : "face"); return; }
+      if (r.action === "desktop") { setProfile("desktop"); if (!on && JV.gesture) JV.gesture.start("efekt"); if (r.panel && JV.ardesk) JV.ardesk.openPanel(r.panel); return; }
+      if (r.action === "game") { setProfile("game"); if (!on && JV.gesture) JV.gesture.start("efekt"); startGame(r.game || "rps"); return; }
       if (r.action === "extra") {
-        if (r.extra === "draw") { opts.draw = true; strokes = []; msg("✏ Havaya çiz: ☝ çiz · ✌ ne çizdim? · ✊ sil · 👍 bitir", 4000); }
-        if (r.extra === "mask") { opts.mask = !opts.mask; msg(opts.mask ? "🛡 Kask HUD'u açık" : "Kask HUD'u kapalı"); }
-        if (r.extra === "palm") { opts.palm = true; msg("✋ Avucunu kameraya aç ve sabit tut", 3000); }
-        saveOpts();
+        if (r.extra === "draw") { setProfile("draw"); msg("✏ Havaya çiz: ☝ çiz · ✌ ne çizdim? · ✊ sil · 👍 bitir", 4000); }
+        if (r.extra === "mask") { setProfile(profile === "mask" ? "none" : "mask"); }
+        if (r.extra === "palm") { setProfile("palm"); msg("✋ Avucunu kameraya aç ve sabit tut", 3000); }
       }
       if (!on && JV.gesture) JV.gesture.start("efekt");
+      if (r.action === "planet" || r.planet) setProfile("planet");
       if (r.planet) api.planet(r.planet);
     },
   };
+  // A saved pre-isolation setting must never reactivate several effects.
+  setProfile(profile, true);
   JV.handfx = api;
 })();
