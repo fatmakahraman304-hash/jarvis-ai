@@ -62,7 +62,7 @@ try:
             result = page.evaluate("""async () => {
               const H = JV.handfx;
               const FX = ['fire','seal','planet','lightning','blast','trail',
-                          'palm','face','mask','draw','library','controls'];
+                          'palm','face','mask','draw','library','controls','skeleton'];
               H.show(null);
               const out = {};
               out.selector = !!document.querySelector('#ar-profile');
