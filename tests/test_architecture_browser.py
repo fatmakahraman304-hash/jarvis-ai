@@ -40,21 +40,7 @@ try:
    probe.on('pageerror',lambda e:probe_errors.append(str(e)))
    probe.on('console',lambda m:probe_errors.append('console '+m.type+': '+m.text[:250]) if m.type in ('error','warning') else None)
    probe.on('requestfailed',lambda r:probe_errors.append('request '+r.url[:130]+' '+str(r.failure)))
-   profile_session=probe.context.new_cdp_session(probe)
-   profile_session.send('HeapProfiler.enable')
-   profile_session.send('HeapProfiler.startSampling',{'samplingInterval':32768})
-   probe.goto(base+'/designer/',wait_until='commit',timeout=30000)
-   probe.wait_for_timeout(2200)
-   try:
-    root=profile_session.send('HeapProfiler.stopSampling')['profile']['head']
-    samples=[]
-    def walk(node):
-     f=node.get('callFrame',{}); n=node.get('selfSize',0)
-     if n>0:samples.append((n,f.get('functionName',''),f.get('url',''),f.get('lineNumber',0)))
-     for child in node.get('children',[]):walk(child)
-    walk(root)
-    print('Designer startup allocation hot spots: '+repr(sorted(samples,reverse=True)[:20]),flush=True)
-   except Exception as e:print('Heap profiling unavailable: '+str(e),flush=True)
+   probe.goto(base+'/designer/',wait_until='domcontentloaded',timeout=30000)
    try:probe.wait_for_function('window.jarvisDesigner && typeof window.jarvisDesigner.run === "function"',timeout=30000)
    except Exception as e:raise AssertionError(f'Isolated designer failed: {e}; errors={probe_errors}') from e
    print('Probe: isolated designer booted; errors='+str(probe_errors),flush=True)
