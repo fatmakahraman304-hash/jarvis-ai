@@ -62,7 +62,9 @@ jobs:
       - name: Install test browser
         run: python -m playwright install --with-deps chromium
       - name: Check real 2D and 3D architecture editor
-        run: python tests/test_architecture_browser.py
+        env:
+          JARVIS_CI_HEADED: "1"
+        run: xvfb-run -a -s "-screen 0 1600x1000x24" python tests/test_architecture_browser.py
       - name: Preserve editor test evidence
         if: always()
         uses: actions/upload-artifact@v4
