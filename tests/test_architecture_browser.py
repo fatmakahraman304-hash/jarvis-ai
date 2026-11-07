@@ -17,7 +17,7 @@ try:
   except Exception:time.sleep(.1)
  else:log.seek(0);raise RuntimeError(log.read()[-4000:])
  with sync_playwright() as pw:
-  kwargs={'headless':os.environ.get('JARVIS_CI_HEADED')!='1','channel':os.environ.get('JARVIS_BROWSER_CHANNEL','chromium'),'args':['--enable-unsafe-swiftshader','--disable-dev-shm-usage']}
+  kwargs={'headless':os.environ.get('JARVIS_CI_HEADED')!='1','channel':os.environ.get('JARVIS_BROWSER_CHANNEL','chromium'),'args':['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--disable-dev-shm-usage']}
   if os.environ.get('JARVIS_TEST_CHROMIUM'):kwargs['executable_path']=os.environ['JARVIS_TEST_CHROMIUM']
   b=pw.chromium.launch(**kwargs)
   try:
@@ -27,6 +27,8 @@ try:
    probe=b.new_page(viewport={'width':1200,'height':800});probe_errors=[]
    probe.on('crash',lambda _:probe_errors.append('standalone renderer crashed'))
    probe.on('pageerror',lambda e:probe_errors.append(str(e)))
+   probe.on('console',lambda m:probe_errors.append('console '+m.type+': '+m.text[:250]) if m.type in ('error','warning') else None)
+   probe.on('requestfailed',lambda r:probe_errors.append('request '+r.url[:130]+' '+str(r.failure)))
    probe.goto(base+'/designer/',wait_until='domcontentloaded',timeout=30000)
    try:probe.wait_for_function('window.jarvisDesigner && typeof window.jarvisDesigner.run === "function"',timeout=30000)
    except Exception as e:raise AssertionError(f'Isolated designer failed: {e}; errors={probe_errors}') from e
