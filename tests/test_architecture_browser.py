@@ -42,6 +42,8 @@ try:
    # First voice/model command must open the editor from the core view automatically.
    print('Opening model catalog from real UI...',flush=True)
    catalog=run('catalog');assert len(catalog)>80
+   print('REAL CATALOG ITEM NAMES: '+repr([x.get('name') for x in catalog]),flush=True)
+
    frame=p.frame(url=base+'/designer/');assert frame
    import io,zipfile
    serialized=frame.evaluate('async()=>Array.from(await window.jarvisDesigner.save())')
