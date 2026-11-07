@@ -53,7 +53,21 @@ try:
 
    assert sum(bool(x['model']) for x in catalog)>70
    assert any(x['opening'] for x in catalog)
-   result=run('house',{'width':10,'depth':12,'bedrooms':2,'bathrooms':1,'name':'Test 10x12'})
+   # End-to-end studio workflow: preset -> dimensions -> visible button -> real SH3D geometry.
+   p.locator('#studio-preset').select_option('compact')
+   assert p.locator('#studio-width').input_value()=='8'
+   assert p.locator('#studio-depth').input_value()=='9'
+   p.locator('#studio-house').click()
+   p.wait_for_function("document.getElementById('studio-metrics').textContent.includes('4 oda')",timeout=90000)
+   studio_state=run('state')
+   assert studio_state['counts']['rooms']==4,studio_state
+   assert studio_state['counts']['furniture']>=12,studio_state
+   assert 'Tasarım uygulandı' in p.locator('#architecture-status').inner_text()
+   p.locator('#architecture-expand').click()
+   assert p.locator('#architecture-expand').get_attribute('aria-pressed')=='true'
+   p.keyboard.press('Escape')
+   assert p.locator('#architecture-expand').get_attribute('aria-pressed')=='false'
+   result=run('house',{'width':10,'depth':12,'bedrooms':2,'bathrooms':1,'name':'Test 10x12','replace':True})
    assert result['counts']['rooms']==6,result
    assert result['counts']['furniture']>=20,result
    assert result['counts']['walls']>=9,result
