@@ -151,6 +151,8 @@
   // ---------------- raf taraması (kameradan) ----------------
   async function scan() {
     if (scanning) return;
+    // Scanning a bookshelf is its own AR mode, not fire + planets + shelf.
+    if (JV.handfx && JV.handfx.setProfile) JV.handfx.setProfile("library");
     if (!(JV.handfx && JV.handfx.active)) { JV.gesture && JV.gesture.start("efekt"); await new Promise((r) => setTimeout(r, 2500)); }
     const v = JV.handfx && JV.handfx.video && JV.handfx.video();
     if (!v || !v.videoWidth) { JV.toast && JV.toast("Kamera açılamadı; raf fotoğrafından ekleyebilirsin (KİTAPLIK paneli)."); return; }
