@@ -38,7 +38,7 @@ try:
    probe=b.new_page(viewport={'width':1200,'height':800});probe_errors=[]
    # Trace the bundled app's async session bootstrap without changing release assets.
    with zipfile.ZipFile(ROOT/'vendor/designer.zip') as archive:
-    bundle_name=next(n for n in archive.namelist() if n.startswith('assets/index-') and n.endswith('.js'))
+    bundle_name=max((n for n in archive.namelist() if n.startswith('assets/index-') and n.endswith('.js')),key=lambda n:archive.getinfo(n).file_size)
     bundle=archive.read(bundle_name).decode('utf8')
    anchor=re.search(r'globalThis\.__devEvent=[^,]{1,30},([\w$]+\(new [\w$]+\)\.then\(async [\w$]+=>\{)',bundle)
    assert anchor, 'Session bootstrap entry not found in compiled bundle'
