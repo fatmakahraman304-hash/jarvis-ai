@@ -25,12 +25,12 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
       - name: Validate release metadata and Python syntax
         shell: pwsh
         run: |
           $release = Get-Content version.json | ConvertFrom-Json
-          if ($release.version -ne "4.6.49") { throw "Unexpected version: $($release.version)" }
+          if ($release.version -ne "4.7.0") { throw "Unexpected version: $($release.version)" }
           python -m compileall -q run.py core
           if (Test-Path "tests/test_smoke.py") { throw "Legacy updater runs test_smoke.py before updating; keep the long smoke test named test_ci_smoke.py." }
           if (-not (Test-Path "tests/test_ci_smoke.py")) { throw "CI smoke test is missing." }
@@ -46,17 +46,20 @@ jobs:
             "tests/test_windows_transport.py",
             "tests/test_research_budget.py",
             "tests/test_live_voice.py"
-            "tests/test_manual_login.py"
             "tests/test_browser_approval.py"
-            "tests/test_spaceplanner.py"
             "tests/test_desktop_control.py"
             "tests/test_visual_pause.py"
             "tests/test_observe_loop.py"
-            "tests/test_gemini_continuation.py"
             "tests/test_gemini_quota_recovery.py"
             "tests/test_gemini_lite_wire.py"
             "tests/test_gemini_tool_schema.py"
             "tests/test_gemini_tool_budget.py"
+            "tests/test_assistant.py"
+            "tests/test_home_verification.py"
+            "tests/test_gemini_continuation.py"
+            "tests/test_update_recovery.py"
+            "tests/test_architecture.py"
+            "tests/test_desktop_semantic.py"
             "tests/test_tool_execution.py"
             "tests/test_expansion.py"
           )
@@ -81,11 +84,11 @@ jobs:
           if (-not $compiler) { throw "ISCC.exe not found. Checked: $($candidates -join '; ')" }
           & $compiler "packaging\windows.iss"
           if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed: $LASTEXITCODE" }
-          if (-not (Test-Path "packaging\dist\JARVIS-Setup-4.6.49.exe")) { throw "Installer EXE was not created." }
+          if (-not (Test-Path "packaging\dist\JARVIS-Setup-4.7.0.exe")) { throw "Installer EXE was not created." }
       - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
-          name: JARVIS-Windows-Setup-v4.6.49
-          path: packaging/dist/JARVIS-Setup-4.6.49.exe
+          name: JARVIS-Windows-Setup-v4.7.0
+          path: packaging/dist/JARVIS-Setup-4.7.0.exe
           if-no-files-found: error
           retention-days: 30

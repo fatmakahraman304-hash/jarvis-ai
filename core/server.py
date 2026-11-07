@@ -16,7 +16,7 @@ from starlette.routing import Mount, Route, WebSocketRoute
 from starlette.staticfiles import StaticFiles
 
 from . import brain, llm, memory, original_voice, personas, tools, voice
-from .config import VERSION, WEB, env, load_settings, save_settings
+from .config import VERSION, ROOT, WEB, env, load_settings, save_settings
 
 TOKEN = env("JARVIS_TOKEN")
 
@@ -56,29 +56,44 @@ def _sse(gen):
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
-async def spaceplanner_manual_api(request):
-    from urllib.parse import urlparse
-    origin = request.headers.get("origin")
-    if origin and (urlparse(origin).netloc != request.url.netloc or urlparse(origin).scheme != request.url.scheme):
-        return JSONResponse({"error": "Farklı kaynaktan elle kullanım isteği reddedildi."}, status_code=403)
-    if not request.headers.get("content-type", "").startswith("application/json"):
-        return JSONResponse({"error": "JSON istek gerekli."}, status_code=415)
-    from .skills import browser
+async def architecture_api(request):
+    from . import architecture
+    action = request.path_params.get("what", "info")
     try:
-        body = await request.json()
-        result = await asyncio.to_thread(browser.spaceplanner_manual, body.get("action"))
-        return JSONResponse(result, headers={"Cache-Control": "no-store"})
-    except Exception as exc:
-        return JSONResponse({"error": str(exc)}, status_code=400, headers={"Cache-Control": "no-store"})
-
-
-async def spaceplanner_frame_api(request):
-    from .skills import browser
-    try:
-        frame = await asyncio.to_thread(browser.spaceplanner_frame)
-        return JSONResponse(frame, headers={"Cache-Control": "no-store"})
-    except Exception as exc:
-        return JSONResponse({"active": False, "message": "Canlı Chrome görüntüsü alınamadı: " + str(exc)}, headers={"Cache-Control": "no-store"})
+        if request.method == "GET":
+            if action == "info": return JSONResponse(architecture.project_info(), headers={"Cache-Control":"no-store"})
+            if action == "project":
+                if not architecture.PROJECT.exists():return Response(status_code=204)
+                return FileResponse(architecture.PROJECT,media_type="application/zip",filename="JARVIS-Proje.sh3d",headers={"Cache-Control":"no-store"})
+            if action == "source":return FileResponse(ROOT / "vendor/designer-source.zip",filename="SweetHomeJS-source.zip")
+            if action == "bundle":return FileResponse(ROOT / "vendor/designer.zip",filename="SweetHomeJS.zip")
+            if action == "command":return JSONResponse(architecture.claim(request.query_params.get("client","")),headers={"Cache-Control":"no-store"})
+        if request.method == "POST":
+            origin=request.headers.get("origin")
+            if origin:
+                from urllib.parse import urlparse
+                parsed=urlparse(origin)
+                if parsed.netloc!=request.url.netloc or parsed.scheme!=request.url.scheme:return JSONResponse({"error":"Origin mismatch"},status_code=403)
+            if action == "run":
+                body=await request.json();op=body.get("op")
+                if op == "house":
+                    args=body.get("args") or {}
+                    operations=architecture.house_operations(**args)
+                    return JSONResponse(await asyncio.to_thread(architecture.command,"apply",operations=operations))
+                if op not in {"state","catalog","apply","undo","redo"}:raise ValueError("Unknown command")
+                args=body.get("args") or {}
+                allowed={"state":{"details"},"catalog":{"query"},"apply":{"operations"},"undo":set(),"redo":set()}[op]
+                if set(args)-allowed:raise ValueError("Unexpected command arguments")
+                return JSONResponse(await asyncio.to_thread(architecture.command,op,**args))
+            if action == "save":
+                data=await request.body()
+                report=json.loads(request.headers.get("x-project-report","{}"))
+                result=architecture.save_project(data,int(request.headers.get("x-revision","0")),report)
+                return JSONResponse(result)
+            if action == "ack":
+                b=await request.json();architecture.acknowledge(b.get("client"),b.get("id"),b.get("result"),b.get("error"));return JSONResponse({"ok":True})
+        return JSONResponse({"error":"Unknown architecture operation"},status_code=404)
+    except Exception as exc:return JSONResponse({"error":str(exc)},status_code=400)
 
 
 async def index(request):
@@ -878,7 +893,10 @@ async def memory_api(request):
         body = await request.json()
         fid = memory.add_fact(body.get("fact", ""), body.get("category", "genel"))
         return JSONResponse({"id": fid})
-    return JSONResponse({"facts": memory.facts(), "reminders": memory.pending_reminders(),
+    from . import assistant
+    return JSONResponse({"tasks": assistant.task_journal(include_finished=True),
+                         "projects": memory._q("SELECT project,key,value,updated FROM project_notes ORDER BY updated DESC LIMIT 100"),
+                         "facts": memory.facts(), "reminders": memory.pending_reminders(),
                          "actions": memory.recent_actions(30)})
 
 
@@ -971,6 +989,9 @@ def _scheduler():
             if n % 6 == 2:      # ~30 sn: sabah brifingi zamanı geldi mi
                 automation.briefing_tick(_notify)
             habits.tick()
+            if n % 12 == 4:
+                from . import assistant
+                assistant.tick(memory.notify)
             semantic.index_tick()
             daily.alarm_tick(_notify)
             from .skills import life
@@ -1063,8 +1084,7 @@ routes = [
     Route("/", index),
     Route("/manifest.json", manifest),
     Route("/api/state", state),
-    Route("/api/spaceplanner/frame", spaceplanner_frame_api),
-    Route("/api/spaceplanner/manual", spaceplanner_manual_api, methods=["POST"]),
+    Route("/api/architecture/{what}", architecture_api, methods=["GET","POST"]),
     Route("/api/chat", chat, methods=["POST"]),
     Route("/api/confirm", confirm, methods=["POST"]),
     Route("/api/tts", tts),
@@ -1117,6 +1137,7 @@ routes = [
     Route("/api/holo/save", holo_save, methods=["POST"]),
     Route("/api/voice/{action}", voice_api, methods=["GET", "POST"]),
     Route("/api/vault/{action}", vault_api, methods=["GET", "POST"]),
+    Mount("/designer", StaticFiles(directory=str(__import__("core.architecture",fromlist=["assets"]).assets()), html=True), name="designer"),
     Mount("/static", StaticFiles(directory=str(WEB)), name="static"),
 ]
 

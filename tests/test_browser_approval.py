@@ -72,8 +72,8 @@ class RoutineBrowserApprovalTests(unittest.TestCase):
             self.assertTrue(tools.is_critical("browser_click", {"target": "12"}))
             self.assertTrue(tools.is_critical("browser_fill", {"field": "search", "value": "room design"}))
 
-    def test_spaceplanner_routine_controls_remain_automatic(self):
-        self.page.url = "https://spaceplanner.co/editor"
+    def test_design_site_controls_follow_general_policy(self):
+        self.page.url = "https://example.test/editor"
         with patch.object(browser, "_label_of", return_value="Room"):
             self.assertFalse(tools.is_critical("browser_click", {"target": "12"}))
         with patch.object(browser, "_label_of", return_value="Export PDF"):

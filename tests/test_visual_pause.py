@@ -27,24 +27,24 @@ class PauseTests(unittest.TestCase):
                 return 'Hata: Görüntü analizi yapılamadı. gemini/test: 429' if observations==fail_at else json.dumps({'ekran_analizi':'fresh visible plan'})
             return 'ok'
         with patch.object(brain.llm,'route',side_effect=route),patch.object(brain.tools,'execute',side_effect=execute),patch.object(brain.tools,'is_critical',return_value=False),patch.object(brain.memory,'history',return_value=[]),patch.object(brain.memory,'add_message'),patch.object(brain,'_estop',return_value=False):
-            events=list(brain.chat('SpacePlanner aç ve 10x12 ev tasarla',groups_override={'browser'}))
+            events=list(brain.chat('Chrome aç ve düğmeye tıkla',groups_override={'browser'}))
         return executed,requests,events
 
     def test_open_failure_prevents_all_later_draws_and_summary_model(self):
-        executed,requests,events=self.run_agent([['spaceplanner_open'],['spaceplanner_draw']])
-        self.assertEqual(executed,['spaceplanner_open','browser_observe'])
+        executed,requests,events=self.run_agent([['browser_open'],['browser_click']])
+        self.assertEqual(executed,['browser_open','browser_observe'])
         self.assertEqual(len(requests),1)
         self.assertEqual(events[-1]['outcome'],'paused')
         self.assertIn('429',events[-1]['text']);self.assertNotIn('Devam ediyorum',events[-1]['text'])
 
     def test_after_one_draw_no_second_draw_even_in_same_batch(self):
-        executed,requests,events=self.run_agent([['spaceplanner_open'],['spaceplanner_draw','spaceplanner_draw'],['spaceplanner_draw']],fail_at=2)
-        self.assertEqual(executed,['spaceplanner_open','browser_observe','spaceplanner_draw','browser_observe'])
+        executed,requests,events=self.run_agent([['browser_open'],['browser_click','browser_click'],['browser_click']],fail_at=2)
+        self.assertEqual(executed,['browser_open','browser_observe','browser_click','browser_observe'])
         self.assertEqual(len(requests),2);self.assertEqual(events[-1]['outcome'],'paused')
         self.assertIn('otomatik tekrarlanmadı',events[-1]['text'])
 
     def test_failed_initial_observation_does_not_execute_requested_edit(self):
-        executed,_,events=self.run_agent([['spaceplanner_draw'],['spaceplanner_draw']])
+        executed,_,events=self.run_agent([['browser_click'],['browser_click']])
         self.assertEqual(executed,['browser_observe'])
         self.assertIn('Yeni çizim/fare işlemi yapılmadı',events[-1]['text'])
 

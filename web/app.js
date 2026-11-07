@@ -158,11 +158,12 @@
       case "provider": $("#model-badge").textContent = "AI MODEL"; $("#model-badge").title = `Yanıt motoru: ${ev.label} · ${ev.model} — kişilik seçmek için tıkla`; setStatus("thinking", "DÜŞÜNÜYOR · " + ev.model); break;
       case "token": body.textContent += ev.text; sent.push(ev.text); scrollLog(); break;
       case "tool":
+        if (ev.name && ev.name.startsWith("architecture_") && JV.architecture) { JV.setView("design"); JV.architecture.open(); }
         if (ev.status === "running") {
           const t = el("details", "msg tool");
           t.append(el("summary", "", `⚙ ${ev.name} …`));
           task.rows[ev.name] = t; body.parentElement.before(t); scrollLog();
-          const nice = { browser_observe: "SAYFAYI YENİDEN ANALİZ EDİYOR", screen_look: "EKRANI ANALİZ EDİYOR", screen_find: "EKRANDA HEDEFİ BULUYOR", browser_read: "SAYFAYI KONTROL EDİYOR", spaceplanner_open: "SPACEPLANNER AÇILIYOR", web_search: "İNTERNETTE ARIYOR", news_search: "HABERLERE BAKIYOR", read_webpage: "SAYFAYI OKUYOR", weather: "HAVA DURUMUNA BAKIYOR" }[ev.name];
+          const nice = { browser_observe: "SAYFAYI YENİDEN ANALİZ EDİYOR", screen_look: "EKRANI ANALİZ EDİYOR", screen_find: "EKRANDA HEDEFİ BULUYOR", browser_read: "SAYFAYI KONTROL EDİYOR", architecture_house: "ÖLÇÜLÜ EV PLANI OLUŞTURULUYOR", architecture_apply: "PROJE DÜZENLENİYOR", web_search: "İNTERNETTE ARIYOR", news_search: "HABERLERE BAKIYOR", read_webpage: "SAYFAYI OKUYOR", weather: "HAVA DURUMUNA BAKIYOR" }[ev.name];
           setStatus("thinking", nice || ("ÇALIŞIYOR: " + ev.name));
           setTaskState("running", nice || ("ÇALIŞIYOR: " + ev.name));
         }
@@ -624,6 +625,17 @@
     const ul = $("#facts"); ul.innerHTML = "";
     if (!m.facts.length) ul.append(el("li", "", "Henüz kayıt yok. Sohbette \"bunu hatırla\" diyebilirsin."));
     m.facts.forEach((f) => { const li = el("li"); const d = el("button", "mini", "SİL"); d.onclick = async () => { await JV.api("/api/memory/" + f.id, { method: "DELETE" }); loadMemory(); }; li.append(el("span", "", f.fact), d); ul.append(li); });
+    const projects = $("#project-notes"); projects.replaceChildren();
+    (m.projects || []).forEach(n => projects.append(el("li", "", `${n.project} · ${n.key}: ${n.value}`)));
+    if (!projects.children.length) projects.append(el("li", "", "Proje kararlarını sohbetten kaydedebilirsin."));
+    const tasks = $("#task-journal"); tasks.replaceChildren();
+    const statuses = {finished:"Tamamlandı",paused:"Duraklatıldı",blocked:"Engellendi",needs_confirmation:"Onay bekliyor",running:"Son kayıt: sürüyordu",cancelled:"İptal"};
+    (m.tasks || []).forEach(t => {
+      const li = el("li"); li.append(el("span", "", `#${t.id} · ${statuses[t.status] || t.status} · ${t.goal}`));
+      if (t.summary) li.append(el("small", "", t.summary));
+      tasks.append(li);
+    });
+    if (!tasks.children.length) tasks.append(el("li", "", "Henüz araçlı görev yok."));
     const rl = $("#reminders"); rl.innerHTML = "";
     m.reminders.forEach((r) => rl.append(el("li", "", `${new Date(r.due * 1000).toLocaleString("tr-TR")} — ${r.text}`)));
     if (!m.reminders.length) rl.append(el("li", "", "—"));
@@ -785,13 +797,16 @@
     box.append(d);
     const s = JV.settings;
     $("#o-guest").checked = !!s.guest_mode; $("#o-rcam").checked = !!s.allow_remote_camera; $("#o-rscr").checked = s.allow_remote_screen !== false; $("#o-rcmd").checked = !!s.allow_remote_commands; $("#o-rport").value = s.robot_port || ""; $("#o-rurl").value = s.robot_url || "";
-    $("#o-browser-auto").checked = s.routine_browser_auto !== false; $("#o-auto").checked = !!s.auto_control; $("#o-mail").checked = s.email_watch !== false; $("#o-meet").checked = s.meeting_alerts !== false; $("#o-city").value = s.city || "";
+    $("#o-initiative").checked = s.initiative_enabled !== false;
+    $("#o-browser-auto").checked = s.routine_browser_auto !== false; $("#o-semantic-auto").checked = s.semantic_desktop_auto !== false; $("#o-auto").checked = !!s.auto_control; $("#o-mail").checked = s.email_watch !== false; $("#o-meet").checked = s.meeting_alerts !== false; $("#o-city").value = s.city || "";
   }
   $("#links-save").onclick = async () => {
     const k = {}; document.querySelectorAll('section[data-tab=links] .prov input[data-env]').forEach((i) => i.value.trim() && (k[i.dataset.env] = i.value.trim()));
     const r = await JV.api("/api/keys", { body: k }); toast(r.ok ? "Kaydedildi." : (r.error || "Kaydedilemedi"));
   };
+  $("#o-initiative").onchange = e => saveSettings({initiative_enabled:e.target.checked});
   $("#o-browser-auto").onchange = (e) => { saveSettings({ routine_browser_auto: e.target.checked }); };
+  $("#o-semantic-auto").onchange = (e) => saveSettings({ semantic_desktop_auto: e.target.checked });
   $("#o-auto").onchange = (e) => { saveSettings({ auto_control: e.target.checked }); if (e.target.checked) toast("Dikkat: JARVIS artık ekranda onaysız tıklayıp yazabilir."); };
   $("#o-mail").onchange = (e) => saveSettings({ email_watch: e.target.checked });
   $("#o-meet").onchange = (e) => saveSettings({ meeting_alerts: e.target.checked });

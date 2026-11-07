@@ -191,9 +191,9 @@ def fake_ha(path, method="GET", body=None):
 smarthome._ha = fake_ha
 check("cihaz listele", smarthome.home_devices("ışık")[0]["id"] == "light.salon")
 smarthome.home_control("salon lambası", "brightness", "40")
-check("parlaklık servisi", ha_calls[-1] == ("services/light/turn_on", "POST", {"entity_id": "light.salon", "brightness_pct": 40}))
+check("parlaklık servisi", ("services/light/turn_on", "POST", {"entity_id": "light.salon", "brightness_pct": 40}) in ha_calls)
 smarthome.home_control("klima", "temperature", "24")
-check("klima sıcaklık", ha_calls[-1][0] == "services/climate/set_temperature" and ha_calls[-1][2]["temperature"] == 24.0)
+check("klima sıcaklık", any(c[0] == "services/climate/set_temperature" and c[2]["temperature"] == 24.0 for c in ha_calls))
 check("kilit açma kritik", tools.is_critical("home_control", {"action": "unlock"}))
 
 print("ARAÇ SEÇİMİ")

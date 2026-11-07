@@ -677,23 +677,7 @@ body.ar-on #holobook.open{background:rgba(0,8,14,.35)}
 @media (hover:none){.msg-copy{opacity:.6}}
 
 
-/* SpacePlanner dış planlama arayüzü */
-#spaceplanner-view{display:none;position:fixed;inset:0;z-index:30;background:#0b1119;color:#eaf3fb}
-body.view-design #spaceplanner-view{display:flex;flex-direction:column}
 body.view-design #world{display:none}
-.spaceplanner-bar{height:48px;min-height:48px;display:flex;align-items:center;gap:14px;padding:0 14px;background:#101d2b;border-bottom:1px solid #29445a;font:12px var(--mono,monospace)}
-.spaceplanner-bar strong{color:#8fe8ff;letter-spacing:.08em}
-.spaceplanner-bar span{color:#a9bac9;flex:1}
-.spaceplanner-bar a{color:#9ee7ff;text-decoration:none}
-.spaceplanner-bar button{background:#193449;color:#eaf6ff;border:1px solid #3d7898;border-radius:6px;padding:7px 10px;cursor:pointer}
-.spaceplanner-launch{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:28px;background:radial-gradient(ellipse at center,#142c40 0%,#0b1119 65%);color:#eaf3fb}
-.spaceplanner-mark{font-size:76px;color:#8fe8ff;text-shadow:0 0 28px #36cfff88}
-.spaceplanner-launch h2{letter-spacing:.18em;color:#9ee7ff;font:600 24px var(--mono,monospace)}
-.spaceplanner-launch p{max-width:560px;color:#b7c8d6;line-height:1.7}
-.spaceplanner-launch button,.spaceplanner-bar #spaceplanner-open{background:#123c55;color:#eafaff;border:1px solid #4aaccb;border-radius:8px;padding:13px 20px;font-weight:700;cursor:pointer;box-shadow:0 0 22px #29b9ef22}
-.spaceplanner-launch button:hover,.spaceplanner-bar #spaceplanner-open:hover{background:#1a5875}
-.spaceplanner-launch small{margin-top:14px;color:#8298aa}
-@media(max-width:700px){.spaceplanner-bar{gap:8px;padding:0 8px;font-size:10px}.spaceplanner-bar span{display:none}.spaceplanner-bar button{padding:6px}}
 
 /* Optional light palette for the main shell and preference panels. */
 :root[data-theme="light"]{--bg:#eef4f8;--panel:rgba(255,255,255,.94);--txt:#17334b;--dim:#476176;--line:#9aafbf;--c:#076d9b;--c2:#215b9b;--glow:none;color-scheme:light}
@@ -710,18 +694,14 @@ html[data-theme="light"] .s-tabs button.active{background:#076d9b;color:#fff}
 .tool-result{white-space:pre-wrap;overflow-wrap:anywhere;max-height:200px;overflow:auto;font:11px var(--mono);line-height:1.5;margin:8px 0}
 details.msg.tool summary{cursor:pointer}
 
-/* Controlled Chrome live view, with JARVIS voice/chat still accessible. */
-#spaceplanner-live{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#08101a;overflow:hidden}
-#spaceplanner-live[hidden],.spaceplanner-launch[hidden]{display:none}
-#spaceplanner-frame{width:100%;min-height:0;flex:1;object-fit:contain}
-#spaceplanner-live-status{font:11px var(--mono);color:#9ee7ff;padding:7px;margin:0}
-body.view-design #spaceplanner-view{inset:100px 400px 48px 20px}
 body.view-design #log,body.view-design #right{visibility:visible}
-@media(max-width:1400px){body.view-design #spaceplanner-view{left:20px;right:400px}}
-@media(max-width:850px){body.view-design #spaceplanner-view{inset:95px 8px max(280px, calc(30vh + 190px))}.spaceplanner-bar span{display:none}}
 
-.spaceplanner-bar{height:auto;min-height:48px;flex-wrap:wrap;padding-block:7px;gap:8px}
-.spaceplanner-bar button[hidden]{display:none}
-.spaceplanner-bar button:disabled{opacity:.5;cursor:wait}
 
-#spaceplanner-control-status{margin:0;padding:8px;color:#a9e4ff;font-size:12px}#spaceplanner-control-status:empty{display:none}
+
+#architecture-view{display:none;position:fixed;inset:100px 400px 48px 18px;z-index:30;background:#eef1f5;flex-direction:column;border:1px solid #36526d;border-radius:8px;overflow:hidden}
+body.view-design #architecture-view{display:flex}body.view-design #world{display:none}
+#architecture-view header{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:9px;background:#102537;color:#d8f6ff;font-size:12px}
+#architecture-status{flex:1}#architecture-view button{background:#183d55;color:white;border:1px solid #4785a0;padding:8px;border-radius:5px;cursor:pointer}
+#architecture-frame{flex:1;width:100%;min-height:0;border:0;background:white}
+#architecture-view footer{padding:5px 10px;font-size:10px;color:#253b50;background:#dfe8ef}#architecture-view footer a{color:#234972}
+@media(max-width:850px){#architecture-view{inset:95px 8px max(280px,calc(30vh + 190px))}}

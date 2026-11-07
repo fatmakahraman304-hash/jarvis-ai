@@ -1,9 +1,14 @@
 {
-  "version": "4.6.49",
+  "version": "4.7.0",
   "date": "2026-11-07",
   "notes": [
-    "Kamera, 3D Dünya el kontrolü ve AR efektleri birbirinden bağımsız çalışır",
-    "AR efekti ekranından Ateş, Gezegen, Şimşek, Kask, Mühür ve diğer modlar tek tek seçilir; efektler birbirine karışmaz",
-    "AR ekranından KAMERA ve DÜNYA düğmeleriyle hızlı geçiş yapılır; mevcut ayarlar ve JARVIS AI görevleri korunur"
+    "Eski harici planlayıcı ve oturum kodları kaldırıldı; yerel SweetHomeJS 2D/3D editörü ve gerçek model kataloğu entegre edildi",
+    "Ölçülü ev oluşturma, oda/duvar/kat/kapı/pencere/mobilya düzenleme, atomik geri alma, yerel sürüm ve SH3D kayıt desteği",
+    "Windows erişilebilirlik ağacıyla semantik hedef bulma, yeni pencere/örtülme kontrolü ve gerçek hedefe tıklama",
+    "JARVIS daha doğal, samimi ve ölçülü mizahla konuşur; doğrulanmamış ilerleme iddiaları engellenir",
+    "Kalıcı proje kararları, görev günlüğü, yeniden başlatma sonrası devam ve kanıta dayalı proaktif öneriler",
+    "Görev sonunda kalan işleri açıkça raporlama; eski ekran/model okumalarını önbelleğe almama",
+    "Yüksek çözünürlüklü ekran bölgesi analizi, belirsiz hedefte tahmini görsel tıklamayı engelleme",
+    "Akıllı evde tek cihaz eşleştirme ve komut sonrası gerçek durum doğrulama; kamera ayrımı ve güncelleyici kurtarma düzeltmeleri korundu"
   ]
 }

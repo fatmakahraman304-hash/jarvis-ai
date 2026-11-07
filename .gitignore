@@ -6,3 +6,5 @@ data/
 plugins/_deneme/
 plugins/_yedek/
 tools/*.exe
+
+test-results/

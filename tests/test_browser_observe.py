@@ -16,11 +16,11 @@ with sync_playwright() as pw:
     b=pw.chromium.launch(headless=True, **({'executable_path':os.environ['JARVIS_TEST_CHROMIUM']} if os.environ.get('JARVIS_TEST_CHROMIUM') else {}))
     try:
         p=b.new_page(viewport={'width':1000,'height':700})
-        p.route('https://app.spaceplanner.co/**',lambda r:r.fulfill(content_type='text/html',body='''
+        p.route('https://example.test/**',lambda r:r.fulfill(content_type='text/html',body='''
           <button id="draw" onclick="this.textContent='Drawing ready'">Draw room</button>
           <div role="dialog" id="advert" style="position:fixed;inset:0;background:white;z-index:10">
           Advertisement <button onclick="document.querySelector('#advert').remove()">Skip ad</button></div>'''))
-        p.goto('https://app.spaceplanner.co/editor')
+        p.goto('https://example.test/editor')
         images=[]
         def vision(question,img,mime):
             images.append(img)

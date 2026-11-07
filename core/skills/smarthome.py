@@ -6,6 +6,9 @@
 - 3D yazıcı: OctoPrint. .env: OCTOPRINT_URL, OCTOPRINT_KEY
 """
 import json
+import math
+import time
+import urllib.parse
 import urllib.error
 import urllib.request
 
@@ -59,13 +62,19 @@ def home_devices(kind="", query=""):
 
 
 def _find_entity(name):
-    if "." in name and " " not in name:
-        return name
-    for s in _ha("states"):
-        fn = s.get("attributes", {}).get("friendly_name", "")
-        if name.lower() in fn.lower() or name.lower() in s["entity_id"].lower():
-            return s["entity_id"]
-    raise RuntimeError(f"'{name}' adlı cihaz bulunamadı.")
+    from .desktop import _norm
+    key = _norm(name)
+    if not key:
+        raise ValueError('Cihaz adı boş olamaz.')
+    states = _ha('states')
+    exact = [s for s in states if key in (_norm(s['entity_id']), _norm(s.get('attributes', {}).get('friendly_name', '')))]
+    matches = exact or [s for s in states if key in _norm(s['entity_id'] + ' ' + s.get('attributes', {}).get('friendly_name', ''))]
+    if len(matches) != 1:
+        raise ValueError('Cihaz bulunamadı veya adı belirsiz. home_devices ile tam kimliği seç: ' +
+                         ', '.join(s['entity_id'] for s in matches[:10]))
+    if matches[0].get('state') in ('unavailable', 'unknown'):
+        raise RuntimeError('Cihaz çevrimdışı veya durumu bilinmiyor; komut gönderilmedi.')
+    return matches[0]['entity_id']
 
 
 def home_control(device, action="toggle", value=""):
@@ -76,19 +85,60 @@ def home_control(device, action="toggle", value=""):
     svc = {"on": "turn_on", "off": "turn_off", "toggle": "toggle", "open": "open_cover", "close": "close_cover",
            "lock": "lock", "unlock": "unlock", "activate": "turn_on"}.get(action)
     if action == "brightness":
-        svc, data["brightness_pct"] = "turn_on", int(float(value))
+        number = float(value)
+        if not math.isfinite(number) or not 0 <= number <= 100:
+            raise ValueError('Parlaklık 0–100 arasında olmalı.')
+        svc, data["brightness_pct"] = "turn_on", round(number)
     elif action == "temperature":
-        svc, data["temperature"] = "set_temperature", float(value)
+        number = float(value)
+        if not math.isfinite(number):
+            raise ValueError('Sıcaklık sonlu bir sayı olmalı.')
+        state = _ha('states/' + urllib.parse.quote(eid, safe=''))
+        attrs = state.get('attributes', {}) if isinstance(state, dict) else {}
+        if not float(attrs.get('min_temp', 5)) <= number <= float(attrs.get('max_temp', 40)):
+            raise ValueError('Sıcaklık cihazın izin verdiği aralık dışında.')
+        svc, data["temperature"] = "set_temperature", number
     elif action == "color":
         svc, data["color_name"] = "turn_on", str(value)
     elif action == "volume":
-        svc, data["volume_level"] = "volume_set", float(value) / 100
+        number = float(value)
+        if not math.isfinite(number) or not 0 <= number <= 100:
+            raise ValueError('Ses seviyesi 0–100 arasında olmalı.')
+        svc, data["volume_level"] = "volume_set", number / 100
     if not svc:
         return "Geçersiz eylem."
     if dom in ("scene", "script") and svc == "turn_on":
         pass
     _ha(f"services/{dom}/{svc}", "POST", data)
-    return f"{device}: {action}{' ' + str(value) if value != '' else ''} yapıldı."
+    expected = {'on':'on','off':'off','open':'open','close':'closed','lock':'locked','unlock':'unlocked'}.get(action)
+    verified = False
+    observed = None
+    error = ''
+    for attempt in range(3):
+        try:
+            observed = _ha('states/' + urllib.parse.quote(eid, safe=''))
+            if not isinstance(observed, dict):
+                break
+            attrs = observed.get('attributes', {})
+            if expected:
+                verified = observed.get('state') == expected
+            elif action == 'temperature':
+                verified = abs(float(attrs.get('temperature', float('inf'))) - data['temperature']) < .1
+            elif action == 'brightness':
+                verified = abs(float(attrs.get('brightness', -999)) / 255 * 100 - data['brightness_pct']) < 2
+            elif action == 'volume':
+                verified = abs(float(attrs.get('volume_level', -999)) - data['volume_level']) < .01
+            if verified or action in ('toggle','color','activate'):
+                break
+        except Exception as exc:
+            error = str(exc)[:200]
+            break
+        if attempt < 2:
+            time.sleep(.2)
+    return {'entity_id':eid, 'action':action, 'command_sent':True, 'verified':verified,
+            'state':observed.get('state') if isinstance(observed, dict) else None,
+            'verification_error':error,
+            'not':'İstenen durum cihazdan doğrulandı.' if verified else 'Komut servise gönderildi; hedef duruma ulaşıldığı doğrulanamadı. Tamamlandı deme.'}
 
 
 def home_scenario(name):
