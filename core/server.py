@@ -87,10 +87,11 @@ async def architecture_api(request):
                     if set(args)!={"revision"}:raise ValueError("Project revision required")
                     architecture.project_version(args["revision"])
                     return JSONResponse(await asyncio.to_thread(architecture.command,"restore",revision=int(args["revision"])))
-                if op not in {"state","catalog","apply","undo","redo"}:raise ValueError("Unknown command")
+                if op not in {"state","catalog","apply","undo","redo","render_style"}:raise ValueError("Unknown command")
                 args=body.get("args") or {}
-                allowed={"state":{"details"},"catalog":{"query"},"apply":{"operations"},"undo":set(),"redo":set()}[op]
+                allowed={"state":{"details"},"catalog":{"query"},"apply":{"operations"},"undo":set(),"redo":set(),"render_style":{"style"}}[op]
                 if set(args)-allowed:raise ValueError("Unexpected command arguments")
+                if op=="render_style" and args.get("style") not in {"technical","design"}:raise ValueError("Render style must be technical or design")
                 return JSONResponse(await asyncio.to_thread(architecture.command,op,**args))
             if action == "save":
                 data=await request.body()

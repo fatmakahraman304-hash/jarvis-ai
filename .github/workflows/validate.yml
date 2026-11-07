@@ -30,6 +30,7 @@ jobs:
           node tests/test_architecture_bridge.js
           node tests/test_architecture_model.js
           node tests/test_architecture_viewport.js
+          node tests/test_architecture_render.js
       - name: Check Python syntax
         run: python -m compileall -q run.py core scripts
       - name: Install test dependencies

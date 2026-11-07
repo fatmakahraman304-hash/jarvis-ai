@@ -3,6 +3,13 @@
  const JV=window.JV,frame=document.getElementById('architecture-frame'),status=document.getElementById('architecture-status');
  const client=crypto.randomUUID();let running=false,loaded=false,revision=0,lastSave=0,savePromise=null,initPromise=null;
  const timings=[];
+ const renderStyle=document.getElementById('studio-render-style');
+ async function changeRenderStyle(style){
+  const result=await measured('render-style',()=>window.JarvisArchitectureRender.setStyle(frame,style));
+  renderStyle.value=result.render_style;
+  try{window.localStorage.setItem('jarvis.studio.renderStyle',result.render_style);}catch(_){result.preference_saved=false;}
+  return result;
+ }
  async function measured(stage,action){const started=Date.now();try{return await action();}finally{timings.push({stage,elapsed_ms:Date.now()-started});if(timings.length>120)timings.shift();}}
  let autoFit=true,fitTimer=0,fitPromise=null;
  function fitView(){
@@ -33,7 +40,15 @@
     const hold=e=>{if(e.target.closest?.('.sh-plan,.sh-view3d'))autoFit=false;};
     doc.addEventListener('pointerdown',hold,true);doc.addEventListener('wheel',hold,{capture:true,passive:true});doc.addEventListener('keydown',hold,true);
    }
-   await fitView();loaded=true;const historyReady=await refreshHistory();status.textContent=historyReady?'Hazır · metre birimi · 2D ve 3D birlikte':'Proje açık; kayıt geçmişi yüklenemedi. Kayıtları yenile.';
+   await fitView();
+   let remembered='technical';try{remembered=window.localStorage.getItem('jarvis.studio.renderStyle')||remembered;}catch(_){}
+   if(remembered==='design'){
+    try{await changeRenderStyle(remembered);}catch(e){
+     renderStyle.value='technical';try{window.localStorage.removeItem('jarvis.studio.renderStyle');}catch(_){}
+     console.warn('[studio] remembered render style failed',e);
+    }
+   }
+   loaded=true;const historyReady=await refreshHistory();status.textContent=historyReady?'Hazır · metre birimi · 2D ve 3D birlikte':'Proje açık; kayıt geçmişi yüklenemedi. Kayıtları yenile.';
   })();try{await initPromise;}catch(e){status.textContent=e.message;initPromise=null;throw e;}
  }
  function save(){
@@ -62,7 +77,9 @@
    if(next.busy){if(loaded)status.textContent='Başka JARVIS penceresi bu projeyi düzenliyor.';return;}
    if(next.job){
     const job=next.job;let result,error;
-    try{JV.setView('design');await init();if(job.command.op==='restore'){
+    try{JV.setView('design');await init();if(job.command.op==='render_style'){
+     result=await changeRenderStyle(job.command.style);
+    }else if(job.command.op==='restore'){
      // Preserve pending manual edits before replacing the model. save_project
      // retains the previous file as a new history entry on the next save.
      const snapshot=await api('version?revision='+encodeURIComponent(job.command.revision));
@@ -95,8 +112,8 @@
  });
  const studioMetrics=document.getElementById('studio-metrics');
  const studioHouse=document.getElementById('studio-house');
- const studioButtons=['studio-house','studio-undo','studio-redo','studio-top','studio-walk','studio-svg','studio-restore'].map(id=>document.getElementById(id));
- const updateMetrics=()=>{try{const report=bridge()?.state();if(report?.counts)studioMetrics.textContent=[report.counts.rooms+' oda',report.counts.walls+' duvar',report.counts.furniture+' eşya',Number(report.area_m2||0).toFixed(1)+' m²'].join(' · ');}catch(_){}};
+ const studioButtons=['studio-house','studio-undo','studio-redo','studio-top','studio-walk','studio-svg','studio-restore','studio-render-style'].map(id=>document.getElementById(id));
+ const updateMetrics=()=>{try{const report=bridge()?.state();if(report?.counts)studioMetrics.textContent=[report.counts.rooms+' oda',report.counts.walls+' duvar',report.counts.furniture+' eşya',Number(report.area_m2||0).toFixed(1)+' m²'].join(' · ');if(report?.render_style&&!studioBusy)renderStyle.value=report.render_style;}catch(_){}};
  let studioBusy=false;
  async function studioRun(op,args={}){
   if(studioBusy)return false;studioBusy=true;studioButtons.forEach(b=>b.disabled=true);
@@ -174,6 +191,11 @@
  };
  document.getElementById('studio-top').onclick=()=>{autoFit=false;return studioRun('apply',{operations:[{kind:'camera',mode:'top'}]});};
  document.getElementById('studio-walk').onclick=()=>{autoFit=false;return studioRun('apply',{operations:[{kind:'camera',mode:'walk'}]});};
+ renderStyle.onchange=async()=>{
+  const ok=await studioRun('render_style',{style:renderStyle.value});
+  renderStyle.value=bridge()?.state().render_style||'technical';
+  if(ok)status.textContent=renderStyle.value==='design'?'Malzeme, gölge ve ortam ışığı görünümü çizildi.':'Hızlı teknik görünüm çizildi.';
+ };
  document.getElementById('studio-svg').onclick=async()=>{
   try{
    await init();

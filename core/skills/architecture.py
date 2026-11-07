@@ -40,7 +40,11 @@ def architecture_house(width=10,depth=12,bedrooms=2,bathrooms=1,name='Ev projesi
 def architecture_history(action='undo'):
     if action not in ('undo','redo'):raise ValueError('undo veya redo gerekli')
     return _bounded(workspace.command(action))
+def architecture_render(style='technical'):
+    if style not in ('technical','design'):raise ValueError('technical veya design gerekli')
+    return _bounded(workspace.command('render_style',style=style))
 TOOLS={
+ 'architecture_render':(architecture_render,_schema('3D görünümü değiştirir: technical hızlı teknik çizim; design fiziksel malzeme, gölge ve ortam ışığı. design daha fazla grafik gücü kullanır. Kamera açısını korur ve gerçek çizilmiş kareyi doğrular. Bu görünüm tercihi geometriyi veya işlem geçmişini değiştirmez.',{'style':S('technical veya design')},['style']),False),
  'architecture_open':(architecture_open,_schema('JARVIS içindeki yerel SweetHomeJS 2D/3D mimari editörünü açar; mevcut projeyi korur.',{}),False),
  'architecture_state':(architecture_state,_schema('Gerçek proje modelinden duvar/oda/mobilya kimlikleri, ölçüler, alan ve ayak izi çakışma uyarılarını okur. details=true ile düzenlenecek nesneleri getir. Büyük projeler sayfalıdır; pages alanında toplam/dönen/more bulunur, offset ile sonraki sayfayı oku. Görsel API gerekmez.',{'details':{'type':'boolean'},'offset':{'type':'integer'},'limit':{'type':'integer'}}),False),
  'architecture_catalog':(architecture_catalog,_schema('Yerel gerçek 3D model kataloğunu arar; result.items içinde model kimlikleri, ölçüler ve kapı/pencere bilgisi verir. İngilizce arama veya boş sorgu kullan. pages.items.more varsa dönen sayı kadar offset artır. limit 1–30.',{'query':S('ör. bed, door, window, kitchen veya boş'),'offset':{'type':'integer'},'limit':{'type':'integer'}}),False),

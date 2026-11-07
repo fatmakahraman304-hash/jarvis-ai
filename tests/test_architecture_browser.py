@@ -172,12 +172,36 @@ try:
    p.set_viewport_size({'width':1600,'height':1000});p.wait_for_timeout(500)
    assert abs(frame.evaluate('window.__homeController.getHome().getObserverCamera().getYaw()')-manual)<.0001
    p.click('#studio-fit');p.wait_for_function("document.querySelector('#architecture-status').textContent.includes('sığdırıldı')")
+   # The quality control must change native materials/lighting, preserve the
+   # camera and geometry, and survive a browser reload + revision replacement.
+   before_style=frame.evaluate('''()=>{
+    const h=window.__homeController.getHome(),c=h.getObserverCamera();
+    return {pose:[c.getX(),c.getY(),c.getZ(),c.getYaw(),c.getPitch(),c.getFieldOfView()],observer:h.getCamera()===c,state:window.jarvisDesigner.state(true)};
+   }''')
+   p.locator('#studio-render-style').select_option('design')
+   p.wait_for_function("document.querySelector('#studio-render-style').disabled===false",timeout=90000)
+   assert 'görünümü çizildi' in p.locator('#architecture-status').inner_text()
+   quality=frame.evaluate('''()=>{
+    const h=window.__homeController.getHome(),c=h.getObserverCamera(),root=window.__homeScene.getRoot();let physical=0;
+    root.traverse(o=>{for(const m of (Array.isArray(o.material)?o.material:[o.material]))if(m?.isMeshPhysicalMaterial)physical++;});
+    return {stats:window.jarvisRenderStats,physical,scene:root.isScene,environment:!!root.environment?.isTexture,
+      pose:[c.getX(),c.getY(),c.getZ(),c.getYaw(),c.getPitch(),c.getFieldOfView()],observer:h.getCamera()===c,state:window.jarvisDesigner.state(true)};
+   }''')
+   assert quality['stats']['style']=='design' and quality['stats']['frames']>0 and quality['stats']['shadows'] and quality['stats']['ao'],quality
+   assert quality['physical']>0 and quality['scene'] and quality['environment'],quality
+   assert quality['pose']==before_style['pose'] and quality['observer']==before_style['observer']
+   for key in ['counts','walls','rooms','furniture','levels']:assert quality['state'][key]==before_style['state'][key],key
+   p.screenshot(path='test-results/studio-material-light.png')
+   print('Native material/light view:',{key:quality[key] for key in ['stats','physical','scene','environment']},flush=True)
    Path('test-results/architecture-stages-before-reload.json').write_text(json.dumps(p.evaluate('JV.architecture.timings'),indent=2))
    p.reload();p.wait_for_function('window.JV && JV.state.personas.length>0');p.click('#boot-btn');p.wait_for_timeout(1000);p.evaluate("JV.setView('design')")
    p.wait_for_function("document.querySelector('#architecture-frame').contentWindow.jarvisDesigner",timeout=45000)
    # Browser reload releases the old client lease after ten seconds.
    p.wait_for_timeout(10500)
    restored=run('state');assert restored['counts']['rooms']==6 and restored['rooms'][0]['name']=='Yeni Salon'
+   frame=p.frame(url=base+'/designer/');assert frame
+   frame.wait_for_function("window.jarvisRenderStats?.style==='design'&&window.jarvisRenderStats.frames>0",timeout=65000)
+   assert restored['render_style']=='design'
    # Restore a previous version through the visible controls. The replaced
    # current project must remain recoverable as a newly retained snapshot.
    versions=p.request.get(base+'/api/architecture/history').json()
@@ -194,6 +218,11 @@ try:
    p.wait_for_function("document.querySelector('#studio-house').disabled===false",timeout=65000)
    assert p.request.get(base+'/api/architecture/info').json()['revision']>prior_revision
    assert any(row['revision']>=prior_revision for row in p.request.get(base+'/api/architecture/history').json())
+   frame.wait_for_function("window.jarvisRenderStats?.style==='design'&&window.jarvisRenderStats.frames>0",timeout=65000)
+   assert frame.evaluate("window.__preferences.getView3DStyle()")=='design'
+   # Return to the fast mode through the model-facing command as well.
+   fast=run('render_style',{'style':'technical'})
+   assert fast['render_style']=='technical' and not fast['shadows'] and not fast['ambient_occlusion']
    # Both new persistent stores are available through the existing memory API.
    mem=p.request.get(base+'/api/memory').json();assert 'tasks' in mem and 'projects' in mem
    assert p.locator('#o-initiative').count()==1

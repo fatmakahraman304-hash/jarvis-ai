@@ -15,7 +15,7 @@ async function main() {
   const frame = {contentWindow:{}};
   Object.defineProperty(frame,'src',{set(value){assert.equal(value,'/designer/');frame.contentWindow.jarvisDesigner=engine;}});
   nodes['architecture-frame']=frame;
-  for(const name of ['architecture-status','architecture-close','architecture-download','architecture-expand','studio-metrics','studio-house','studio-undo','studio-redo','studio-width','studio-depth','studio-bedrooms','studio-bathrooms','studio-preset','studio-inspector','studio-inspect','studio-object','studio-properties','studio-object-status','studio-top','studio-walk','studio-svg','studio-history','studio-restore','studio-fit','studio-history-refresh'])nodes[name]={textContent:'',setAttribute:()=>{},addEventListener:()=>{},disabled:false,value:'2'};
+  for(const name of ['architecture-status','architecture-close','architecture-download','architecture-expand','studio-metrics','studio-house','studio-undo','studio-redo','studio-width','studio-depth','studio-bedrooms','studio-bathrooms','studio-preset','studio-inspector','studio-inspect','studio-object','studio-properties','studio-object-status','studio-top','studio-walk','studio-svg','studio-history','studio-restore','studio-fit','studio-history-refresh','studio-render-style'])nodes[name]={textContent:'',setAttribute:()=>{},addEventListener:()=>{},disabled:false,value:'2'};
   nodes['studio-inspector'].hidden=true;
   nodes['studio-history'].replaceChildren=()=>{};nodes['studio-history'].add=()=>{};
   const document = {hidden:false,getElementById:id=>nodes[id],addEventListener:()=>{},body:{classList:{contains:()=>false,toggle:()=>false,remove:()=>{}}}};

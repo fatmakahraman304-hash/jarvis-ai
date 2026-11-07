@@ -52,7 +52,7 @@ def assets():
     archive=ROOT/'vendor/designer.zip'
     if hashlib.sha256(archive.read_bytes()).hexdigest()!=manifest['sha256']:
         raise RuntimeError('Mimari editör paketi doğrulanamadı.')
-    target=DATA/'vendor'/(manifest['sha256'][:16]+'-studio6')
+    target=DATA/'vendor'/(manifest['sha256'][:16]+'-studio7')
     if not (target/'index.html').exists():
         target.mkdir(parents=True,exist_ok=True)
         with zipfile.ZipFile(archive) as z:
@@ -66,7 +66,7 @@ def assets():
     if manifest.get('catalog_fix') != 'shared-categories-source':
         _fix_designer_catalog(target)
     from .designer_patch import patch_bundle, corresponding_source
-    if manifest.get('cutaway_fix') != 'studio-v6':
+    if manifest.get('cutaway_fix') != 'studio-v7':
         patch_bundle(target)
     source=ROOT/'vendor/designer-source.zip'
     if hashlib.sha256(source.read_bytes()).hexdigest()!=manifest['source_sha256']:

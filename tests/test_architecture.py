@@ -86,6 +86,14 @@ class WorkspaceTests(unittest.TestCase):
   names={s['function']['name'] for s in tools.specs({'architecture'})}
   self.assertIn('architecture_house',names);self.assertIn('architecture_apply',names)
   self.assertFalse(any('space'+'planner' in n for n in tools.TOOLS))
+ def test_render_tool_rejects_unknown_style_before_dispatch(self):
+  from core.skills.architecture import architecture_render
+  from unittest.mock import patch
+  with patch.object(a,'command',return_value={'verified':True,'result':{'render_style':'design'}}) as dispatch:
+   self.assertEqual(architecture_render('design')['result']['render_style'],'design')
+   dispatch.assert_called_once_with('render_style',style='design')
+   with self.assertRaises(ValueError):architecture_render('ultra')
+   self.assertEqual(dispatch.call_count,1)
  def test_production_icon_method_reuses_buffer_and_copies_exact_pixels(self):
   import subprocess
   bundle=next((a.assets()/'assets').glob('index-*.js')).read_text()

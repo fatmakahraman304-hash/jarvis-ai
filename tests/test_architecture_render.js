@@ -1,0 +1,32 @@
+const assert=require('node:assert/strict');
+global.requestAnimationFrame=callback=>setTimeout(callback,0);
+const {setStyle}=require('../web/architecture-render.js');
+const fields=['X','Y','Z','Yaw','Pitch','FieldOfView'];
+const pose=[110,220,330,.4,.6,.9],observer={};
+fields.forEach((field,i)=>{observer['get'+field]=()=>pose[i];observer['set'+field]=value=>{pose[i]=value;};});
+let active=observer,style='technical',fail=false,delay=0;
+const home={getObserverCamera:()=>observer,getCamera:()=>active,setCamera:value=>{active=value;}};
+const win={__homeController:{getHome:()=>home},__homeScene:{getHome:()=>home},jarvisRenderStats:{style,frames:1}};
+win.__preferences={getView3DStyle:()=>style,setView3DStyle:value=>{
+ style=value;
+ if(value==='design'&&fail)return;
+ setTimeout(()=>{pose.fill(0);win.jarvisRenderStats={style:value,frames:1,shadows:value==='design',ao:value==='design'};},delay);
+}};
+(async()=>{
+ const frame={contentWindow:win};
+ const expected=[...pose];
+ await assert.rejects(setStyle(frame,'ultra'),/technical/);
+ assert.equal(style,'technical');
+ delay=20;let done=false;
+ const pending=setStyle(frame,'design').then(result=>{done=true;return result;});
+ await new Promise(resolve=>setTimeout(resolve,5));assert(!done,'Must wait for a drawn frame');
+ const result=await pending;
+ assert.deepEqual(result,{render_style:'design',frames:1,shadows:true,ambient_occlusion:true});
+ assert.deepEqual(pose,expected);assert.equal(active,observer);
+ const top={};active=top;await setStyle(frame,'technical');assert.equal(active,top);assert.deepEqual(pose,expected);
+ fail=true;await assert.rejects(setStyle(frame,'design',{timeout:10}),/çizilemedi/);
+ assert.equal(style,'technical');assert.deepEqual(pose,expected);assert.equal(active,top);
+ await new Promise(resolve=>setTimeout(resolve,50));assert.deepEqual(pose,expected,'Rollback camera must survive the delayed initial camera callback');
+ await assert.rejects(setStyle({contentWindow:{}},'design'),/hazır/);
+ console.log('Render style: real-frame wait, invalid input, camera retention and failed-switch rollback passed');
+})().catch(error=>{console.error(error);process.exitCode=1;});

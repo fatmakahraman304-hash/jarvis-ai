@@ -33,3 +33,9 @@ The corresponding source download and rebuild script include this correction.
 Plan-icon drawing buffers grow only when needed; icons use an exact viewport
 and copy the matching lower-left pixel region into their individual 2D canvases.
 This avoids reallocating the shared buffer for alternating icon dimensions.
+
+The native technical/design rendering preference is synchronized with HomePane,
+preserved across project replacements, and reported by the JARVIS bridge. The
+HomeScene3D root uses THREE.Scene so its background and environment are honored.
+Design composer passes are disposed explicitly when switching views. These
+changes are included in the exact corresponding source download and rebuild.

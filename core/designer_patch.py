@@ -28,8 +28,28 @@ SOURCE_PATCHES['packages/render3d/src/TopViewIconRenderer.ts'] = [
 SOURCE_PATCHES['packages/ui/src/view3d/View3DCanvas.tsx'].extend([
     ('      renderer!.setSize(width, height, false);',
      '      if (renderer!.domElement.width !== Math.floor(width * renderer!.getPixelRatio()) || renderer!.domElement.height !== Math.floor(height * renderer!.getPixelRatio())) { renderer!.setSize(width, height, false); (globalThis as any).jarvisRenderStats.resizes++; }'),
-    ('{frames:0, triangles:0}', '{frames:0, triangles:0, resizes:0}'),
+    ('{frames:0, triangles:0}', '{frames:0, triangles:0, resizes:0, style:design ? "design" : "technical", shadows:renderer.shadowMap.enabled, ao:designComposer !== null}'),
 ])
+SOURCE_PATCHES['packages/ui/src/HomePane.tsx'] = [(
+    '  const [view3DStyle, setView3DStyle] = useState<View3DStyle>(preferences.getView3DStyle());\n  const changeView3DStyle',
+    '  const [view3DStyle, setView3DStyle] = useState<View3DStyle>(preferences.getView3DStyle());\n  useEffect(() => {\n    const syncStyle = (): void => setView3DStyle(preferences.getView3DStyle());\n    syncStyle();\n    preferences.addPropertyChangeListener(syncStyle);\n    return () => preferences.removePropertyChangeListener(syncStyle);\n  }, [preferences]);\n  const changeView3DStyle',
+)]
+SOURCE_PATCHES['apps/web/src/App.tsx'] = [(
+    '  const replaceSession = (next: Session): void => {\n    sessionRef.current = next;',
+    '  const replaceSession = (next: Session): void => {\n    if (sessionRef.current) next.preferences.setView3DStyle(sessionRef.current.preferences.getView3DStyle());\n    (globalThis as unknown as Record<string, unknown>).__preferences = next.preferences;\n    sessionRef.current = next;',
+)]
+SOURCE_PATCHES['apps/web/src/jarvisBridge.ts'].append((
+    "name:h.getName(),view_3d:",
+    "name:h.getName(),render_style:get().preferences.getView3DStyle(),view_3d:",
+))
+SOURCE_PATCHES['packages/render3d/src/HomeScene3D.ts'] = [(
+    '  private readonly root = new THREE.Group();',
+    '  private readonly root = new THREE.Scene();',
+)]
+SOURCE_PATCHES['packages/render3d/src/DesignComposer.ts'] = [(
+    '    dispose: () => {\n      composer.dispose();',
+    '    dispose: () => {\n      for (const pass of composer.passes) pass.dispose();\n      composer.dispose();',
+)]
 SOURCE_PATCHES['packages/render3d/src/TopViewIconRenderer.ts'].append((
     'this.renderer.setSize(canvas.width, canvas.height, false);\n    this.renderer.setPixelRatio(1);',
     'if (this.renderer.getPixelRatio?.() !== 1) this.renderer.setPixelRatio(1);\n    const buffer = this.renderer.domElement;\n    if (!buffer || buffer.width < canvas.width || buffer.height < canvas.height) this.renderer.setSize(Math.max(buffer?.width || 0, canvas.width), Math.max(buffer?.height || 0, canvas.height), false);\n    this.renderer.setViewport(0, 0, canvas.width, canvas.height);',
@@ -57,7 +77,17 @@ BUNDLE_PATCHES = (
     ('c.setSize(G,z,!1),E!==null',
      '(c.domElement.width!==Math.floor(G*c.getPixelRatio())||c.domElement.height!==Math.floor(z*c.getPixelRatio()))&&(c.setSize(G,z,!1),globalThis.jarvisRenderStats.resizes++),E!==null'),
     ('globalThis.jarvisRenderStats={frames:0,triangles:0}',
-     'globalThis.jarvisRenderStats={frames:0,triangles:0,resizes:0}'),
+     'globalThis.jarvisRenderStats={frames:0,triangles:0,resizes:0,style:l?"design":"technical",shadows:c.shadowMap.enabled,ao:E!==null}'),
+    ('[P,_]=Tt.useState(t.getView3DStyle()),I=u(',
+     '[P,_]=Tt.useState(t.getView3DStyle()),jarvisStyleSync=Tt.useEffect(()=>{const sync=()=>_(t.getView3DStyle());sync();t.addPropertyChangeListener(sync);return()=>t.removePropertyChangeListener(sync)},[t]),I=u('),
+    ('i=u(a=>{t.current=a,globalThis.__homeController=a.homeController,',
+     'i=u(a=>{t.current&&a.preferences.setView3DStyle(t.current.preferences.getView3DStyle()),globalThis.__preferences=a.preferences,t.current=a,globalThis.__homeController=a.homeController,'),
+    ('name:g.getName(),view_3d:',
+     'name:g.getName(),render_style:r().preferences.getView3DStyle(),view_3d:'),
+    ('super(t.home,t.home,t.preferences,null);y(this,"root",new pn);y(this,"intermediate")',
+     'super(t.home,t.home,t.preferences,null);y(this,"root",new ey);y(this,"intermediate")'),
+    ('c.setSize(Math.max(1,Math.floor(f*a)),Math.max(1,Math.floor(g*a)))},"setSize"),dispose:u(()=>{l.dispose()},"dispose")',
+     'c.setSize(Math.max(1,Math.floor(f*a)),Math.max(1,Math.floor(g*a)))},"setSize"),dispose:u(()=>{for(const pass of l.passes)pass.dispose();l.dispose()},"dispose")'),
     ('this.renderer.setSize(a.width,a.height,!1),this.renderer.setPixelRatio(1);',
      'this.renderer.getPixelRatio?.()!==1&&this.renderer.setPixelRatio(1);const jarvisBuffer=this.renderer.domElement;(!jarvisBuffer||jarvisBuffer.width<a.width||jarvisBuffer.height<a.height)&&this.renderer.setSize(Math.max(jarvisBuffer?.width||0,a.width),Math.max(jarvisBuffer?.height||0,a.height),!1),this.renderer.setViewport(0,0,a.width,a.height);'),
     ('g!==null&&g.drawImage(this.renderer.domElement,0,0,a.width,a.height)',
