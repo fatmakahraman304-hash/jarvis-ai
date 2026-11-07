@@ -46,6 +46,21 @@ class DesktopTests(unittest.TestCase):
             with patch.object(computer,'_grab',return_value=(b'image',meta)),patch.object(computer.llm,'vision',return_value=json.dumps(data)):
                 self.assertIsInstance(computer.screen_find('x'),str)
 
+    def test_accessibility_ambiguity_never_falls_back_to_visual_guess(self):
+        from core.skills import desktop
+        with patch.object(desktop,'desktop_target',side_effect=ValueError('ambiguous')),patch.object(computer.llm,'vision') as vision:
+            with self.assertRaises(ValueError):computer.screen_find('İleri')
+            vision.assert_not_called()
+
+    def test_region_preserves_negative_monitor_and_checks_bounds(self):
+        from PIL import Image
+        with patch('PIL.ImageGrab.grab',return_value=Image.new('RGB',(400,200))) as grab,patch.object(computer.llm,'vision',return_value='Düğme görünür'):
+            result=computer.screen_region(-1800,100,400,200)
+        grab.assert_called_once_with(bbox=(-1800,100,-1400,300),all_screens=True)
+        self.assertEqual(result['region']['left'],-1800)
+        self.assertEqual(result['ekran_analizi'],'Düğme görünür')
+        with self.assertRaises(ValueError):computer.screen_region(1800,100,400,200)
+
     def test_smooth_move_and_bounds(self):
         computer.mouse_move(-100,200,duration=.1)
         self.assertEqual(self.u32.SetCursorPos.call_count,6)

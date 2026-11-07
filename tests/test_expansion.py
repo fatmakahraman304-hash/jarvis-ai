@@ -81,18 +81,10 @@ class ExpansionTests(unittest.TestCase):
     def test_feature_tools_registered(self):
         for name in ['math_solve','linear_optimize','model_compare','browser_upload','browser_download','mqtt_message','database_inspect','runtime_diagnostics']:
             self.assertIn(name,tools.TOOLS)
-    def test_local_plan_removed_spaceplanner_preserved(self):
-        from starlette.testclient import TestClient
-        from core.server import app
-        self.assertNotIn('plan_project',tools.TOOLS)
-        self.assertNotIn('analyze_plan',tools.TOOLS)
-        self.assertNotIn('architecture',tools.GROUP_INFO)
-        self.assertIn('spaceplanner_open',tools.TOOLS)
-        self.assertIn('spaceplanner_draw',tools.TOOLS)
-        client=TestClient(app)
-        try:
-            self.assertEqual(client.post('/api/architecture',json={'action':'list'}).status_code,404)
-        finally:client.close()
+    def test_local_architecture_engine_registered(self):
+        self.assertIn('architecture',tools.GROUP_INFO)
+        self.assertIn('architecture_house',tools.TOOLS)
+        self.assertIn('architecture_apply',tools.TOOLS)
     def test_mqtt_publish_waits_for_ack(self):
         seen=[]
         class Client:

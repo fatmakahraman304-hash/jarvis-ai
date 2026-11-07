@@ -135,7 +135,7 @@ def open_window(url):
         for exe in candidates:
             if exe and Path(exe).is_file():
                 try:
-                    subprocess.Popen([exe, "--app=" + url, "--window-size=1400,900"])
+                    subprocess.Popen([exe, "--app=" + url, "--window-size=1400,900", "--force-renderer-accessibility"])
                     return
                 except OSError:
                     continue

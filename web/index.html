@@ -30,31 +30,17 @@
   <button data-view="core" class="on">◉ ÇEKİRDEK</button>
   <button data-view="globe">🌍 DÜNYA</button>
   <button data-view="lab">🧊 ATÖLYE</button>
-  <button data-view="design">🏠 SPACEPLANNER</button>
+  <button data-view="design">🏠 MİMARİ</button>
   <button data-view="science">🔬 BİLİM</button>
   <button data-view="space">🚀 UZAY</button>
   <button data-view="twin">🖥 İKİZ</button>
   <button data-view="bio">🧬 BİYO</button>
 </nav>
 
-<section id="spaceplanner-view" aria-label="SpacePlanner">
-  <div class="spaceplanner-bar">
-    <strong>SPACEPLANNER</strong>
-    <span>Chrome · JARVIS içinde canlı görünüm</span>
-    <button type="button" id="spaceplanner-open">SPACEPLANNER'I AÇ</button>
-    <button type="button" id="spaceplanner-manual">Chrome’da elle kullan / giriş yap</button>
-    <button type="button" id="spaceplanner-resume" hidden>JARVIS’e geri ver</button>
-    <button type="button" id="spaceplanner-close">JARVIS'e dön ✕</button>
-  </div>
-  <p id="spaceplanner-control-status" role="status"></p>
-  <div id="spaceplanner-live" hidden><img id="spaceplanner-frame" alt="Chrome’daki gerçek SpacePlanner sayfasının canlı görüntüsü"><p id="spaceplanner-live-status" role="status"></p></div>
-  <div class="spaceplanner-launch">
-    <div class="spaceplanner-mark">⌂</div>
-    <h2>SPACEPLANNER</h2>
-    <p>SpacePlanner gerçek Chrome sekmesinde çalışır; canlı görüntüsü burada görünür. JARVIS’e ölçüleri söyle; çizimi yapıp her adımda kontrol etsin.</p>
-    <button type="button" id="spaceplanner-open-main">SPACEPLANNER'I JARVIS İÇİNDE AÇ</button>
-    <small id="spaceplanner-idle-status">JARVIS açık kalır ve dinlemeyi sürdürür. Örnek: “JARVIS, 4 metreye 3 metre bir oda çiz.”</small>
-  </div>
+<section id="architecture-view" aria-label="Mimari tasarım">
+ <header><strong>MİMARİ · SweetHomeJS</strong><span id="architecture-status" role="status">2D plan · gerçek 3D modeller · yerel proje</span><button id="architecture-download">Projeyi indir</button><button id="architecture-close">JARVIS’e dön</button></header>
+ <iframe id="architecture-frame" title="SweetHomeJS 2D ve 3D mimari editör" allow="clipboard-write" loading="lazy"></iframe>
+ <footer>Metre cinsinden ölçülü model · JARVIS’e sesle değişiklik söyle veya araçları elle kullan · <a href="/api/architecture/source" target="_blank">GPL kaynak ve lisanslar</a></footer>
 </section>
 
 <!-- açılış ekranı -->
@@ -235,6 +221,8 @@
     <section data-tab="memory" hidden>
       <form id="fact-form" class="row"><input id="fact-in" placeholder="Hatırlamasını istediğin bir bilgi…"><button class="btn-primary">EKLE</button></form>
       <ul id="facts"></ul>
+      <h4>PROJE HAFIZASI</h4><ul id="project-notes"></ul>
+      <h4>GÖREV GÜNLÜĞÜ</h4><ul id="task-journal"></ul>
       <h4>HATIRLATICILAR</h4><ul id="reminders"></ul>
       <h4>SON İŞLEMLER</h4><ul id="actions"></ul>
     </section>
@@ -250,7 +238,9 @@
       <div class="prov"><b>OCTOPRINT_KEY</b><input data-env="OCTOPRINT_KEY" type="password"><span></span></div>
       <button class="btn-primary" id="links-save">KAYDET</button>
       <h4>DAVRANIŞ</h4>
+      <label class="row">Geçmişe dayalı proaktif öneriler (09–22, en fazla saatte bir) <input type="checkbox" id="o-initiative"></label>
       <label class="row">Tarayıcıda sıradan işlemleri onaysız yap (giriş, izin, ödeme, silme ve gönderme korumalı) <input type="checkbox" id="o-browser-auto"></label>
+      <label class="row">Windows düğmelerini erişilebilirlikten bulup onaysız tıkla <input type="checkbox" id="o-semantic-auto"></label>
       <label class="row">Ekran/fare/klavye işlemlerinde onay isteme (tam otonom) <input type="checkbox" id="o-auto"></label>
       <label class="row">Önemli yeni e-postaları sesli bildir <input type="checkbox" id="o-mail"></label>
       <label class="row">Toplantıdan 10 dk önce hatırlat <input type="checkbox" id="o-meet"></label>
@@ -343,5 +333,6 @@
 <script src="/static/ambient.js"></script>
 <script src="/static/update.js"></script>
 <script src="/static/preferences.js"></script>
+<script src="/static/architecture.js"></script>
 </body>
 </html>

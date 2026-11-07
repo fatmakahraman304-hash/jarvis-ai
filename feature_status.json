@@ -1,5 +1,5 @@
 {
-  "version": "4.6.37",
+  "version": "4.7.0",
   "requested_label": "82 özellik",
   "actual_listed_count": 71,
   "features": [
@@ -73,145 +73,145 @@
       "id": 94,
       "feature": "Eksiksiz duvar çizme/düzenleme",
       "status": "partial",
-      "detail": "İşlemler yalnızca kontrollü SpacePlanner sitesinin gerçek arayüzünden yapılır; tüm tasarımlar canlı olarak doğrulanmadı. Yerel mimari editör kullanıcı isteğiyle kaldırıldı."
+      "detail": "Yerel SweetHomeJS 2D/3D editörüne ölçülü model araçları entegre edildi. Test edilmiş kapsam ve sınırlar README’de; bu geniş özellik başlığının tüm profesyonel senaryoları doğrulanmadı."
     },
     {
       "id": 95,
       "feature": "Otomatik kapı/pencere yerleştirme",
       "status": "partial",
-      "detail": "İşlemler yalnızca kontrollü SpacePlanner sitesinin gerçek arayüzünden yapılır; tüm tasarımlar canlı olarak doğrulanmadı. Yerel mimari editör kullanıcı isteğiyle kaldırıldı."
+      "detail": "Yerel SweetHomeJS 2D/3D editörüne ölçülü model araçları entegre edildi. Test edilmiş kapsam ve sınırlar README’de; bu geniş özellik başlığının tüm profesyonel senaryoları doğrulanmadı."
     },
     {
       "id": 96,
       "feature": "Eksiksiz mobilya yerleştirme",
       "status": "partial",
-      "detail": "İşlemler yalnızca kontrollü SpacePlanner sitesinin gerçek arayüzünden yapılır; tüm tasarımlar canlı olarak doğrulanmadı. Yerel mimari editör kullanıcı isteğiyle kaldırıldı."
+      "detail": "Yerel SweetHomeJS 2D/3D editörüne ölçülü model araçları entegre edildi. Test edilmiş kapsam ve sınırlar README’de; bu geniş özellik başlığının tüm profesyonel senaryoları doğrulanmadı."
     },
     {
       "id": 97,
       "feature": "Yerel mimari mobilya kütüphanesi",
-      "status": "pending",
-      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
+      "status": "implemented",
+      "detail": "Yerel SweetHomeJS 2D/3D editörüne ölçülü model araçları entegre edildi. Test edilmiş kapsam ve sınırlar README’de; bu geniş özellik başlığının tüm profesyonel senaryoları doğrulanmadı."
     },
     {
       "id": 98,
       "feature": "Profesyonel ölçülü mimari plan",
       "status": "pending",
-      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
+      "detail": "Yerel SweetHomeJS 2D/3D editörüne ölçülü model araçları entegre edildi. Test edilmiş kapsam ve sınırlar README’de; bu geniş özellik başlığının tüm profesyonel senaryoları doğrulanmadı."
     },
     {
       "id": 99,
       "feature": "Otomatik metrekare hesabı",
-      "status": "pending",
-      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
+      "status": "implemented",
+      "detail": "Yerel SweetHomeJS 2D/3D editörüne ölçülü model araçları entegre edildi. Test edilmiş kapsam ve sınırlar README’de; bu geniş özellik başlığının tüm profesyonel senaryoları doğrulanmadı."
     },
     {
       "id": 100,
       "feature": "Tam kat planı editörü",
       "status": "partial",
-      "detail": "İşlemler yalnızca kontrollü SpacePlanner sitesinin gerçek arayüzünden yapılır; tüm tasarımlar canlı olarak doğrulanmadı. Yerel mimari editör kullanıcı isteğiyle kaldırıldı."
+      "detail": "Yerel SweetHomeJS 2D/3D editörüne ölçülü model araçları entegre edildi. Test edilmiş kapsam ve sınırlar README’de; bu geniş özellik başlığının tüm profesyonel senaryoları doğrulanmadı."
     },
     {
       "id": 101,
       "feature": "Merdiven/balkon/teras editörü",
       "status": "partial",
-      "detail": "İşlemler yalnızca kontrollü SpacePlanner sitesinin gerçek arayüzünden yapılır; tüm tasarımlar canlı olarak doğrulanmadı. Yerel mimari editör kullanıcı isteğiyle kaldırıldı."
+      "detail": "Yerel SweetHomeJS 2D/3D editörüne ölçülü model araçları entegre edildi. Test edilmiş kapsam ve sınırlar README’de; bu geniş özellik başlığının tüm profesyonel senaryoları doğrulanmadı."
     },
     {
       "id": 102,
       "feature": "Özel mutfak/banyo tasarımı",
       "status": "partial",
-      "detail": "İşlemler yalnızca kontrollü SpacePlanner sitesinin gerçek arayüzünden yapılır; tüm tasarımlar canlı olarak doğrulanmadı. Yerel mimari editör kullanıcı isteğiyle kaldırıldı."
+      "detail": "Yerel SweetHomeJS 2D/3D editörüne ölçülü model araçları entegre edildi. Test edilmiş kapsam ve sınırlar README’de; bu geniş özellik başlığının tüm profesyonel senaryoları doğrulanmadı."
     },
     {
       "id": 103,
       "feature": "Mimari malzeme/kaplama kataloğu",
       "status": "pending",
-      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
+      "detail": "Yerel SweetHomeJS 2D/3D editörüne ölçülü model araçları entegre edildi. Test edilmiş kapsam ve sınırlar README’de; bu geniş özellik başlığının tüm profesyonel senaryoları doğrulanmadı."
     },
     {
       "id": 104,
       "feature": "Fotogerçekçi mimari ışıklandırma",
       "status": "pending",
-      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
+      "detail": "Yerel SweetHomeJS 2D/3D editörüne ölçülü model araçları entegre edildi. Test edilmiş kapsam ve sınırlar README’de; bu geniş özellik başlığının tüm profesyonel senaryoları doğrulanmadı."
     },
     {
       "id": 105,
       "feature": "Güneş/gölge analizi",
       "status": "pending",
-      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
+      "detail": "Yerel SweetHomeJS 2D/3D editörüne ölçülü model araçları entegre edildi. Test edilmiş kapsam ve sınırlar README’de; bu geniş özellik başlığının tüm profesyonel senaryoları doğrulanmadı."
     },
     {
       "id": 106,
       "feature": "3D ev içinde gezinti",
       "status": "partial",
-      "detail": "İşlemler yalnızca kontrollü SpacePlanner sitesinin gerçek arayüzünden yapılır; tüm tasarımlar canlı olarak doğrulanmadı. Yerel mimari editör kullanıcı isteğiyle kaldırıldı."
+      "detail": "Yerel SweetHomeJS 2D/3D editörüne ölçülü model araçları entegre edildi. Test edilmiş kapsam ve sınırlar README’de; bu geniş özellik başlığının tüm profesyonel senaryoları doğrulanmadı."
     },
     {
       "id": 107,
       "feature": "Mobilya çakışma kontrolü",
-      "status": "pending",
-      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
+      "status": "partial",
+      "detail": "Yerel SweetHomeJS 2D/3D editörüne ölçülü model araçları entegre edildi. Test edilmiş kapsam ve sınırlar README’de; bu geniş özellik başlığının tüm profesyonel senaryoları doğrulanmadı."
     },
     {
       "id": 108,
       "feature": "Otomatik oda yerleşimi",
-      "status": "pending",
-      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
+      "status": "partial",
+      "detail": "Yerel SweetHomeJS 2D/3D editörüne ölçülü model araçları entegre edildi. Test edilmiş kapsam ve sınırlar README’de; bu geniş özellik başlığının tüm profesyonel senaryoları doğrulanmadı."
     },
     {
       "id": 109,
       "feature": "Fotoğraftan ölçekli plan",
       "status": "pending",
-      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
+      "detail": "Yerel SweetHomeJS 2D/3D editörüne ölçülü model araçları entegre edildi. Test edilmiş kapsam ve sınırlar README’de; bu geniş özellik başlığının tüm profesyonel senaryoları doğrulanmadı."
     },
     {
       "id": 110,
       "feature": "DWG/DXF/OBJ/GLB/PDF aktarımının tamamı",
-      "status": "pending",
-      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
+      "status": "partial",
+      "detail": "Yerel SweetHomeJS 2D/3D editörüne ölçülü model araçları entegre edildi. Test edilmiş kapsam ve sınırlar README’de; bu geniş özellik başlığının tüm profesyonel senaryoları doğrulanmadı."
     },
     {
       "id": 111,
       "feature": "Fotogerçekçi render",
       "status": "pending",
-      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
+      "detail": "Yerel SweetHomeJS 2D/3D editörüne ölçülü model araçları entegre edildi. Test edilmiş kapsam ve sınırlar README’de; bu geniş özellik başlığının tüm profesyonel senaryoları doğrulanmadı."
     },
     {
       "id": 112,
       "feature": "Sesle tüm mimariyi güvenilir değiştirme",
       "status": "partial",
-      "detail": "İşlemler yalnızca kontrollü SpacePlanner sitesinin gerçek arayüzünden yapılır; tüm tasarımlar canlı olarak doğrulanmadı. Yerel mimari editör kullanıcı isteğiyle kaldırıldı."
+      "detail": "Yerel SweetHomeJS 2D/3D editörüne ölçülü model araçları entegre edildi. Test edilmiş kapsam ve sınırlar README’de; bu geniş özellik başlığının tüm profesyonel senaryoları doğrulanmadı."
     },
     {
       "id": 113,
       "feature": "Alternatif ev planları",
-      "status": "pending",
-      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
+      "status": "partial",
+      "detail": "Yerel SweetHomeJS 2D/3D editörüne ölçülü model araçları entegre edildi. Test edilmiş kapsam ve sınırlar README’de; bu geniş özellik başlığının tüm profesyonel senaryoları doğrulanmadı."
     },
     {
       "id": 114,
       "feature": "Elektrik/tesisat planlama",
       "status": "pending",
-      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
+      "detail": "Yerel SweetHomeJS 2D/3D editörüne ölçülü model araçları entegre edildi. Test edilmiş kapsam ve sınırlar README’de; bu geniş özellik başlığının tüm profesyonel senaryoları doğrulanmadı."
     },
     {
       "id": 115,
       "feature": "Malzeme metrajı/maliyet",
       "status": "pending",
-      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
+      "detail": "Yerel SweetHomeJS 2D/3D editörüne ölçülü model araçları entegre edildi. Test edilmiş kapsam ve sınırlar README’de; bu geniş özellik başlığının tüm profesyonel senaryoları doğrulanmadı."
     },
     {
       "id": 116,
       "feature": "Tam yerel proje kayıt/sürüm sistemi",
-      "status": "pending",
-      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
+      "status": "implemented",
+      "detail": "Yerel SweetHomeJS 2D/3D editörüne ölçülü model araçları entegre edildi. Test edilmiş kapsam ve sınırlar README’de; bu geniş özellik başlığının tüm profesyonel senaryoları doğrulanmadı."
     },
     {
       "id": 117,
-      "feature": "SpacePlanner seviyesinde bağımsız editör",
-      "status": "pending",
-      "detail": "Yerel mimari araç uygulanmaz; kullanıcı isteğiyle kodları kaldırıldı. SpacePlanner sitesindeki gerçek özellikler tarayıcı üzerinden kullanılabilir; yerel özellik olarak sayılmaz."
+      "feature": "Bağımsız yerel 2D/3D editör",
+      "status": "partial",
+      "detail": "Yerel SweetHomeJS 2D/3D editörüne ölçülü model araçları entegre edildi. Test edilmiş kapsam ve sınırlar README’de; bu geniş özellik başlığının tüm profesyonel senaryoları doğrulanmadı."
     },
     {
       "id": 133,

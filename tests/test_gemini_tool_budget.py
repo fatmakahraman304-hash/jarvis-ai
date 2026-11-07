@@ -26,7 +26,7 @@ class ToolBudgetTests(unittest.TestCase):
                      "Güncel haberleri internette araştır ve kaynaklarla anlat",
                      "Bana bir günlük hatırlatıcı ayarla",
                      "Word belgesi oluştur",
-                     "SpacePlanner'da bir ev tasarla"):
+                     "Ölçülü bir ev tasarla"):
             with self.subTest(command=text):
                 chosen = brain._bounded_specs(all_specs, text)
                 self.assertLessEqual(len(chosen), 24)
@@ -54,13 +54,12 @@ class ToolBudgetTests(unittest.TestCase):
         self.assertIn("create_word", names(chosen))
         self.assertIn("enable_tools", names(chosen))
 
-    def test_spaceplanner_focused_flow_retained(self):
-        command = "SpacePlanner'da ev çiz, salon ve odaları yerleştir"
-        full = tools.specs(tools.pick_groups(command))
-        focused = brain._focused_specs(full, set())
-        self.assertIn("spaceplanner_draw", names(focused))
-        self.assertIn("spaceplanner_open", names(focused))
-        self.assertLess(len(focused), 25)
+    def test_local_architecture_flow_uses_native_model_tools(self):
+        command = "Ev çiz, salon ve odaları yerleştir"
+        focused = brain._bounded_specs(tools.specs({'core','architecture'}),command)
+        self.assertIn('architecture_house',names(focused))
+        self.assertIn('architecture_apply',names(focused))
+        self.assertLessEqual(len(focused),24)
 
     def test_chat_routes_only_bounded_set_even_after_broad_group_match(self):
         captured = []

@@ -73,7 +73,7 @@
     if (v === view && (v === "core" || current)) return;
     if (current && current.exit) current.exit();
     view = v; current = W[v] || null;
-    if (v === "design") current = null;
+    if (v === "design") { current = null; if(JV.architecture) JV.architecture.open(); }
     const world = v !== "core";
     document.body.classList.toggle("world-mode", world);
     ["globe", "lab", "design", "science", "space", "graph", "twin", "bio"].forEach((x) => document.body.classList.toggle("view-" + x, v === x));
@@ -84,71 +84,6 @@
     document.querySelectorAll("[data-view]").forEach((b) => b.classList.toggle("on", b.dataset.view === v));
   };
   JV.getView = () => view;
-  let plannerPollBusy = false;
-  let plannerManual = false;
-  let plannerControlBusy = false;
-  let plannerControlVersion = 0;
-  async function refreshPlanner() {
-    if (plannerPollBusy || plannerControlBusy || document.hidden || !document.body.classList.contains("view-design")) return;
-    plannerPollBusy = true;
-    const generation = plannerControlVersion;
-    try {
-      const frame = await JV.api("/api/spaceplanner/frame");
-      if (generation !== plannerControlVersion || (plannerManual && !frame.manual)) return;
-      plannerManual = !!frame.manual;
-      document.getElementById("spaceplanner-manual").hidden = plannerManual;
-      document.getElementById("spaceplanner-resume").hidden = !plannerManual;
-      const live = document.getElementById("spaceplanner-live");
-      const image = document.getElementById("spaceplanner-frame");
-      const landing = document.querySelector(".spaceplanner-launch");
-      document.getElementById("spaceplanner-live-status").textContent = frame.message || "";
-      document.getElementById("spaceplanner-idle-status").textContent = frame.message || "SpacePlanner açılmayı bekliyor.";
-      live.hidden = !frame.active;
-      landing.hidden = !!frame.active;
-      if (frame.active && frame.image && frame.image.startsWith("data:image/jpeg;base64,")) image.src = frame.image;
-      else image.removeAttribute("src");
-    } catch (e) {
-      document.getElementById("spaceplanner-live-status").textContent = "Canlı görüntü bağlantısı kesildi; yeniden deneniyor.";
-    } finally { plannerPollBusy = false; }
-  }
-  setInterval(refreshPlanner, 1200);
-  async function plannerControl(action) {
-    plannerControlBusy = true; plannerControlVersion++;
-    const start = document.getElementById("spaceplanner-manual");
-    const resume = document.getElementById("spaceplanner-resume");
-    start.disabled = resume.disabled = true;
-    const status = document.getElementById("spaceplanner-control-status");
-    status.textContent = action === "start" ? "Chrome açılıyor; girişi Chrome penceresinde kendin yap." : "Kontrol geri alınıyor…";
-    if (action === "start") {
-      plannerManual = true;
-      document.getElementById("spaceplanner-frame").removeAttribute("src");
-      document.getElementById("spaceplanner-live").hidden = true;
-      document.querySelector(".spaceplanner-launch").hidden = false;
-      document.getElementById("spaceplanner-idle-status").textContent = "Chrome açılıyor; giriş bilgilerini yalnızca Chrome penceresinde yaz.";
-    }
-    try {
-      const result = await JV.api("/api/spaceplanner/manual", {body: {action}});
-      if (result.error) throw new Error(result.error);
-      plannerManual = !!result.manual;
-      start.hidden = plannerManual; resume.hidden = !plannerManual;
-      status.textContent = result.message || "";
-    } catch (e) {
-      if (action === "start") plannerManual = false;
-      status.textContent = e.message;
-    } finally { plannerControlBusy = false; start.disabled = resume.disabled = false; }
-  }
-  document.getElementById("spaceplanner-manual").onclick = () => plannerControl("start");
-  document.getElementById("spaceplanner-resume").onclick = () => plannerControl("finish");
-  const spacePlannerClose = document.getElementById("spaceplanner-close");
-  if (spacePlannerClose) spacePlannerClose.onclick = () => JV.setView("core");
-  const openSpacePlanner = () => {
-    if (JV.sendCommand) JV.sendCommand("SpacePlanner'ı spaceplanner_open aracıyla kontrollü tarayıcıda aç; mevcut planı koru.");
-  };
-  ["spaceplanner-open", "spaceplanner-open-main"].forEach((id) => {
-    const button = document.getElementById(id);
-    if (button) button.addEventListener("click", openSpacePlanner);
-  });
-
   // arayüz komutları (beynin araç sonuçlarından gelir)
   JV.uiCommand = function (name, args, result) {
     let r = result;
@@ -162,7 +97,7 @@
     if (ui === "command") return JV.command && (r.open === false ? JV.command.close() : JV.command.open());
     if (ui === "panel") return JV.openPanel && JV.openPanel(r.panel, r.open);
     if (ui.startsWith("globe") || ui === "map") { JV.setView("globe"); return W.globe.cmd(ui, r, args); }
-    if (ui === "home_design" || ui === "spaceplanner") { JV.setView("design"); refreshPlanner(); return; }
+    if (ui === "architecture") { JV.setView("design"); if(JV.architecture) JV.architecture.open(); return; }
     if (ui.startsWith("holo") || ui === "chart3d") { JV.setView("lab"); return W.lab.cmd(ui, r, args); }
     if (ui === "sim") { JV.setView("science"); return W.science.cmd(r.kind, r.params || {}, r); }
     if (ui === "space") { JV.setView("space"); return W.space.cmd(r); }

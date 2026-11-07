@@ -720,6 +720,7 @@ GROUP_INFO = {
     "operations": ("SQLite salt okunur inceleme, Python kaynak denetimi, enerji hesabı ve depo takibi", "sqlite veritabanı database güvenlik tarama kaynak denetle enerji tüketim kwh github depo değişiklik takip"),
     "engineering": ("Sembolik denklemler, sayısal sonuç kontrolü ve doğrusal optimizasyon", "denklem integral matematik sembolik optimizasyon minimize maksimize çöz kök"),
     "integrations": ("Docker, VirtualBox, MQTT ve süreç bellek/CPU ölçümleri", "docker container konteyner virtualbox sanal makine mqtt broker ram bellek sızıntı performans"),
+    "assistant": ("Kalıcı proje hafızası, görev günlüğü ve proaktif öneriler", "hafıza hatırla proje karar tercih alışkanlık devam görev proaktif öner inisiyatif"),
     "reasoning": ("Model cevaplarını karşılaştırma, cevap uzunluğu tercihi, tekrarlanan işlerden makro önerisi", "modelleri karşılaştır cevap uzunluğu kısa detaylı makro öner tekrar eden"),
     "google": ("Gmail ve Google Takvim", "mail posta gmail gelen kutu ileti yanıtla cevapla taslak takvim toplantı randevu ajanda etkinlik davet meet program bugün yarın hafta"),
     "computer": ("ekranı görme, fare/klavye, pencereler, pano, kamera, görsel analiz", "ekran ekranda tıkla tıklat yaz klavye fare mouse mosue imleç sürükle sürükleme taşı hareket pencere sekme pano kopyala yapıştır kamera bak gör görsel resim fotoğraf foto oku ocr buton hata mesajı kullan"),
@@ -757,7 +758,9 @@ GROUP_INFO = {
     "cams": ("telefon kameraları (JARVIS'in gözü), güvenlik modu", "kamera kameraya kameradan mutfak mutfakta salon salonda kapı kapıya bahçe oda odada bak göz izle güvenlik hareket alarm bebek ne var"),
     "library": ("kitaplık: kitaplarım, raf taraması, notlar, alıntılar, okuma durumu", "kitap kitabı kitaplık kitaplığım kitaplığımı raf raftan okudum okuyorum okunacak sayfa sayfadayım alıntı roman yazar bitirdim öner"),
     "arfx": ("kamera AR el efektleri, gezegen, kahve falı, uyku modu", "el efekt efektleri gezegen mars jüpiter satürn güneş ateş şimşek mühür büyü sihir hologram fal falıma falımı kahve fincan uyku uyu uyut alkış"),
-    "browser": ("SpacePlanner çizimi ve tarayıcı otomasyonu", "spaceplanner spacelanner spaceplaner spacepllaner space planner kat planı katplanı oda çiz ev tasarla mimari yerleşim salon mutfak yatak mobilya kapı pencere merdiven çatı bahçe elektrik floorplan tarayıcı tarayıcıda site sitesine sitesinde sayfa sayfada form doldur tıkla sekme sekmeyi giriş rezervasyon bilet uçak otel sepet ürün sipariş edge chrome web"),
+    "desktop": ("Windows semantik ekran ve hedef tıklama", "ekran pencere düğme buton simge tıkla bas fare mouse hedef"),
+    "architecture": ("yerel ölçülü 2D/3D ev ve iç mekân tasarımı", "mimari mimarlık katplanı kat planı ev oda salon mutfak yatak mobilya kapı pencere merdiven floorplan sweethome tasarım"),
+    "browser": ("tarayıcı otomasyonu", "tarayıcı site sayfa form tıkla sekme giriş rezervasyon bilet uçak otel sepet ürün sipariş chrome web"),
     "plugins": ("eklentiler", ""),
 }
 
@@ -814,8 +817,8 @@ def is_critical(name, args):
     return crit(args) if callable(crit) else bool(crit)
 
 
-TOOL_TIMEOUT = {"repository_watch": 20, "source_audit": 20, "math_solve": 15, "math_verify": 10, "linear_optimize": 15, "model_compare": 40, "docker_manage": 30, "vm_manage": 30, "mqtt_message": 30, "browser_download": 45, "browser_upload": 30, "web_search": 15, "news_search": 12, "read_webpage": 12, "weather": 15, "currency": 15,  # ağ araçları: süre sınırlı
-                "spaceplanner_open": 45, "home_design": 45, "spaceplanner_draw": 30, "browser_observe": 60, "browser_open": 45, "browser_read": 30, "browser_look": 45}
+TOOL_TIMEOUT = {"desktop_inspect":10,"desktop_target":10,"desktop_click_target":12,**{n:60 for n in ("architecture_open","architecture_state","architecture_catalog","architecture_apply","architecture_house","architecture_history")},"repository_watch": 20, "source_audit": 20, "math_solve": 15, "math_verify": 10, "linear_optimize": 15, "model_compare": 40, "docker_manage": 30, "vm_manage": 30, "mqtt_message": 30, "browser_download": 45, "browser_upload": 30, "web_search": 15, "news_search": 12, "read_webpage": 12, "weather": 15, "currency": 15,  # ağ araçları: süre sınırlı
+                "browser_observe": 60, "browser_open": 45, "browser_read": 30, "browser_look": 45}
 
 
 def _run_limited(fn, args, limit):
@@ -839,9 +842,6 @@ def _run_limited(fn, args, limit):
 
 
 def execute(name, args):
-    from .skills import browser
-    if browser.manual_active():
-        return "Chrome elle kullanımda; araçlar ve ekran analizi duraklatıldı. Girişi bitirince JARVIS’e geri ver düğmesine bas."
     if name not in TOOLS:
         return f"Bilinmeyen araç: {name}"
     fn = TOOLS[name][0]

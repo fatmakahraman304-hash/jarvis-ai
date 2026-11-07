@@ -48,8 +48,6 @@ def _call(fn, *args, timeout=90):
 
 
 def _ctx():
-    if manual_active():
-        raise RuntimeError("Chrome elle kullanımda; önce JARVIS’e geri ver düğmesine bas.")
     st = _state
     if st["ctx"]:
         try:
@@ -66,18 +64,12 @@ def _ctx():
         st["pw"] = sync_playwright().start()
     prof = DATA / "browser_profile"
     prof.mkdir(parents=True, exist_ok=True)
-    headless = st.get("embedded", False) or os.environ.get("JARVIS_BROWSER_HEADLESS") == "1"
-    if st.get("embedded") and os.environ.get("JARVIS_BROWSER_HEADLESS") != "1":
-        from .. import chrome_session
-        browser, context, process = chrome_session.launch(st["pw"], prof)
-        st.update(browser=browser, ctx=context, process=process, manual_capable=True)
-        st["page"] = context.pages[0] if context.pages else context.new_page()
-        return context
+    headless = os.environ.get("JARVIS_BROWSER_HEADLESS") == "1"
     last = None
-    channels = ["chrome"] if st.get("embedded") or os.name == "nt" else ([os.environ.get("JARVIS_BROWSER_CHANNEL")] if os.environ.get("JARVIS_BROWSER_CHANNEL") else ["chrome", None])
+    channels = ["chrome"] if os.name == "nt" else ([os.environ.get("JARVIS_BROWSER_CHANNEL")] if os.environ.get("JARVIS_BROWSER_CHANNEL") else ["chrome", None])
     for ch in channels:
         try:
-            kw = {"headless": headless, "viewport": None if not headless else {"width": 1280, "height": 860}, "locale": "tr-TR"}
+            kw = {"headless": headless, "viewport": None if not headless else {"width": 1280, "height": 860}, "locale": "tr-TR", "args": ["--force-renderer-accessibility"]}
             if ch:
                 kw["channel"] = ch
             st["ctx"] = st["pw"].chromium.launch_persistent_context(str(prof), **kw)
@@ -357,181 +349,8 @@ def browser_observe():
             "devam":"Son duruma göre karar ver; eski öğe numaralarını kullanma. Reklam sekmesi varsa browser_tabs ile kapatıp asıl sekmeye dön. Kullanıcının asıl görevini sürdür."}
 
 
-def _is_spaceplanner(url):
-    parsed = urlparse(url)
-    return parsed.scheme == "https" and parsed.hostname in ("spaceplanner.co", "www.spaceplanner.co", "app.spaceplanner.co")
-
-
-def spaceplanner_open():
-    """Aynı kontrollü sekmeyi yeniden kullan; mevcut planı yeniden yükleme."""
-    def run():
-        _state["embedded"] = True
-        ctx = _ctx()
-        for p in ctx.pages:
-            if not p.is_closed() and _is_spaceplanner(p.url) and not urlparse(p.url).path.startswith("/docs"):
-                _state["page"] = p
-                if _state.get("manual_capable"):
-                    _window_state(p, "background")
-                else:
-                    p.bring_to_front()
-                return {"ui": "spaceplanner", **_read(4000)}
-        # İşçi içinden _call çağırmak kilitlenir; gezinme burada yapılır.
-        p = ctx.new_page()
-        _state["page"] = p
-        p.goto("https://spaceplanner.co/", wait_until="domcontentloaded", timeout=30000)
-        if _state.get("manual_capable"):
-            _window_state(p, "background")
-        else:
-            p.bring_to_front()
-        return {"ui": "spaceplanner", **_read(4000)}
-    return _call(run)
-
-
-_manual_lock = threading.Lock()
-
-
-def manual_active():
-    return bool(_state.get("manual"))
-
-
-def _window_state(page, state):
-    background = state == "background"
-    if background:
-        state = "normal"
-    session = page.context.new_cdp_session(page)
-    try:
-        window = session.send("Browser.getWindowForTarget")
-        session.send("Browser.setWindowBounds", {"windowId": window["windowId"], "bounds": {"windowState": state}})
-    finally:
-        session.detach()
-    if background:
-        from .. import chrome_session
-        chrome_session.background(_state.get("process"))
-
-
-def spaceplanner_manual(action):
-    if action not in {"start", "finish"}:
-        raise ValueError("Geçersiz elle kullanım işlemi.")
-    if not _manual_lock.acquire(blocking=False):
-        raise RuntimeError("Önceki elle kullanım isteği sürüyor.")
-    try:
-        if action == "start":
-            if not _state.get("ctx") or not _state.get("manual_capable"):
-                raise RuntimeError("Bu oturum elle kullanımı desteklemiyor. JARVIS’i güncelleyip tamamen kapat/aç; ardından SpacePlanner’ı aç.")
-            # Set before queueing: queued screenshots and new model tools cannot capture login.
-            _state["manual"] = True
-            def show():
-                p = _state.get("page")
-                if not p or p.is_closed() or not _is_spaceplanner(p.url):
-                    raise RuntimeError("Önce SpacePlanner sekmesini aç.")
-                _window_state(p, "normal")
-                p.bring_to_front()
-                return {"manual": True, "message": "Chrome penceresinde koşulları kendin inceleyip Google ile devam et. Girişi tamamlayınca JARVIS’e geri ver."}
-            try:
-                return _call(show)
-            except Exception:
-                _state["manual"] = False
-                raise
-        def resume():
-            ctx = _state.get("ctx")
-            if not ctx:
-                raise RuntimeError("Chrome kapandı. SpacePlanner’ı yeniden aç.")
-            pages = [p for p in ctx.pages if not p.is_closed()]
-            if any(urlparse(p.url).hostname == "accounts.google.com" for p in pages):
-                raise RuntimeError("Google giriş penceresi hâlâ açık. Girişi tamamla veya iptal edip bu pencereyi kapat.")
-            original = _state.get("page")
-            p = original if original in pages and _is_spaceplanner(original.url) else next((p for p in pages if _is_spaceplanner(p.url)), None)
-            if p is None:
-                raise RuntimeError("SpacePlanner sekmesi bulunamadı; Chrome’da SpacePlanner’a geri dön.")
-            if p.evaluate("() => [...document.querySelectorAll(\"input[type=password]\")].some(e => e.value && e.getClientRects().length)"):
-                raise RuntimeError("Giriş formunda doldurulmuş şifre alanı var. Önce Chrome’da girişi tamamla veya alanı temizle.")
-            _window_state(p, "background")
-            _state["page"] = p
-            _state["manual"] = False
-            return {"manual": False, "message": "Kontrol JARVIS’te. Giriş durumunu kontrol ederek devam et komutunu verebilirsin."}
-        return _call(resume)
-    finally:
-        _manual_lock.release()
-
-
-def spaceplanner_frame():
-    """Same controlled Chrome page, rendered in JARVIS; never launch or navigate from polling."""
-    if manual_active():
-        return {"active": False, "manual": True, "message": "Chrome’da elle kullanım açık. Girişi bitirince JARVIS’e geri ver düğmesine bas."}
-    if not _state.get("ctx"):
-        return {"active": False, "message": "SpacePlanner’ı açmak için AÇ düğmesine bas veya sesle iste."}
-    def run():
-        if manual_active():
-            return {"active": False, "manual": True, "message": "Chrome elle kullanımda; görüntü aktarımı duraklatıldı."}
-        p = _state.get("page")
-        if not p or p.is_closed() or not _is_spaceplanner(p.url):
-            return {"active": False, "message": "SpacePlanner sekmesi etkin değil; JARVIS’e SpacePlanner’a dön de."}
-        image = p.screenshot(type="jpeg", quality=70, timeout=5000)
-        return {"active": True, "image": "data:image/jpeg;base64," + base64.b64encode(image).decode("ascii"),
-                "title": p.title(), "url": p.url, "message": "Chrome · canlı görünüm · sesle kontrol"}
-    return _call(run)
-
-
-def spaceplanner_draw(points, action="drag", size=""):
-    """Yalnızca görünür çizim tuvalinde gözlenmiş CSS koordinatlarıyla çalışır."""
-    def run():
-        p = _page()
-        if not _is_spaceplanner(p.url):
-            raise ValueError("Önce spaceplanner_open ile SpacePlanner editörünü aç.")
-        if action not in ("click", "double_click", "drag", "move"):
-            raise ValueError("Geçersiz çizim hareketi.")
-        if not isinstance(points, list) or not 1 <= len(points) <= 60:
-            raise ValueError("1–60 nokta gerekli.")
-        if action == "drag" and len(points) < 2:
-            raise ValueError("Sürüklemek için en az iki nokta gerekli.")
-        coords = []
-        for point in points:
-            x, y = float(point["x"]), float(point["y"])
-            if not math.isfinite(x) or not math.isfinite(y):
-                raise ValueError("Koordinatlar sonlu olmalı.")
-            coords.append({"x": x, "y": y})
-        if size and (action != "drag" or not re.fullmatch(r"[0-9.,xX* /'\"cmftin-]{1,40}", size)):
-            raise ValueError("Ölçü yalnızca sürüklerken sayısal olarak girilebilir (ör. 400x300).")
-        # DOM düğmeleri için browser_click kullanılır. Buradaki her nokta aynı,
-        # görünür canvas üzerinde olmalı; hesap/ödeme düğmelerine tıklanamaz.
-        valid = p.evaluate("""points => {
-          let canvas = null;
-          return points.every(({x,y}) => {
-            if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) return false;
-            const hit = document.elementFromPoint(x,y);
-            const c = hit && hit.closest('canvas');
-            if (!c || (canvas && canvas !== c)) return false;
-            canvas = c; return true;
-          });
-        }""", coords)
-        if not valid:
-            raise ValueError("Noktalar aynı görünür çizim tuvalinde olmalı; browser_look ile yeniden bak.")
-        p.mouse.move(**coords[0])
-        if action == "drag":
-            p.mouse.down()
-            try:
-                for point in coords[1:]:
-                    p.mouse.move(**point, steps=12)
-                if size:
-                    p.keyboard.type(size)
-                    p.keyboard.press("Enter")
-            finally:
-                p.mouse.up()
-        elif action != "move":
-            for point in coords:
-                (p.mouse.dblclick if action == "double_click" else p.mouse.click)(**point)
-        else:
-            for point in coords[1:]:
-                p.mouse.move(**point, steps=12)
-        return {"hareket": action, "nokta_sayısı": len(coords), "ölçü": size,
-                "doğrulama": "browser_look ile çizimi ve gerçek ölçüleri kontrol et.", **_read(2000)}
-    return _call(run)
-
-
 def browser_close():
     def run():
-        if manual_active():
-            raise RuntimeError("Chrome elle kullanımda; önce kontrolü JARVIS’e geri ver.")
         try:
             if _state.get("browser"):
                 _state["browser"].new_browser_cdp_session().send("Browser.close")
@@ -572,9 +391,6 @@ def _click_crit(a):
                 label = _label_of(p, target)
                 if RISKY.search(label) or SENSITIVE_UI.search(label):
                     return True
-                # Keep the existing uninterrupted SpacePlanner drawing workflow.
-                if _is_spaceplanner(p.url):
-                    return False
                 # Only trusted, currently resolvable DOM controls can be automatic.
                 _loc(p, target)
                 host = (urlparse(p.url).hostname or "").lower()
@@ -613,8 +429,6 @@ def _fill_crit(a):
                         or SENSITIVE_FIELD.search(hint)
                         or host.startswith(("accounts.", "login.", "auth."))):
                     return True
-                if _is_spaceplanner(p.url) and kind in {"select", "number", "range"}:
-                    return False
                 if (load_settings().get("routine_browser_auto", True)
                         and kind in {"text", "search", "textarea", "number", "range", "select"}):
                     return False
@@ -631,11 +445,6 @@ TOOLS = {
     "browser_upload": (browser_upload, _schema("Gerçek file input alanına yerel dosya yükler; alan numarası veya etiketi ve dosya yolu gerekir. 100MB sınırı.", {"field":S("alan"),"path":S("dosya yolu")}, ["field","path"]), True),
     "browser_download": (browser_download, _schema("İndirme başlatan öğeye tıklar, dosyanın tamamlanmasını bekleyip data/downloads altında yeni adla saklar. Her indirme türü veya oturum dışı pencere desteklenmez.", {"target":S("öğe")}, ["target"]), True),
     "browser_observe": (browser_observe, _schema("Güncel tarayıcı ekranını ve öğeleri yeniden analiz eder. Açık kapat/atla/reddet düğmeli reklam veya çerez engellerini en fazla 3 kez kapatıp tekrar görür; hesap/ödeme/kaydedilmemiş veri pencerelerini otomatik kapatmaz.", {}), False),
-    "spaceplanner_open": (spaceplanner_open, _schema("SpacePlanner'ı JARVIS'in kontrol ettiği pencerede açar; varsa aynı plan sekmesini yeniden yüklemeden kullanır.", {}), False),
-    "spaceplanner_draw": (spaceplanner_draw, _schema("SpacePlanner canvas üzerinde çizim/yerleştirme/sürükleme. Önce browser_look ile koordinatları gör, browser_click veya browser_press ile aracı seç; sonra sonucu görsel doğrula. Ölçü için size kullan, pikselden metre tahmin etme.", {
-        "points": {"type": "array", "items": {"type": "object", "properties": {"x": {"type": "number"}, "y": {"type": "number"}}, "required": ["x", "y"]}},
-        "action": {"type": "string", "enum": ["click", "double_click", "drag", "move"]},
-        "size": S("Sürükleme sırasında kesin ölçü; ör. cm biriminde 400x300")}, ["points"]), False),
     "browser_open": (browser_open, _schema("Tarayıcıda (JARVIS'in Edge/Chrome profili) adres ya da arama açar ve sayfayı okur; tıklanabilir öğeleri numaralı listeler.",
                                            {"url": S("adres ya da aranacak şey"), "new_tab": {"type": "boolean"}}, ["url"]), False),
     "browser_read": (browser_read, _schema("Açık sayfanın metnini ve numaralı tıklanabilir öğelerini okur.", {"max_chars": {"type": "integer"}}), False),

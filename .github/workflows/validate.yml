@@ -19,14 +19,11 @@ jobs:
           node --check web/lab.js
           node --check web/app.js
           node --check web/worlds.js
-          node --check web/gesture.js
-          node --check web/handfx.js
-          node --check web/ardesk.js
-          node --check web/shell.js
-          node --check web/library.js
           node --check web/preferences.js
           node --check web/stt.js
+          node --check web/architecture.js
           node tests/test_continuous_listening.js
+          node tests/test_architecture_bridge.js
       - name: Check Python syntax
         run: python -m compileall -q run.py core scripts
       - name: Install test dependencies
@@ -45,30 +42,35 @@ jobs:
         run: python tests/test_gemini_lite_wire.py
       - name: Check Gemini quota and 400 recovery
         run: python tests/test_gemini_quota_recovery.py
-      - name: Check Gemini continuation protocol
-        run: python tests/test_gemini_continuation.py
       - name: Check visual verification pause
         run: python tests/test_visual_pause.py
       - name: Check observe-act loop
         run: python tests/test_observe_loop.py
-      - name: Check manual login privacy and handoff
-        run: python tests/test_manual_login.py
       - name: Check routine browser approvals
         run: python tests/test_browser_approval.py
-      - name: Check SpacePlanner tools
-        run: python tests/test_spaceplanner.py
+      - name: Check durable assistant and device verification
+        run: |
+          python tests/test_assistant.py
+          python tests/test_home_verification.py
+          python tests/test_gemini_continuation.py
+          python tests/test_update_recovery.py
+          node tests/test_update_ui.js
+      - name: Check native architecture and semantic desktop
+        run: |
+          python tests/test_architecture.py
+          python tests/test_desktop_semantic.py
       - name: Install test browser
         run: python -m playwright install --with-deps chromium
-      - name: Check real Chrome session manual handoff
-        run: JARVIS_TEST_HEADED=1 xvfb-run -a python tests/test_manual_login_browser.py
-      - name: Check native agent with real browser
-        run: python tests/test_agent_browser_execution.py
-      - name: Check real canvas input
-        run: python tests/test_spaceplanner_canvas.py
+      - name: Check real 2D and 3D architecture editor
+        run: python tests/test_architecture_browser.py
+      - name: Preserve editor test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: architecture-test-evidence
+          path: test-results/
       - name: Check overlay recovery in browser
         run: python tests/test_browser_observe.py
-      - name: Check SpacePlanner settings UI
-        run: python tests/test_spaceplanner_settings_ui.py
       - name: Verify isolated camera and AR modes
         run: python tests/test_camera_mode_isolation.py
       - name: Validate release metadata
