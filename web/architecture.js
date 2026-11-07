@@ -39,6 +39,19 @@
   }catch(e){status.textContent=e.message;}finally{running=false;}
  }
  JV.architecture={open:()=>init().catch(e=>{status.textContent=e.message;}),save,state:()=>bridge()?.state(true)};
+ const expand=document.getElementById('architecture-expand');
+ expand.onclick=()=>{
+  const active=document.body.classList.toggle('architecture-expanded');
+  expand.setAttribute('aria-pressed',String(active));
+  expand.textContent=active?'⊟ Küçült':'⛶ Tam ekran';
+  frame.contentWindow?.dispatchEvent(new Event('resize'));
+ };
+ document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&document.body.classList.contains('architecture-expanded')){
+   document.body.classList.remove('architecture-expanded');
+   expand.setAttribute('aria-pressed','false');expand.textContent='⛶ Tam ekran';
+  }
+ });
  document.getElementById('architecture-close').onclick=()=>JV.setView('core');
  document.getElementById('architecture-download').onclick=async()=>{try{await save();const r=await api('project');const url=URL.createObjectURL(await r.blob());const a=document.createElement('a');a.href=url;a.download='JARVIS-Proje.sh3d';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(e){status.textContent=e.message;}};
  setInterval(poll,400);
