@@ -8,6 +8,17 @@ os.environ['JARVIS_DATA']=tempfile.mkdtemp(prefix='jv_responsive_')
 from core import server
 
 class ResponsiveTests(unittest.IsolatedAsyncioTestCase):
+ async def test_render_style_api_validates_before_queueing(self):
+  from core import architecture
+  async def body(style):return {'op':'render_style','args':{'style':style}}
+  with patch.object(architecture,'command',return_value={'verified':True,'result':{'render_style':'design'}}) as command:
+   for invalid in ['ultra',None,[],{}]:
+    request=SimpleNamespace(path_params={'what':'run'},method='POST',headers={},json=lambda:body(invalid))
+    self.assertEqual((await server.architecture_api(request)).status_code,400)
+   command.assert_not_called()
+   request=SimpleNamespace(path_params={'what':'run'},method='POST',headers={},json=lambda:body('design'))
+   self.assertEqual((await server.architecture_api(request)).status_code,200)
+   command.assert_called_once_with('render_style',style='design')
  async def check_worker(self,handler,target,result,request=None):
   loop=asyncio.get_running_loop();started=asyncio.Event();release=threading.Event();active=threading.Event()
   def blocking(*args,**kwargs):

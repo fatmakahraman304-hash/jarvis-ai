@@ -41,14 +41,15 @@
     doc.addEventListener('pointerdown',hold,true);doc.addEventListener('wheel',hold,{capture:true,passive:true});doc.addEventListener('keydown',hold,true);
    }
    await fitView();
-   let remembered='technical';try{remembered=window.localStorage.getItem('jarvis.studio.renderStyle')||remembered;}catch(_){}
+   let remembered='technical',renderWarning='';try{remembered=window.localStorage.getItem('jarvis.studio.renderStyle')||remembered;}catch(_){}
    if(remembered==='design'){
     try{await changeRenderStyle(remembered);}catch(e){
      renderStyle.value='technical';try{window.localStorage.removeItem('jarvis.studio.renderStyle');}catch(_){}
+     renderWarning=' · Malzeme ve ışık modu açılamadı: '+e.message;
      console.warn('[studio] remembered render style failed',e);
     }
    }
-   loaded=true;const historyReady=await refreshHistory();status.textContent=historyReady?'Hazır · metre birimi · 2D ve 3D birlikte':'Proje açık; kayıt geçmişi yüklenemedi. Kayıtları yenile.';
+   loaded=true;const historyReady=await refreshHistory();status.textContent=(historyReady?'Hazır · metre birimi · 2D ve 3D birlikte':'Proje açık; kayıt geçmişi yüklenemedi. Kayıtları yenile.')+renderWarning;
   })();try{await initPromise;}catch(e){status.textContent=e.message;initPromise=null;throw e;}
  }
  function save(){
@@ -112,7 +113,7 @@
  });
  const studioMetrics=document.getElementById('studio-metrics');
  const studioHouse=document.getElementById('studio-house');
- const studioButtons=['studio-house','studio-undo','studio-redo','studio-top','studio-walk','studio-svg','studio-restore','studio-render-style'].map(id=>document.getElementById(id));
+ const studioButtons=['studio-house','studio-undo','studio-redo','studio-top','studio-walk','studio-svg','studio-restore','studio-render-style','studio-fit'].map(id=>document.getElementById(id));
  const updateMetrics=()=>{try{const report=bridge()?.state();if(report?.counts)studioMetrics.textContent=[report.counts.rooms+' oda',report.counts.walls+' duvar',report.counts.furniture+' eşya',Number(report.area_m2||0).toFixed(1)+' m²'].join(' · ');if(report?.render_style&&!studioBusy)renderStyle.value=report.render_style;}catch(_){}};
  let studioBusy=false;
  async function studioRun(op,args={}){

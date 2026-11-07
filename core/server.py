@@ -91,7 +91,7 @@ async def architecture_api(request):
                 args=body.get("args") or {}
                 allowed={"state":{"details"},"catalog":{"query"},"apply":{"operations"},"undo":set(),"redo":set(),"render_style":{"style"}}[op]
                 if set(args)-allowed:raise ValueError("Unexpected command arguments")
-                if op=="render_style" and args.get("style") not in {"technical","design"}:raise ValueError("Render style must be technical or design")
+                if op=="render_style" and args.get("style") not in ("technical","design"):raise ValueError("Render style must be technical or design")
                 return JSONResponse(await asyncio.to_thread(architecture.command,op,**args))
             if action == "save":
                 data=await request.body()

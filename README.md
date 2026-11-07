@@ -51,6 +51,12 @@ indirme bağlantısındaki pakette yer alır.
   genişlik, derinlik, yükseklik ve açıyı değiştir. Değerler metre/derecedir.
   Uygulama ve disk kaydı onaylanmadan başarı bildirilmez; işlem geri alınabilir.
 - **Üstten 3D / İç mekân 3D:** editörün gerçek kamera modunu değiştirir.
+- **3D görünüm:** `Teknik · hızlı` varsayılandır. `Malzeme ve ışık` fiziksel
+  malzeme, gölge ve ortam ışığını açar; daha fazla grafik gücü kullanır.
+  Geçiş kamera açısını korur; çizilmiş kare doğrulanmadan başarı bildirilmez.
+  Seçim bu tarayıcıda hatırlanır. JARVIS `architecture_render` aracıyla da
+  `technical` / `design` seçebilir. Bu bir görünüm tercihidir; geometri ve geri
+  alma geçmişini değiştirmez, fotogerçekçi çıktı garantisi vermez.
 - **SVG plan indir:** oda çokgenleri, duvar kalınlıkları ve döndürülmüş mobilya
   ayak izlerini vektörel dosyaya aktarır. Bu, 3D render veya ruhsat çizimi değildir;
   çok katlı projelerde bütün katların aynı düzleme izdüşümünü içerir.
