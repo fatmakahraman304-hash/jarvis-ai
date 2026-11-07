@@ -656,7 +656,7 @@
       $("#camera").classList.remove("hidden");
     } catch (e) { if (request === camRequest) toast("Kamera açılamadı: " + e.message); }
   }
-  JV.camera = { close: closeCam, isOpen: () => !!camStream && !$("#camera").classList.contains("hidden") };
+  JV.camera = { open: openCam, close: closeCam, isOpen: () => !!camStream && !$("#camera").classList.contains("hidden") };
   $("#t-camera").onclick = () => { JV.unlockAudio(); openCam(); };
   $("#cam-close").onclick = closeCam;
   $("#cam-flip").onclick = () => { facing = facing === "user" ? "environment" : "user"; closeCam(); openCam(); };
