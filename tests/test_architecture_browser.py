@@ -83,8 +83,7 @@ try:
    # Both new persistent stores are available through the existing memory API.
    mem=p.request.get(base+'/api/memory').json();assert 'tasks' in mem and 'projects' in mem
    assert p.locator('#o-initiative').count()==1
-   assert not errors,errors
-   print('Real editor: 90+ model catalog, measured 10x12 house, 2D+3D triangles, update/undo/redo, atomic rollback, saved/reloaded SH3D, visible voice/chat.')
+   # The deliberately rejected INVALID transaction logs a browser console error.\n   # External resources are intentionally aborted by the test's offline route.\n   unexpected=[e for e in errors if not (\n    e=='Browser error: Failed to load resource: net::ERR_FAILED' or\n    (e.startswith('Browser error: [architecture] command failed: apply ') and\n     'Unsupported architecture operation: INVALID' in e)\n   )]\n   assert not unexpected,unexpected\n   print('Real editor: 90+ model catalog, measured 10x12 house, 2D+3D triangles, update/undo/redo, atomic rollback, saved/reloaded SH3D, visible voice/chat.')
   finally:b.close()
 finally:
  server.terminate()
