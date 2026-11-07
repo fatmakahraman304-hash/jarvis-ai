@@ -3,6 +3,10 @@ import json,os,socket,subprocess,sys,tempfile,time,urllib.request,re,zipfile
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parent.parent
+with zipfile.ZipFile(ROOT/'vendor/designer-source.zip') as sources:
+ source=sources.read('apps/web/src/App.tsx').decode('utf8')
+ i=source.find('async function createSession')
+ print('DESIGNER SOURCE SESSION: '+source[i:i+4400],flush=True)
 with zipfile.ZipFile(ROOT/'vendor/designer.zip') as archive:
  entries=[(i.filename,i.file_size) for i in archive.infolist() if i.filename.endswith(('.js','.html'))]
  print('DESIGNER files largest: '+repr(sorted(entries,key=lambda x:-x[1])[:12]),flush=True)
