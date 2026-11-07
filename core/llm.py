@@ -590,6 +590,10 @@ def vision(prompt, image_bytes, mime="image/png", system="", light=False):
         tried = []
         while model and len(tried) < 3:
             tried.append(model)
+            if cooling(pid, model):
+                errors.append(f"{pid}/{model}: kota/servis bekleme süresinde")
+                model = (next_model_for_tier(pid, model, tried, "smart") if pid == "gemini" else next_model(pid, model, tried))
+                continue
             try:
                 text = ""
                 for kind, data in stream_chat(pid, model, msgs, None, temperature=0.2):

@@ -99,7 +99,7 @@ class ExecutionTests(unittest.TestCase):
         self.assertFalse(executed);self.assertNotIn('require_tools',requests[0][1])
 
     def test_continue_retains_action_contract(self):
-        executed,requests,_=self.run_brain([{'calls':[call('browser_read')]},{'calls':[call('spaceplanner_draw',points=[{'x':1,'y':1},{'x':2,'y':2}])]},{'calls':[call('task_report',status='finished',summary='Sonuç doğrulandı.',remaining='')]}],text='devam et',history=[{'role':'user','content':'SpacePlanner aç ve oda çiz'}])
+        executed,requests,_=self.run_brain([{'calls':[call('browser_read')]},{'calls':[call('spaceplanner_draw',points=[{'x':1,'y':1},{'x':2,'y':2}])]},{'calls':[call('spaceplanner_draw',points=[{'x':1,'y':1},{'x':2,'y':2}])]},{'calls':[call('task_report',status='finished',summary='Sonuç doğrulandı.',remaining='')]}],text='devam et',history=[{'role':'user','content':'SpacePlanner aç ve oda çiz'}])
         self.assertTrue(requests[0][1]['require_tools']);self.assertIn('spaceplanner_draw',executed)
 
     def test_shortcut_and_typo_route(self):
