@@ -16,3 +16,11 @@ The source and runtime SHA-256 values are recorded in vendor/designer.json.
 
 The editor has been modified for local JARVIS integration. Upstream does not
 endorse this integration. No remote account or cloud service is required by it.
+
+The cutaway-room, elevated-camera and single-read serialization corrections are defined in
+core/designer_patch.py under GPL-2.0-or-later. The original vendor archives and
+their manifest hashes remain unchanged. The local source download applies these
+patches to the TypeScript source and contains the corresponding modified files.
+The extracted production bundle receives the same verified changes.
+scripts/rebuild_designer.py applies the source patches before rebuilding, so
+future rebuilt archives contain the corrections directly.

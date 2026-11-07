@@ -130,8 +130,10 @@ try:
    versions=p.request.get(base+'/api/architecture/history').json()
    assert versions
    p.wait_for_function("document.querySelector('#studio-history').options.length>1")
-   target=versions[0]['revision']
-   p.locator('#studio-history').select_option(str(target))
+   p.click('#studio-history')
+   p.keyboard.press('Home');p.keyboard.press('ArrowDown');p.keyboard.press('Enter')
+   target=int(p.evaluate("document.querySelector('#studio-history').value"))
+   assert any(row['revision']==target for row in p.request.get(base+'/api/architecture/history').json())
    prior_revision=p.request.get(base+'/api/architecture/info').json()['revision']
    p.once('dialog',lambda dialog:dialog.accept())
    p.locator('#studio-restore').click()

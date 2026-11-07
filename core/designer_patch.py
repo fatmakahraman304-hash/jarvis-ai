@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
 """Traceable fixes for the pinned GPL editor; original archives stay immutable."""
 import zipfile
 
@@ -10,12 +11,18 @@ SOURCE_PATCHES = {
         'const pitch = 0.38; // ~22° looking down',
         'const pitch = 0.85; // Elevated cutaway view reveals furniture behind walls',
     ),
+    'packages/core/src/io/HomeFileRecorder.ts': (
+        '      const digests = new Map<string, string>();\n      for (const { name, content } of contents) {\n        const data = await streamToBytes(await content.openStream());\n        digests.set(name, await sha1Base64(data));\n      }\n      entries.set("ContentDigests", new TextEncoder().encode(writeContentDigests(digests)));\n      for (const { name, content } of contents) {\n        entries.set(name, await streamToBytes(await content.openStream()));\n      }',
+        '      const digests = new Map<string, string>();\n      const contentBytes = new Map<string, Uint8Array>();\n      for (const { name, content } of contents) {\n        const data = await streamToBytes(await content.openStream());\n        contentBytes.set(name, data);\n        digests.set(name, await sha1Base64(data));\n      }\n      entries.set("ContentDigests", new TextEncoder().encode(writeContentDigests(digests)));\n      for (const [name, data] of contentBytes) {\n        entries.set(name, data);\n      }',
+    ),
 }
 BUNDLE_PATCHES = (
     ('m.setAreaVisible(!0),m.setLevel(g.getSelectedLevel())',
      'm.setAreaVisible(!0),m.setCeilingVisible(!1),m.setLevel(g.getSelectedLevel())'),
     ('re=Math.PI*.22,le=.38,Ie=j+Math.sin(le)*W*1.05',
      're=Math.PI*.22,le=.85,Ie=j+Math.sin(le)*W*1.05'),
+    ('const f=new Map;for(const{name:g,content:p}of c){const m=await qD(await p.openStream());f.set(g,await ZH(m))}l.set("ContentDigests",new TextEncoder().encode(JH(f)));for(const{name:g,content:p}of c)l.set(g,await qD(await p.openStream()))',
+     'const f=new Map,jarvisContentBytes=new Map;for(const{name:g,content:p}of c){const m=await qD(await p.openStream());jarvisContentBytes.set(g,m);f.set(g,await ZH(m))}l.set("ContentDigests",new TextEncoder().encode(JH(f)));for(const[g,m]of jarvisContentBytes)l.set(g,m)'),
 )
 
 
