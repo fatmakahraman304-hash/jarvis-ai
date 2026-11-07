@@ -72,6 +72,19 @@ def main():
             )
             vite.write_text(vite_text, encoding="utf-8")
 
+        # esbuild.keepNames preserves source class names with an underscore prefix
+        # for some generated classes (e.g. _Home, _ObserverCamera).
+        # XML tags must use their canonical names to round-trip SH3D correctly.
+        exporter = source / "packages" / "core" / "src" / "io" / "HomeXMLExporter.ts"
+        exporter_text = exporter.read_text(encoding="utf-8")
+        old_tag = "const name = object.constructor.name;"
+        new_tag = "const name = object.constructor.name.replace(/^_+/, \"\");"
+        if old_tag in exporter_text:
+            exporter_text = exporter_text.replace(old_tag, new_tag, 1)
+            exporter.write_text(exporter_text, encoding="utf-8")
+        elif new_tag not in exporter_text:
+            raise RuntimeError("HomeXMLExporter.getTag did not match expected source")
+
         run("npm", "ci", "--no-audit", "--no-fund", cwd=source)
         for name in (
             "@sweethomejs/core",
