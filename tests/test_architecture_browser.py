@@ -1,8 +1,19 @@
 """Real 2D/3D editor, local catalog, transaction rollback and durable project roundtrip."""
-import json,os,socket,subprocess,sys,tempfile,time,urllib.request,re
+import json,os,socket,subprocess,sys,tempfile,time,urllib.request,re,zipfile
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parent.parent
+with zipfile.ZipFile(ROOT/'vendor/designer.zip') as archive:
+ entries=[(i.filename,i.file_size) for i in archive.infolist() if i.filename.endswith(('.js','.html'))]
+ print('DESIGNER files largest: '+repr(sorted(entries,key=lambda x:-x[1])[:12]),flush=True)
+ for name,size in entries:
+  if size>15_000_000:continue
+  raw=archive.read(name)
+  for needle in (b'jarvisDesigner',b'jarvisRenderStats'):
+   at=raw.find(needle)
+   if at>=0:
+    print('DESIGNER bridge in '+name+' bytes='+str(size)+' near='+raw[max(0,at-600):at+700].decode('utf8','replace'),flush=True)
+
 sock=socket.socket();sock.bind(('127.0.0.1',0));port=sock.getsockname()[1];sock.close()
 data=Path(tempfile.mkdtemp(prefix='jv_designer_browser_'))
 (data/'settings.json').write_text(json.dumps({'wake_word':False,'voice_enabled':False,'always_listen_migrated':True,'continuous_voice_v2':True}))
