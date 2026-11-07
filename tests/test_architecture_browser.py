@@ -19,6 +19,7 @@ with zipfile.ZipFile(ROOT/'vendor/designer-source.zip') as sources:
 with zipfile.ZipFile(ROOT/'vendor/designer.zip') as archive:
  entries=[(i.filename,i.file_size) for i in archive.infolist() if i.filename.endswith(('.js','.html'))]
  print('DESIGNER files largest: '+repr(sorted(entries,key=lambda x:-x[1])[:12]),flush=True)
+ print('DESIGNER catalogue asset names: '+repr([n for n in archive.namelist() if 'catalog' in n.lower()][:30]),flush=True)
  import io
  if 'catalog.sh3f' in archive.namelist():
   data=archive.read('catalog.sh3f')
@@ -75,6 +76,7 @@ try:
    probe.on('pageerror',lambda e:probe_errors.append(str(e)))
    probe.on('console',lambda m:probe_errors.append('console '+m.type+': '+m.text[:250]) if m.type in ('error','warning') else None)
    probe.on('requestfailed',lambda r:probe_errors.append('request '+r.url[:130]+' '+str(r.failure)))
+   probe.on('response',lambda r:print('DESIGNER HTTP '+str(r.status)+' '+r.url,flush=True) if r.status>=400 else None)
    probe.goto(base+'/designer/',wait_until='domcontentloaded',timeout=30000)
    try:probe.wait_for_function('window.jarvisDesigner && typeof window.jarvisDesigner.run === "function"',timeout=30000)
    except Exception as e:raise AssertionError(f'Isolated designer failed: {e}; errors={probe_errors}') from e
