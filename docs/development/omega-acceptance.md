@@ -9,10 +9,10 @@ complete based on passing fixture tests or an installer build.
 | Existing application | Real local server smoke and updater roundtrip; existing model, voice, desktop and device regressions | Long-running use on the user's Windows installation |
 | Studio persistence | Shared save completion, dirty-edit protection, revision tests and real-browser history restore passed | Failure recovery under lost connection and concurrent-session soak testing |
 | Measured editing | Furniture ID, name, X/Y, width/depth/height and angle submitted through native transactions; browser exercised editing | Complete room/wall/level inspector, grouping, floor duplication, roof and open-kitchen workflows |
-| 3D visibility | Native geometry, new-room ceilings hidden, elevated initial camera; corresponding source supplied | Photoreal/PBR material workflow, catalog preview cards, wall cuts and visual acceptance of representative large projects |
+| 3D visibility | Native geometry/cutaway camera; physical material, shadow/AO and environment preview; exact source supplied | Texture/material editing, final render/AO quality tuning, catalog preview cards, wall cuts and representative large-project visual acceptance |
 | Export | Actual SVG download with measured rooms, wall widths and rotated furniture footprints | Per-floor export, additional 3D export formats and professional documentation layouts |
 | Display quality | Real-browser plan/camera fit at 1920×1080, 2560×1440 and 3840×2160; manual camera retention, focus labels and reduced-motion styling | Physical Windows DPI, whole-HUD contrast review and GPU FPS |
-| Performance | CI timings, shared icon renderer, guarded/grow-only WebGL buffers with exact-pixel verification and nonblocking telemetry/model discovery | House/undo/redo measured 9.26/12.42/9.77 seconds in latest software-WebGL CI (originally 31–32); startup/reload/fit waits remain; investigate latency, startup/voice p95, idle CPU/RAM and large-project soak |
+| Performance | CI timings, shared icon renderer, guarded/grow-only WebGL buffers with exact-pixel verification and nonblocking telemetry/model discovery | Pre-material baseline 02df164 measured house/undo/redo 9.26/12.42/9.77 seconds in software-WebGL CI (originally 31–32); quality-mode startup, reload/fit, voice and device latency remain to profile, startup/voice p95, idle CPU/RAM and large-project soak |
 | Brain and memory | Existing assistant, continuation, model selection and memory regression coverage remains passing | Live Turkish multi-step goals across sessions, model outages and error recovery beyond fixtures |
 | Screen and computer control | Existing desktop targeting, observation and approval regressions preserved | Actual Windows UIA applications, multi-monitor DPI, interruption and emergency-stop sessions |
 | Voice and personality | Existing listening/voice regression scripts preserved | Real microphone, noise, echo, barge-in, wake words and natural JARVIS/FRIDAY conversations |
@@ -23,5 +23,6 @@ complete based on passing fixture tests or an installer build.
 Full validation details and actual failed-run explanations are retained in
 [4.8-studio-validation.md](4.8-studio-validation.md) and
 [4.8-viewport-performance.md](4.8-viewport-performance.md), and
-[4.8-icon-buffer.md](4.8-icon-buffer.md). The release version and
+[4.8-icon-buffer.md](4.8-icon-buffer.md), and
+[4.8-material-light.md](4.8-material-light.md). The release version and
 updater channel remain unchanged while this work is a draft.
