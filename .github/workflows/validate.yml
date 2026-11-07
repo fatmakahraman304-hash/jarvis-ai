@@ -1,6 +1,9 @@
 name: JARVIS validation
 
 on:
+  workflow_dispatch:
+  schedule:
+    - cron: "40 2 * * 1"
   pull_request:
     branches: [main]
   push:
@@ -9,6 +12,7 @@ on:
 jobs:
   syntax:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,6 +28,9 @@ jobs:
           node --check web/architecture.js
           node tests/test_continuous_listening.js
           node tests/test_architecture_bridge.js
+          node tests/test_architecture_model.js
+          node tests/test_architecture_viewport.js
+          node tests/test_architecture_render.js
       - name: Check Python syntax
         run: python -m compileall -q run.py core scripts
       - name: Install test dependencies
@@ -50,6 +57,7 @@ jobs:
         run: python tests/test_browser_approval.py
       - name: Check durable assistant and device verification
         run: |
+          python tests/test_server_responsiveness.py
           python tests/test_assistant.py
           python tests/test_home_verification.py
           python tests/test_gemini_continuation.py
@@ -64,7 +72,7 @@ jobs:
       - name: Check real 2D and 3D architecture editor
         env:
           JARVIS_CI_HEADED: "1"
-          JARVIS_BROWSER_CHANNEL: "chrome"
+          JARVIS_BROWSER_CHANNEL: "chromium"
           DEBUG: "pw:browser*"
         run: xvfb-run -a -s "-screen 0 1600x1000x24" python tests/test_architecture_browser.py
       - name: Preserve editor test evidence

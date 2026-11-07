@@ -38,8 +38,21 @@
 </nav>
 
 <section id="architecture-view" aria-label="Mimari tasarım">
- <header><strong>MİMARİ · SweetHomeJS</strong><span id="architecture-status" role="status">2D plan · gerçek 3D modeller · yerel proje</span><button id="architecture-download">Projeyi indir</button><button id="architecture-close">JARVIS’e dön</button></header>
- <iframe id="architecture-frame" title="SweetHomeJS 2D ve 3D mimari editör" allow="clipboard-write" loading="lazy"></iframe>
+ <header><strong>JARVIS · TASARIM STÜDYOSU</strong><span id="architecture-status" role="status">2D plan · gerçek 3D modeller · yerel proje</span><button id="architecture-expand" type="button" aria-pressed="false" title="Mimari çalışma alanını genişlet">⛶ Tam ekran</button><button id="architecture-download">Projeyi indir</button><button id="architecture-close">JARVIS’e dön</button></header>
+ <div id="architecture-tools" role="toolbar" aria-label="JARVIS mimari araçları"><label>ŞABLON <select id="studio-preset"><option value="custom">Özel plan</option><option value="compact">Kompakt 8×9</option><option value="family" selected>Aile evi 10×12</option><option value="villa">Villa 16×18</option></select></label><label>GENİŞLİK <input id="studio-width" type="number" min="7" max="40" value="10" step="1"></label><label>DERİNLİK <input id="studio-depth" type="number" min="7" max="40" value="12" step="1"></label><label>YATAK ODASI <select id="studio-bedrooms"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option></select></label><label>BANYO <select id="studio-bathrooms"><option selected>1</option><option>2</option><option>3</option></select></label><button id="studio-house" type="button">⌂ Ölçülü ev oluştur</button><button id="studio-fit" type="button" title="Plan ve kamerayı sığdır; otomatik sığdırmayı yeniden aç">Plana sığdır</button><button id="studio-inspect" type="button" aria-expanded="false" aria-controls="studio-inspector">Nesne ölçüleri</button><button id="studio-top" type="button">Üstten 3D</button><button id="studio-walk" type="button">İç mekân 3D</button><label>3D GÖRÜNÜM <select id="studio-render-style" aria-label="3D görünüm kalitesi" title="Malzeme ve ışık modu daha fazla grafik gücü kullanır"><option value="technical">Teknik · hızlı</option><option value="design">Malzeme ve ışık</option></select></label><button id="studio-svg" type="button">SVG plan indir</button><label>KAYITLAR <select id="studio-history"><option value="">Kayıtlı sürümler</option></select></label><button id="studio-history-refresh" type="button">Kayıtları yenile</button><button id="studio-restore" type="button">Sürüme dön</button><button id="studio-undo" type="button">↶ Geri al</button><button id="studio-redo" type="button">↷ İleri al</button><span id="studio-metrics" aria-live="polite">Proje hazırlanıyor…</span></div>
+ <div id="studio-workspace"><iframe id="architecture-frame" title="SweetHomeJS 2D ve 3D mimari editör" allow="clipboard-write" loading="lazy"></iframe>
+ <aside id="studio-inspector" hidden aria-label="Nesne özellikleri">
+  <h2>Nesne özellikleri</h2><p>Metre ve derece cinsinden gerçek proje ölçüleri.</p>
+  <label>Nesne <select id="studio-object"><option value="">Mobilya seç</option></select></label>
+  <form id="studio-properties"><fieldset disabled>
+   <label>Ad <input name="name" maxlength="100" required></label>
+   <div class="studio-fields">
+    <label>X (m)<input name="x" type="number" step="any" min="-1000" max="1000" required></label><label>Y (m)<input name="y" type="number" step="any" min="-1000" max="1000" required></label>
+    <label>Genişlik (m)<input name="width" type="number" step="any" min=".02" max="100" required></label><label>Derinlik (m)<input name="depth" type="number" step="any" min=".02" max="100" required></label>
+    <label>Yükseklik (m)<input name="height" type="number" step="any" min=".02" max="100" required></label><label>Açı (°)<input name="angle" type="number" step="any" min="-360" max="360" required></label>
+   </div><button type="submit">Ölçüleri uygula ve kaydet</button>
+  </fieldset></form><p id="studio-object-status" role="status">Seçilen mobilyanın ölçüleri burada görünür.</p>
+ </aside></div>
  <footer>Metre cinsinden ölçülü model · JARVIS’e sesle değişiklik söyle veya araçları elle kullan · <a href="/api/architecture/source" target="_blank">GPL kaynak ve lisanslar</a></footer>
 </section>
 
@@ -333,6 +346,9 @@
 <script src="/static/ambient.js"></script>
 <script src="/static/update.js"></script>
 <script src="/static/preferences.js"></script>
+<script src="/static/architecture-model.js"></script>
+<script src="/static/architecture-viewport.js"></script>
+<script src="/static/architecture-render.js"></script>
 <script src="/static/architecture.js"></script>
 </body>
 </html>

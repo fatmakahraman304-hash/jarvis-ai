@@ -54,6 +54,7 @@ jobs:
             "tests/test_gemini_lite_wire.py"
             "tests/test_gemini_tool_schema.py"
             "tests/test_gemini_tool_budget.py"
+            "tests/test_server_responsiveness.py"
             "tests/test_assistant.py"
             "tests/test_home_verification.py"
             "tests/test_gemini_continuation.py"

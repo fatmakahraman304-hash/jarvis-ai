@@ -16,3 +16,26 @@ The source and runtime SHA-256 values are recorded in vendor/designer.json.
 
 The editor has been modified for local JARVIS integration. Upstream does not
 endorse this integration. No remote account or cloud service is required by it.
+
+The cutaway-room, elevated-camera and single-read serialization corrections are defined in
+core/designer_patch.py under GPL-2.0-or-later. The original vendor archives and
+their manifest hashes remain unchanged. The local source download applies these
+patches to the TypeScript source and contains the corresponding modified files.
+The extracted production bundle receives the same verified changes.
+scripts/rebuild_designer.py applies the source patches before rebuilding, so
+future rebuilt archives contain the corrections directly.
+
+The default offscreen plan-icon WebGL renderer is also shared for the editor
+page lifetime; custom renderer factories retain ownership of their contexts.
+Model managers remain per-view, avoiding cross-project content identity reuse.
+The corresponding source download and rebuild script include this correction.
+
+Plan-icon drawing buffers grow only when needed; icons use an exact viewport
+and copy the matching lower-left pixel region into their individual 2D canvases.
+This avoids reallocating the shared buffer for alternating icon dimensions.
+
+The native technical/design rendering preference is synchronized with HomePane,
+preserved across project replacements, and reported by the JARVIS bridge. The
+HomeScene3D root uses THREE.Scene so its background and environment are honored.
+Design composer passes are disposed explicitly when switching views. These
+changes are included in the exact corresponding source download and rebuild.

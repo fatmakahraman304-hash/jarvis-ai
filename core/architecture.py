@@ -52,7 +52,7 @@ def assets():
     archive=ROOT/'vendor/designer.zip'
     if hashlib.sha256(archive.read_bytes()).hexdigest()!=manifest['sha256']:
         raise RuntimeError('Mimari editör paketi doğrulanamadı.')
-    target=DATA/'vendor'/manifest['sha256'][:16]
+    target=DATA/'vendor'/(manifest['sha256'][:16]+'-studio7')
     if not (target/'index.html').exists():
         target.mkdir(parents=True,exist_ok=True)
         with zipfile.ZipFile(archive) as z:
@@ -65,6 +65,13 @@ def assets():
     # has the fix and stable XML constructor names baked into the JavaScript.
     if manifest.get('catalog_fix') != 'shared-categories-source':
         _fix_designer_catalog(target)
+    from .designer_patch import patch_bundle, corresponding_source
+    if manifest.get('cutaway_fix') != 'studio-v7':
+        patch_bundle(target)
+    source=ROOT/'vendor/designer-source.zip'
+    if hashlib.sha256(source.read_bytes()).hexdigest()!=manifest['source_sha256']:
+        raise RuntimeError('Mimari editör kaynak paketi doğrulanamadı.')
+    corresponding_source(source,target/'jarvis-source.zip')
     return target
 
 
@@ -128,6 +135,24 @@ def save_project(data, revision, report):
 
 def project_info():
     return json.loads(REPORT.read_text()) if REPORT.exists() else {'revision':0,'report':None}
+
+
+def project_history():
+    """Bounded local snapshots, newest first; never expose arbitrary paths."""
+    with _LOCK:
+        return [{'revision': int(p.stem[1:]), 'bytes': p.stat().st_size,
+                 'saved_at': p.stat().st_mtime}
+                for p in sorted((STORE / 'history').glob('r[0-9]*.sh3d'), reverse=True)
+                if p.stem[1:].isdigit()][:50]
+
+
+def project_version(revision):
+    if isinstance(revision, bool) or not str(revision).isdigit() or int(revision) < 1:
+        raise ValueError('Geçersiz proje sürümü.')
+    path = STORE / 'history' / f'r{int(revision):06}.sh3d'
+    if not path.is_file():
+        raise ValueError('Kayıtlı proje sürümü bulunamadı.')
+    return path
 
 
 def house_operations(width=10,depth=12,bedrooms=2,bathrooms=1,name='Ev projesi',replace=False):

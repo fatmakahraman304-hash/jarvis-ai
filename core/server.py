@@ -65,7 +65,9 @@ async def architecture_api(request):
             if action == "project":
                 if not architecture.PROJECT.exists():return Response(status_code=204)
                 return FileResponse(architecture.PROJECT,media_type="application/zip",filename="JARVIS-Proje.sh3d",headers={"Cache-Control":"no-store"})
-            if action == "source":return FileResponse(ROOT / "vendor/designer-source.zip",filename="SweetHomeJS-source.zip")
+            if action == "history":return JSONResponse(architecture.project_history(),headers={"Cache-Control":"no-store"})
+            if action == "version":return FileResponse(architecture.project_version(request.query_params.get("revision","")),media_type="application/zip",headers={"Cache-Control":"no-store"})
+            if action == "source":return FileResponse(architecture.assets() / "jarvis-source.zip",filename="SweetHomeJS-source.zip")
             if action == "bundle":return FileResponse(ROOT / "vendor/designer.zip",filename="SweetHomeJS.zip")
             if action == "command":return JSONResponse(architecture.claim(request.query_params.get("client","")),headers={"Cache-Control":"no-store"})
         if request.method == "POST":
@@ -80,10 +82,16 @@ async def architecture_api(request):
                     args=body.get("args") or {}
                     operations=architecture.house_operations(**args)
                     return JSONResponse(await asyncio.to_thread(architecture.command,"apply",operations=operations))
-                if op not in {"state","catalog","apply","undo","redo"}:raise ValueError("Unknown command")
+                if op == "restore":
+                    args=body.get("args") or {}
+                    if set(args)!={"revision"}:raise ValueError("Project revision required")
+                    architecture.project_version(args["revision"])
+                    return JSONResponse(await asyncio.to_thread(architecture.command,"restore",revision=int(args["revision"])))
+                if op not in {"state","catalog","apply","undo","redo","render_style"}:raise ValueError("Unknown command")
                 args=body.get("args") or {}
-                allowed={"state":{"details"},"catalog":{"query"},"apply":{"operations"},"undo":set(),"redo":set()}[op]
+                allowed={"state":{"details"},"catalog":{"query"},"apply":{"operations"},"undo":set(),"redo":set(),"render_style":{"style"}}[op]
                 if set(args)-allowed:raise ValueError("Unexpected command arguments")
+                if op=="render_style" and args.get("style") not in ("technical","design"):raise ValueError("Render style must be technical or design")
                 return JSONResponse(await asyncio.to_thread(architecture.command,op,**args))
             if action == "save":
                 data=await request.body()
@@ -863,11 +871,11 @@ async def original_voice_api(request):
 
 
 async def system(request):
-    return JSONResponse(tools.system_status(), )
+    return JSONResponse(await asyncio.to_thread(tools.system_status))
 
 
 async def processes(request):
-    return JSONResponse(tools.top_processes(8, request.query_params.get("by", "ram")))
+    return JSONResponse(await asyncio.to_thread(tools.top_processes, 8, request.query_params.get("by", "ram")))
 
 
 LOCAL_ONLY_SETTINGS = {"allow_remote_commands", "allow_remote_camera", "allow_remote_screen", "telegram_voice", "guest_mode", "voice_lock", "disabled_groups", "robot_port", "robot_url"}
@@ -917,13 +925,18 @@ async def models(request):
     if pid not in llm.PROVIDERS:
         return JSONResponse({"error": "yok"}, status_code=404)
     refresh = request.query_params.get("refresh") == "1"
+    return JSONResponse(await asyncio.to_thread(_model_snapshot, pid, refresh))
+
+
+def _model_snapshot(pid, refresh):
+    """Provider discovery may wait on a network socket; keep it off the ASGI loop."""
     if not llm.configured(pid):
-        return JSONResponse({"models": [], "selected": "", "auto": "", "pinned": ""})
+        return {"models": [], "selected": "", "auto": "", "pinned": ""}
     llm.list_models(pid, refresh)
-    return JSONResponse({"models": llm.ranked_models(pid), "selected": llm.pick_model(pid),
-                         "auto": llm.pick_model(pid) if not env(f"{pid.upper()}_MODEL") else (llm.ranked_models(pid) or [""])[0],
-                         "pinned": env(f"{pid.upper()}_MODEL"),
-                         "kota_doldu": {m: time.strftime("%H:%M", time.localtime(t)) for m in llm.ranked_models(pid) if (t := llm.cooling(pid, m))}})
+    return {"models": llm.ranked_models(pid), "selected": llm.pick_model(pid),
+            "auto": llm.pick_model(pid) if not env(f"{pid.upper()}_MODEL") else (llm.ranked_models(pid) or [""])[0],
+            "pinned": env(f"{pid.upper()}_MODEL"),
+            "kota_doldu": {m: time.strftime("%H:%M", time.localtime(t)) for m in llm.ranked_models(pid) if (t := llm.cooling(pid, m))}}
 
 
 ALLOWED_KEYS = {p["key_env"] for p in llm.PROVIDERS.values() if p["key_env"]} | {

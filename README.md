@@ -37,6 +37,39 @@ değişir. MİMARİ görünümünde mikrofon ve sohbet açık kalır.
 banyolu ev tasarla; kapı, pencere ve temel mobilyaları yerleştir.” Ardından “Salonun
 zeminini ahşap tonuna çevir”, “Üst kat ekle”, “Projeyi kontrol et” denebilir.
 
+Yeni oluşturulan planlarda tavanlar gizlenir ve başlangıç kamerası yükseltilir;
+içerideki zemin ve mobilyalar görülebilir. Kayıtlı projelerin tavan tercihi korunur.
+Dağıtımda uygulanan düzeltmelerin karşılık gelen TypeScript kaynakları, kaynak
+indirme bağlantısındaki pakette yer alır.
+
+### Tasarım stüdyosu kontrolleri (4.8 geliştirme dalı)
+
+- **Plana sığdır:** 2D planı merkezler; 3D kamerayı yapının tamamını gösterecek
+  uzaklığa alır. Pencere boyutu değişince görünüm otomatik uyarlanır. Plan veya
+  3D içinde elle gezinmek otomatik sığdırmayı durdurur; düğme tekrar açar.
+- **Nesne ölçüleri:** gerçek proje kimliğiyle mobilya seç; ad, X/Y konumu,
+  genişlik, derinlik, yükseklik ve açıyı değiştir. Değerler metre/derecedir.
+  Uygulama ve disk kaydı onaylanmadan başarı bildirilmez; işlem geri alınabilir.
+- **Üstten 3D / İç mekân 3D:** editörün gerçek kamera modunu değiştirir.
+- **3D görünüm:** `Teknik · hızlı` varsayılandır. `Malzeme ve ışık` fiziksel
+  malzeme, gölge ve ortam ışığını açar; daha fazla grafik gücü kullanır.
+  Geçiş kamera açısını korur; çizilmiş kare doğrulanmadan başarı bildirilmez.
+  Seçim bu tarayıcıda hatırlanır. JARVIS `architecture_render` aracıyla da
+  `technical` / `design` seçebilir. Bu bir görünüm tercihidir; geometri ve geri
+  alma geçmişini değiştirmez, fotogerçekçi çıktı garantisi vermez.
+- **SVG plan indir:** oda çokgenleri, duvar kalınlıkları ve döndürülmüş mobilya
+  ayak izlerini vektörel dosyaya aktarır. Bu, 3D render veya ruhsat çizimi değildir;
+  çok katlı projelerde bütün katların aynı düzleme izdüşümünü içerir.
+- **Kayıtlar / Sürüme dön:** son 50 otomatik yedeği listeler. Seçilen sürüm
+  açılmadan önce mevcut çizim kaydedilir; dönüş yeni kayıt sürümü oluşturur.
+  Mevcut çizim geçmişte korunur. Eksik/bozuk sürüm başarı olarak bildirilmez.
+- Editör kabuğu okunabilir araçlar, klavye odakları ve dar ekran uyarlamaları
+  içerir. 4K görünüm, FPS ve Windows DPI sonucu ancak ilgili ortamda ölçülür.
+
+Eşzamanlı kayıt çağrıları aynı işlemin bitmesini bekler. Kayıt sırasında yapılan
+elle değişiklikler kayıt bekleyen değişiklik olarak kalır. Yeni ev oluşturulurken
+önce kayıtlı proje yüklenir, ardından mevcut çizimi değiştirme onayı istenir.
+
 ## Ekran ve fare
 
 `desktop_inspect` Windows UI Automation ile etkin pencerenin gerçek öğelerini,

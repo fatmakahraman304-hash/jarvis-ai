@@ -1,0 +1,28 @@
+html,body,#root{margin:0;width:100%;height:100%;overflow:hidden}
+/* JARVIS studio shell, served locally without changing model or canvas geometry. */
+.sh-home{--sh-bg:#eef3f7;--sh-fg:#182f43;--sh-accent:#08788a;--sh-border:#c5d3dd;--sh-toolbar-bg:#f7fafc;--sh-statusbar-bg:#e5edf3;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+.sh-home *{box-sizing:border-box}
+.sh-menubar{padding:5px 8px;gap:3px;background:#e5edf3}
+.sh-menu-button{font-size:13px;padding:6px 12px;color:#244354}
+.sh-toolbar{flex-wrap:wrap;gap:4px;padding:7px 10px;box-shadow:0 2px 6px #1232;z-index:2}
+.sh-toolbar-button{min-height:32px;border-radius:6px;color:#244354}
+.sh-toolbar-button:hover,.sh-left-tool:hover{background:#dceaf0}
+.sh-toolbar-button.active,.sh-left-tool.active{background:#08788a;color:white;box-shadow:0 2px 5px #08788a33}
+.sh-left-toolbar{width:48px;padding:5px}
+.sh-left-tool{width:38px;height:38px;border-radius:6px}
+.sh-catalog-dock{width:224px;background:#f7fafc}
+.sh-catalog-search{width:calc(100% - 16px);min-height:34px;border:1px solid #b5cad6;border-radius:6px;padding:7px 10px;font:13px system-ui,sans-serif}
+.sh-statusbar{padding:7px 12px;color:#36576a;font-size:12px;flex-wrap:wrap}
+.sh-menu-dropdown{border-radius:8px;box-shadow:0 10px 35px #142f4433;padding:6px}
+.sh-menu-item{border-radius:4px;min-height:30px}
+.sh-home button:focus-visible,.sh-home input:focus-visible,.sh-home select:focus-visible{outline:2px solid #08788a;outline-offset:2px}
+@media(max-width:1000px){.sh-catalog-dock{width:180px}.sh-toolbar-button{padding:5px}.sh-home-name{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+@media(max-width:650px){.sh-home-body{flex-wrap:wrap}.sh-catalog-dock{width:150px}.sh-plan,.sh-view3d{min-width:180px}.sh-toolbar{max-height:110px;overflow:auto}}
+@media(prefers-reduced-motion:reduce){.sh-home *{transition:none!important;animation:none!important}}
+
+.sh-catalog-category{padding:3px 0}
+.sh-catalog-category-header{display:flex;align-items:center;gap:7px;width:100%;min-height:36px;text-align:left;background:#e8f0f5;border:0;border-radius:5px;padding:7px 9px;color:#284a5c;font:600 12px system-ui,sans-serif;cursor:pointer}
+.sh-catalog-count{margin-left:auto;min-width:22px;padding:2px 5px;background:#d0e1ea;border-radius:10px;text-align:center;font-size:11px}
+.sh-catalog-pieces{list-style:none;margin:4px 0;padding:0 0 0 10px}
+.sh-catalog-piece{width:100%;min-height:32px;text-align:left;padding:6px 9px;border:1px solid transparent;border-radius:4px;background:transparent;color:#34596c;font:12px system-ui,sans-serif;cursor:pointer}
+.sh-catalog-piece:hover,.sh-catalog-piece:focus-visible{background:#dcecf0;border-color:#9fbfc8}
