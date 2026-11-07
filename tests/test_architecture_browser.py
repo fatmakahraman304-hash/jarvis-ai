@@ -57,6 +57,17 @@ try:
    assert sum(bool(x['model']) for x in catalog)>70
    assert any(x['opening'] for x in catalog)
    profiler=p.context.new_cdp_session(p);profiler.send('Profiler.enable');profiler.send('Profiler.start')
+   profile_saved=[]
+   def save_profile():
+    if profile_saved:return
+    profile=profiler.send('Profiler.stop')['profile']
+    nodes={n['id']:n['callFrame'] for n in profile['nodes']};totals={}
+    for ident,delta in zip(profile.get('samples',[]),profile.get('timeDeltas',[])):
+     name=nodes[ident].get('functionName') or '(anonymous)';totals[name]=totals.get(name,0)+delta/1000
+    Path('test-results').mkdir(exist_ok=True)
+    Path('test-results/architecture-cpu.json').write_text(json.dumps(sorted(totals.items(),key=lambda item:item[1],reverse=True)[:80],indent=2))
+    profile_saved.append(True)
+
    # End-to-end studio workflow: preset -> dimensions -> visible button -> real SH3D geometry.
    p.locator('#studio-preset').select_option('compact')
    assert p.locator('#studio-width').input_value()=='8'
@@ -75,6 +86,7 @@ try:
    assert result['counts']['rooms']==6,result
    assert result['counts']['furniture']>=20,result
    assert result['counts']['walls']>=9,result
+   frame.evaluate('window.__testIconRenderer=window.__planView.pipeline.getIconCache().getRenderer().renderer')
    assert frame.evaluate('window.__homeController.getHome().getRooms().every(room=>!room.isCeilingVisible())'), 'Ceilings obscure the furnished interior'
    p.wait_for_timeout(2500)
    assert frame.locator('canvas').count()>=2,'2D and 3D canvases missing'
@@ -83,8 +95,8 @@ try:
    full=run('state',{'details':True});room=full['rooms'][0]
    run('apply',{'operations':[{'kind':'update','id':room['id'],'values':{'name':'Yeni Salon'}}]})
    assert run('state')['rooms'][0]['name']=='Yeni Salon'
-   run('undo');assert run('state')['rooms'][0]['name']!='Yeni Salon'
-   run('redo');assert run('state')['rooms'][0]['name']=='Yeni Salon'
+   run('undo');assert frame.evaluate('window.__testIconRenderer===window.__planView.pipeline.getIconCache().getRenderer().renderer');assert run('state')['rooms'][0]['name']!='Yeni Salon'
+   run('redo');assert frame.evaluate('window.__testIconRenderer===window.__planView.pipeline.getIconCache().getRenderer().renderer');assert run('state')['rooms'][0]['name']=='Yeni Salon'
    p.locator('#studio-inspect').click()
    p.wait_for_function("document.querySelector('#studio-object').options.length>1")
    editable=run('state',{'details':True})['furniture'][0]
@@ -94,7 +106,8 @@ try:
    p.locator('#studio-properties input[name="angle"]').fill('45')
    assert p.locator('#studio-properties').evaluate('(form)=>form.checkValidity()'),p.locator('#studio-properties input').evaluate_all('(inputs)=>inputs.map(i=>({name:i.name,value:i.value,valid:i.validity.valid}))')
    p.locator('#studio-properties button').click()
-   p.wait_for_function("document.querySelector('#studio-object-status').textContent.includes('doğrulandı')",timeout=65000)
+   p.wait_for_function("()=>{const f=document.querySelector('#architecture-frame').contentWindow.jarvisDesigner.state(true).furniture;return f.some(item=>item.name==='Ölçülü test mobilyası'&&Math.abs(item.x-2.75)<.001)}",timeout=65000)
+   p.wait_for_function("document.querySelector('#studio-house').disabled===false",timeout=65000)
    changed=next(f for f in run('state',{'details':True})['furniture'] if f['id']==editable['id'])
    assert changed['name']=='Ölçülü test mobilyası' and abs(changed['x']-2.75)<.001 and abs(changed['angle']-45)<.001,changed
    p.locator('#studio-inspect').click()
@@ -105,12 +118,7 @@ try:
    with p.expect_download() as exported:p.locator('#studio-svg').click()
    svg=Path(exported.value.path()).read_text()
    assert '<svg' in svg and 'Ölçülü test mobilyası' in svg and 'rotate(45' in svg,svg[:1000]
-   profile=profiler.send('Profiler.stop')['profile']
-   nodes={n['id']:n['callFrame'] for n in profile['nodes']};totals={}
-   for ident,delta in zip(profile.get('samples',[]),profile.get('timeDeltas',[])):
-    name=nodes[ident].get('functionName') or '(anonymous)';totals[name]=totals.get(name,0)+delta/1000
-   Path('test-results').mkdir(exist_ok=True)
-   Path('test-results/architecture-cpu.json').write_text(json.dumps(sorted(totals.items(),key=lambda item:item[1],reverse=True)[:80],indent=2))
+   save_profile()
    count=run('state')['counts']['walls']
    bad=p.request.post(base+'/api/architecture/run',data={'op':'apply','args':{'operations':[{'kind':'wall','start':[0,0],'end':[2,0]},{'kind':'INVALID'}]}},timeout=65000)
    assert bad.status==400
@@ -178,6 +186,9 @@ try:
    assert not unexpected,unexpected
    print('Real editor: catalog, measured house, 2D+3D geometry, inspector, cameras, SVG, undo/redo, atomic rollback and durable SH3D.')
   except BaseException:
+   if 'profiler' in locals():
+    try:save_profile()
+    except Exception:pass
    Path('test-results').mkdir(exist_ok=True)
    if 'measurements' in locals():Path('test-results/architecture-timings.json').write_text(json.dumps(measurements,indent=2))
    if 'p' in locals():

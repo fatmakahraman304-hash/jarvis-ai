@@ -33,7 +33,7 @@
     const hold=e=>{if(e.target.closest?.('.sh-plan,.sh-view3d'))autoFit=false;};
     doc.addEventListener('pointerdown',hold,true);doc.addEventListener('wheel',hold,{capture:true,passive:true});doc.addEventListener('keydown',hold,true);
    }
-   await fitView();loaded=true;await refreshHistory();status.textContent='Hazır · metre birimi · 2D ve 3D birlikte';
+   await fitView();loaded=true;const historyReady=await refreshHistory();status.textContent=historyReady?'Hazır · metre birimi · 2D ve 3D birlikte':'Proje açık; kayıt geçmişi yüklenemedi. Kayıtları yenile.';
   })();try{await initPromise;}catch(e){status.textContent=e.message;initPromise=null;throw e;}
  }
  function save(){
@@ -132,7 +132,7 @@
  const objects=document.getElementById('studio-object');
  const properties=document.getElementById('studio-properties');
  const objectStatus=document.getElementById('studio-object-status');
- let inspectorItems=[];
+ let inspectorItems=[],inspectorSignature='';
  function fillInspector(){
   const selected=inspectorItems.find(item=>item.id===objects.value);
   properties.querySelector('fieldset').disabled=!selected;
@@ -143,7 +143,9 @@
  function refreshInspector(){
   if(inspector.hidden||!loaded)return;
   const selected=objects.value;
-  inspectorItems=bridge().state(true).furniture||[];
+  const rows=bridge().state(true).furniture||[],signature=JSON.stringify(rows);
+  if(signature===inspectorSignature)return;
+  inspectorSignature=signature;inspectorItems=rows;
   objects.replaceChildren(new Option('Mobilya seç', ''));
   for(const [i,item] of inspectorItems.entries())objects.add(new Option((i+1)+'. '+item.name,item.id));
   objects.value=inspectorItems.some(item=>item.id===selected)?selected:'';

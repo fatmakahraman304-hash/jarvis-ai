@@ -16,6 +16,15 @@ SOURCE_PATCHES = {
         '      const digests = new Map<string, string>();\n      const contentBytes = new Map<string, Uint8Array>();\n      for (const { name, content } of contents) {\n        const data = await streamToBytes(await content.openStream());\n        contentBytes.set(name, data);\n        digests.set(name, await sha1Base64(data));\n      }\n      entries.set("ContentDigests", new TextEncoder().encode(writeContentDigests(digests)));\n      for (const [name, data] of contentBytes) {\n        entries.set(name, data);\n      }',
     ),
 }
+# A path may need several independent, exact source substitutions.
+SOURCE_PATCHES = {path: [pair] for path, pair in SOURCE_PATCHES.items()}
+SOURCE_PATCHES['packages/render3d/src/TopViewIconRenderer.ts'] = [
+    ('renderer = (options.rendererFactory ?? (() => new THREE.WebGLRenderer({ antialias: true })))();',
+     'renderer = (options.rendererFactory ?? (() => ((globalThis as any).__jarvisPlanIconRenderer ??= new THREE.WebGLRenderer({ antialias: true }))))();'),
+    ('this.rendererCreated = true;', 'this.rendererCreated = !!options.rendererFactory;'),
+    ('destroy(): void {\n    this.renderer?.dispose();\n  }', 'destroy(): void {\n    if (this.rendererCreated) this.renderer?.dispose();\n  }'),
+]
+
 BUNDLE_PATCHES = (
     ('m.setAreaVisible(!0),m.setLevel(g.getSelectedLevel())',
      'm.setAreaVisible(!0),m.setCeilingVisible(!1),m.setLevel(g.getSelectedLevel())'),
@@ -23,6 +32,10 @@ BUNDLE_PATCHES = (
      're=Math.PI*.22,le=.85,Ie=j+Math.sin(le)*W*1.05'),
     ('const f=new Map;for(const{name:g,content:p}of c){const m=await qD(await p.openStream());f.set(g,await ZH(m))}l.set("ContentDigests",new TextEncoder().encode(JH(f)));for(const{name:g,content:p}of c)l.set(g,await qD(await p.openStream()))',
      'const f=new Map,jarvisContentBytes=new Map;for(const{name:g,content:p}of c){const m=await qD(await p.openStream());jarvisContentBytes.set(g,m);f.set(g,await ZH(m))}l.set("ContentDigests",new TextEncoder().encode(JH(f)));for(const[g,m]of jarvisContentBytes)l.set(g,m)'),
+    ('t=(e.rendererFactory??(()=>new Ty({antialias:!0})))(),this.rendererCreated=!0',
+     't=(e.rendererFactory??(()=>globalThis.__jarvisPlanIconRenderer??=new Ty({antialias:!0})))(),this.rendererCreated=!!e.rendererFactory'),
+    ('destroy(){var e;(e=this.renderer)==null||e.dispose()}},u(op,"TopViewIconRenderer")',
+     'destroy(){var e;this.rendererCreated&&((e=this.renderer)==null||e.dispose())}},u(op,"TopViewIconRenderer")'),
 )
 
 
@@ -35,8 +48,9 @@ def replace_once(code, old, new):
 
 
 def patch_source(path, code):
-    patch = SOURCE_PATCHES.get(path)
-    return replace_once(code, *patch) if patch else code
+    for patch in SOURCE_PATCHES.get(path, []):
+        code = replace_once(code, *patch)
+    return code
 
 
 def patch_bundle(target):

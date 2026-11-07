@@ -24,3 +24,8 @@ patches to the TypeScript source and contains the corresponding modified files.
 The extracted production bundle receives the same verified changes.
 scripts/rebuild_designer.py applies the source patches before rebuilding, so
 future rebuilt archives contain the corrections directly.
+
+The default offscreen plan-icon WebGL renderer is also shared for the editor
+page lifetime; custom renderer factories retain ownership of their contexts.
+Model managers remain per-view, avoiding cross-project content identity reuse.
+The corresponding source download and rebuild script include this correction.

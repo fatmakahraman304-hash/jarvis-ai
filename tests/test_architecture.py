@@ -75,10 +75,11 @@ class WorkspaceTests(unittest.TestCase):
    self.assertNotIn(old,code)
    self.assertIn(new,code)
   with zipfile.ZipFile(target/'jarvis-source.zip') as source:
-   for path,(old,new) in SOURCE_PATCHES.items():
+   for path,patches in SOURCE_PATCHES.items():
     content=source.read(path).decode()
-    self.assertNotIn(old,content)
-    self.assertIn(new,content)
+    for old,new in patches:
+     self.assertNotIn(old,content)
+     self.assertIn(new,content)
     self.assertEqual(patch_source(path,content),content)
   with self.assertRaises(RuntimeError):replace_once('unexpected','old','new')
  def test_architecture_group_has_native_tools_no_retired_integration(self):
