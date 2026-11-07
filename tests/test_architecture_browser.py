@@ -43,6 +43,12 @@ try:
    print('Opening model catalog from real UI...',flush=True)
    catalog=run('catalog');assert len(catalog)>80
    frame=p.frame(url=base+'/designer/');assert frame
+   import io,zipfile
+   serialized=frame.evaluate('async()=>Array.from(await window.jarvisDesigner.save())')
+   with zipfile.ZipFile(io.BytesIO(bytes(serialized))) as archive:
+    home_xml=archive.read('Home.xml').decode('utf8')
+    print('ARCHITECTURE ROUNDTRIP Home.xml beginning: '+home_xml[:650],flush=True)
+
    assert sum(bool(x['model']) for x in catalog)>70
    assert any(x['opening'] for x in catalog)
    result=run('house',{'width':10,'depth':12,'bedrooms':2,'bathrooms':1,'name':'Test 10x12'})
