@@ -61,7 +61,10 @@ def assets():
                 p=(target/i.filename).resolve()
                 if not p.is_relative_to(target.resolve()):raise ValueError('Unsafe editor path')
             z.extractall(target)
-    _fix_designer_catalog(target)
+    # Legacy prebuilt archives need the runtime patch; a rebuilt source archive
+    # has the fix and stable XML constructor names baked into the JavaScript.
+    if manifest.get('catalog_fix') != 'shared-categories-source':
+        _fix_designer_catalog(target)
     return target
 
 
