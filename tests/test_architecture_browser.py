@@ -29,7 +29,7 @@ try:
    p=b.new_page(viewport={'width':1600,'height':1000});errors=[];requests=[]
    p.on('pageerror',lambda e:errors.append(str(e)))
    p.on('crash',lambda _:errors.append('Page/renderer crashed'))
-   p.on('console',lambda m:errors.append('Browser '+m.type+': '+m.text[:300]) if m.type=='error' else None)
+   p.on('console',lambda m:errors.append('Browser '+m.type+': '+m.text[:1800]) if m.type=='error' else None)
    p.on('requestfailed',lambda r:requests.append(f'{r.method} {r.url}: {r.failure}'))
    # Block external resources, but let localhost requests run natively: routing
    # every poll through Python can starve the synchronous APIRequestContext test.
