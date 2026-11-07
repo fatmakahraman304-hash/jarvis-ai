@@ -32,7 +32,11 @@ SOURCE_PATCHES['packages/ui/src/view3d/View3DCanvas.tsx'].extend([
 ])
 SOURCE_PATCHES['packages/render3d/src/TopViewIconRenderer.ts'].append((
     'this.renderer.setSize(canvas.width, canvas.height, false);\n    this.renderer.setPixelRatio(1);',
-    'if (this.renderer.getPixelRatio?.() !== 1) this.renderer.setPixelRatio(1);\n    if (this.renderer.domElement?.width !== canvas.width || this.renderer.domElement?.height !== canvas.height) this.renderer.setSize(canvas.width, canvas.height, false);',
+    'if (this.renderer.getPixelRatio?.() !== 1) this.renderer.setPixelRatio(1);\n    const buffer = this.renderer.domElement;\n    if (!buffer || buffer.width < canvas.width || buffer.height < canvas.height) this.renderer.setSize(Math.max(buffer?.width || 0, canvas.width), Math.max(buffer?.height || 0, canvas.height), false);\n    this.renderer.setViewport(0, 0, canvas.width, canvas.height);',
+))
+SOURCE_PATCHES['packages/render3d/src/TopViewIconRenderer.ts'].append((
+    '      context.drawImage(this.renderer.domElement, 0, 0, canvas.width, canvas.height);',
+    '      context.drawImage(this.renderer.domElement, 0, this.renderer.domElement.height - canvas.height, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);',
 ))
 
 BUNDLE_PATCHES = (
@@ -51,7 +55,9 @@ BUNDLE_PATCHES = (
     ('globalThis.jarvisRenderStats={frames:0,triangles:0}',
      'globalThis.jarvisRenderStats={frames:0,triangles:0,resizes:0}'),
     ('this.renderer.setSize(a.width,a.height,!1),this.renderer.setPixelRatio(1);',
-     'this.renderer.getPixelRatio?.()!==1&&this.renderer.setPixelRatio(1),(this.renderer.domElement?.width!==a.width||this.renderer.domElement?.height!==a.height)&&this.renderer.setSize(a.width,a.height,!1);'),
+     'this.renderer.getPixelRatio?.()!==1&&this.renderer.setPixelRatio(1);const jarvisBuffer=this.renderer.domElement;(!jarvisBuffer||jarvisBuffer.width<a.width||jarvisBuffer.height<a.height)&&this.renderer.setSize(Math.max(jarvisBuffer?.width||0,a.width),Math.max(jarvisBuffer?.height||0,a.height),!1),this.renderer.setViewport(0,0,a.width,a.height);'),
+    ('g!==null&&g.drawImage(this.renderer.domElement,0,0,a.width,a.height)',
+     'g!==null&&g.drawImage(this.renderer.domElement,0,this.renderer.domElement.height-a.height,a.width,a.height,0,0,a.width,a.height)'),
 )
 
 

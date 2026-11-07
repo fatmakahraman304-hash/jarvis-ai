@@ -86,4 +86,8 @@ class WorkspaceTests(unittest.TestCase):
   names={s['function']['name'] for s in tools.specs({'architecture'})}
   self.assertIn('architecture_house',names);self.assertIn('architecture_apply',names)
   self.assertFalse(any('space'+'planner' in n for n in tools.TOOLS))
+ def test_production_icon_method_reuses_buffer_and_copies_exact_pixels(self):
+  import subprocess
+  bundle=next((a.assets()/'assets').glob('index-*.js')).read_text()
+  subprocess.run(['node',str(a.ROOT/'tests/test_designer_icon.js')],input=bundle,text=True,encoding='utf-8',check=True)
 if __name__=='__main__':unittest.main()

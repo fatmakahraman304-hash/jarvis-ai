@@ -87,6 +87,26 @@ try:
    assert result['counts']['furniture']>=20,result
    assert result['counts']['walls']>=9,result
    frame.evaluate('window.__testIconRenderer=window.__planView.pipeline.getIconCache().getRenderer().renderer')
+   # Real WebGL: a larger shared buffer must preserve every output pixel for
+   # an icon with the same dimensions, rather than scaling/cropping its image.
+   icon_evidence=frame.evaluate('''async()=>{
+    const icon=window.__planView.pipeline.getIconCache().getRenderer(),renderer=icon.renderer;
+    const piece=window.__homeController.getHome().getFurniture().find(p=>p.getModel()&&!p.isDoorOrWindow());
+    const pixels=c=>Array.from(c.getContext('2d').getImageData(0,0,c.width,c.height).data);
+    renderer.setSize(64,32,false);
+    await icon.renderTopView(piece,64,32);
+    const expected=pixels(await icon.renderTopView(piece,64,32));
+    await icon.renderTopView(piece,256,256);
+    const before=[renderer.domElement.width,renderer.domElement.height];
+    const actual=pixels(await icon.renderTopView(piece,64,32));
+    const after=[renderer.domElement.width,renderer.domElement.height];
+    return {before,after,same:expected.every((value,i)=>value===actual[i]),
+      opaque:actual.filter((_,i)=>i%4===3).every(value=>value===255),
+      colored:actual.filter((value,i)=>i%4!==3&&value<240).length};
+   }''')
+   assert icon_evidence['before']==icon_evidence['after']==[256,256],icon_evidence
+   assert icon_evidence['same'] and icon_evidence['opaque'] and icon_evidence['colored']>0,icon_evidence
+   print('Real icon buffer/pixel verification:',icon_evidence,flush=True)
    assert frame.evaluate('window.__homeController.getHome().getRooms().every(room=>!room.isCeilingVisible())'), 'Ceilings obscure the furnished interior'
    p.wait_for_timeout(2500)
    assert frame.locator('canvas').count()>=2,'2D and 3D canvases missing'

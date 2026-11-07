@@ -29,3 +29,7 @@ The default offscreen plan-icon WebGL renderer is also shared for the editor
 page lifetime; custom renderer factories retain ownership of their contexts.
 Model managers remain per-view, avoiding cross-project content identity reuse.
 The corresponding source download and rebuild script include this correction.
+
+Plan-icon drawing buffers grow only when needed; icons use an exact viewport
+and copy the matching lower-left pixel region into their individual 2D canvases.
+This avoids reallocating the shared buffer for alternating icon dimensions.
