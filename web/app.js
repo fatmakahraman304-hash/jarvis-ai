@@ -634,14 +634,29 @@
 
 
   // ---------- kamera ----------
-  let camStream = null, facing = "user";
-  async function openCam() {
-    try {
-      camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facing, width: 1280 }, audio: false });
-      $("#cam-video").srcObject = camStream; $("#camera").classList.remove("hidden");
-    } catch (e) { toast("Kamera açılamadı: " + e.message); }
+  let camStream = null, facing = "user", camRequest = 0;
+  function closeCam() {
+    camRequest++;
+    if (camStream) camStream.getTracks().forEach((t) => t.stop());
+    camStream = null;
+    $("#cam-video").srcObject = null;
+    $("#camera").classList.add("hidden");
   }
-  function closeCam() { if (camStream) camStream.getTracks().forEach((t) => t.stop()); camStream = null; $("#camera").classList.add("hidden"); }
+  async function openCam() {
+    // Plain camera inspection must not show any hand effects or orbit controls.
+    if (JV.gesture && JV.gesture.isRunning()) JV.gesture.stop();
+    else if (JV.handfx && JV.handfx.active) JV.handfx.stop();
+    closeCam();
+    const request = ++camRequest;
+    try {
+      const next = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facing, width: 1280 }, audio: false });
+      if (request !== camRequest) { next.getTracks().forEach((t) => t.stop()); return; }
+      camStream = next;
+      $("#cam-video").srcObject = camStream;
+      $("#camera").classList.remove("hidden");
+    } catch (e) { if (request === camRequest) toast("Kamera açılamadı: " + e.message); }
+  }
+  JV.camera = { open: openCam, close: closeCam, isOpen: () => !!camStream && !$("#camera").classList.contains("hidden") };
   $("#t-camera").onclick = () => { JV.unlockAudio(); openCam(); };
   $("#cam-close").onclick = closeCam;
   $("#cam-flip").onclick = () => { facing = facing === "user" ? "environment" : "user"; closeCam(); openCam(); };

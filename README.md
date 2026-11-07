@@ -1,5 +1,11 @@
 # J.A.R.V.I.S. Personal AI
 
+## 4.6.49 — Kamera, Dünya ve AR efektleri ayrı modlarda
+
+**KAMERA** düğmesi yalnızca görüntü ve görsel analiz açar; AR efektleri ve el hareketi kontrolü kapanır. **DÜNYA · Elle Döndür** ayrı nesne kontrol modunu kullanır; dünyaya geçilince ateş/şimşek/gezegen AR katmanı kapanır. **AR · TEK MOD** seçicisi Ateş, Mühür, Avuçta Gezegen, Şimşek, Patlama, Işık İzi, Avuç HUD, Yüz Takip, Kask HUD, Havaya Çizim, Kitaplık, Masaüstü, El Komutları, El İskeleti, Oyun veya Sade Görüntü modlarını birbirinden ayırır. AR ekranının üstünde **KAMERA** ve **DÜNYA** geçiş düğmeleri bulunur; önceki bütün efektler açık ayarı otomatik tek moda dönüştürülür.
+
+Kamera ve AR modları için ayrı Chromium otomatik testi eklendi. AI çekirdeği ve SpacePlanner görev protokolü değiştirilmedi. Kişisel bilgisayardaki gerçek kamera ile canlı deneme yapılmadı; otomatik testte sanal kamera kullanıldı.
+
 ## 4.6.48 — Görsel doğrulama olmadan çizime devam etme
 
 İlk ekran analizi, işlem sonrası analiz veya doğrudan görsel araç çağrısı başarısızsa arayüz görevi hemen duraklatılır. Aynı model turundaki sonraki eylemler de çalıştırılmaz. Son eylem yapılmış ama doğrulanamamışsa otomatik tekrar edilmez; gerçek hata gösterilir. Modelden araçsız ilerleme özeti istenmediği için ekranda doğrulama yapılamazken çizime devam ediliyormuş gibi yanıt üretilmez. Onaydan sonra çalıştırılmış işlemler de bu kurala uyar.
