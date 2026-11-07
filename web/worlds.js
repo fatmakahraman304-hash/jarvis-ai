@@ -64,6 +64,11 @@
 
   // ---------------- mod değiştirme ----------------
   JV.setView = function (v) {
+    // World/lab/space views never keep the camera effect overlay running.
+    if (v !== "core" && JV.handfx && JV.handfx.active) {
+      if (JV.gesture && JV.gesture.isRunning()) JV.gesture.setMode("nesne");
+      else JV.handfx.stop();
+    }
     if (JV.stage && JV.stage.current()) JV.stage.clear();
     if (v === view && (v === "core" || current)) return;
     if (current && current.exit) current.exit();
