@@ -2,8 +2,8 @@
   "upstream": "https://github.com/njhurst/sweethomejs",
   "commit": "b32104f7c978cc7d45064aa44d237ad3eec35309",
   "license": "GPL-2.0-or-later",
-  "sha256": "33d8af8d657f4b7bff677daeaaf5cb0a3083eaa1639941a1245a81bbf1ecd9f3",
-  "source_sha256": "422a2736af7d11494b1045f846cbacd33a232d839d39e9eb4fc5d6bc1ea456f7",
+  "sha256": "335f83273090a6a4cfc9424b5b6652c87c7a3b5eb100875afd58d88091f6cf2e",
+  "source_sha256": "ab77bb114e075873c1fde077aa12097ab7abe879dba6a89824c71a3bac314d97",
   "catalog_fix": "shared-categories-source",
   "xml_constructor_names": "preserved-vite-esbuild"
 }
