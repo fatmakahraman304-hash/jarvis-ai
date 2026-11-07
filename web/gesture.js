@@ -50,6 +50,8 @@
   async function start(m) {
     if (m) setMode(m);
     if (running) return;
+    // Camera inspection and gesture/AR are separate activities.
+    if (JV.camera && JV.camera.close) JV.camera.close();
     showHud(true); status("Model yükleniyor…");
     try {
       stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: "user" }, audio: false });
