@@ -37,6 +37,11 @@ değişir. MİMARİ görünümünde mikrofon ve sohbet açık kalır.
 banyolu ev tasarla; kapı, pencere ve temel mobilyaları yerleştir.” Ardından “Salonun
 zeminini ahşap tonuna çevir”, “Üst kat ekle”, “Projeyi kontrol et” denebilir.
 
+Yeni oluşturulan planlarda tavanlar gizlenir ve başlangıç kamerası yükseltilir;
+içerideki zemin ve mobilyalar görülebilir. Kayıtlı projelerin tavan tercihi korunur.
+Dağıtımda uygulanan düzeltmelerin karşılık gelen TypeScript kaynakları, kaynak
+indirme bağlantısındaki pakette yer alır.
+
 ### Tasarım stüdyosu kontrolleri (4.8 geliştirme dalı)
 
 - **Nesne ölçüleri:** gerçek proje kimliğiyle mobilya seç; ad, X/Y konumu,

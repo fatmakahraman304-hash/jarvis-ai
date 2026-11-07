@@ -16,7 +16,7 @@
    const r=await api('project');if(r.status!==204)await bridge().load(new Uint8Array(await r.arrayBuffer()));
    const doc=frame.contentDocument;
    if(doc&&!doc.getElementById('jarvis-designer-theme')){const link=doc.createElement('link');link.id='jarvis-designer-theme';link.rel='stylesheet';link.href='/static/designer-theme.css';doc.head.appendChild(link);}
-   loaded=true;status.textContent='Hazır · metre birimi · 2D ve 3D birlikte';
+   loaded=true;await refreshHistory();status.textContent='Hazır · metre birimi · 2D ve 3D birlikte';
   })();try{await initPromise;}catch(e){status.textContent=e.message;initPromise=null;throw e;}
  }
  function save(){
@@ -32,7 +32,7 @@
    const unchanged=current.length===bytes.length&&current.every((value,i)=>value===bytes[i]);
    if(unchanged)bridge().saved();
    status.textContent='Yerel kayıt · sürüm '+revision+' · '+report.counts.rooms+' oda · '+report.area_m2.toFixed(2)+' m²'+(unchanged?'':' · yeni değişiklikler kayıt bekliyor');
-   return saved;
+   await refreshHistory();return saved;
   })().finally(()=>{savePromise=null;});
   return savePromise;
  }
@@ -171,7 +171,7 @@
    history.value=rows.some(row=>String(row.revision)===selected)?selected:'';
   }catch(e){status.textContent=e.message;}
  }
- history.onfocus=refreshHistory;
+ // Populate at load/save, rather than replacing options during native focus.
  document.getElementById('studio-restore').onclick=async()=>{
   if(!history.value){status.textContent='Önce kayıtlı bir sürüm seç.';return;}
   if(!window.confirm('Proje sürüm '+history.value+' ile değiştirilsin mi? Mevcut çizim ayrıca yedeklenecek.'))return;

@@ -40,6 +40,7 @@ try:
     response=p.request.post(base+'/api/architecture/run',data={'op':op,'args':args or {}},timeout=65000)
     assert response.ok, f'{response.text()}\nJS errors: {errors}\nFailed requests: {requests}'
     measurements.append({'operation':op,'elapsed_ms':round((time.perf_counter()-started)*1000,2)})
+    print('Architecture command:',measurements[-1],flush=True)
     return response.json()['result']
    # First voice/model command must open the editor from the core view automatically.
    print('Opening model catalog from real UI...',flush=True)
@@ -73,6 +74,7 @@ try:
    assert result['counts']['rooms']==6,result
    assert result['counts']['furniture']>=20,result
    assert result['counts']['walls']>=9,result
+   assert frame.evaluate('window.__homeController.getHome().getRooms().every(room=>!room.isCeilingVisible())'), 'Ceilings obscure the furnished interior'
    p.wait_for_timeout(2500)
    assert frame.locator('canvas').count()>=2,'2D and 3D canvases missing'
    stats=frame.evaluate('window.jarvisRenderStats')
@@ -127,7 +129,6 @@ try:
    # current project must remain recoverable as a newly retained snapshot.
    versions=p.request.get(base+'/api/architecture/history').json()
    assert versions
-   p.locator('#studio-history').focus()
    p.wait_for_function("document.querySelector('#studio-history').options.length>1")
    target=versions[0]['revision']
    p.locator('#studio-history').select_option(str(target))
@@ -153,6 +154,7 @@ try:
    print('Real editor: catalog, measured house, 2D+3D geometry, inspector, cameras, SVG, undo/redo, atomic rollback and durable SH3D.')
   except BaseException:
    Path('test-results').mkdir(exist_ok=True)
+   if 'measurements' in locals():Path('test-results/architecture-timings.json').write_text(json.dumps(measurements,indent=2))
    if 'p' in locals():
     try:print('Studio failure state:',p.evaluate('({status:document.querySelector("#architecture-status")?.textContent,object:document.querySelector("#studio-object-status")?.textContent})'),flush=True)
     except Exception:pass

@@ -67,7 +67,7 @@ async def architecture_api(request):
                 return FileResponse(architecture.PROJECT,media_type="application/zip",filename="JARVIS-Proje.sh3d",headers={"Cache-Control":"no-store"})
             if action == "history":return JSONResponse(architecture.project_history(),headers={"Cache-Control":"no-store"})
             if action == "version":return FileResponse(architecture.project_version(request.query_params.get("revision","")),media_type="application/zip",headers={"Cache-Control":"no-store"})
-            if action == "source":return FileResponse(ROOT / "vendor/designer-source.zip",filename="SweetHomeJS-source.zip")
+            if action == "source":return FileResponse(architecture.assets() / "jarvis-source.zip",filename="SweetHomeJS-source.zip")
             if action == "bundle":return FileResponse(ROOT / "vendor/designer.zip",filename="SweetHomeJS.zip")
             if action == "command":return JSONResponse(architecture.claim(request.query_params.get("client","")),headers={"Cache-Control":"no-store"})
         if request.method == "POST":

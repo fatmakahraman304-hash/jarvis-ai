@@ -67,6 +67,20 @@ class WorkspaceTests(unittest.TestCase):
  def test_editor_package_is_local_and_source_available(self):
   self.assertTrue((a.assets()/'index.html').exists())
   self.assertTrue((a.ROOT/'vendor/designer-source.zip').exists())
+ def test_cutaway_patch_and_corresponding_source_are_reproducible(self):
+  from core.designer_patch import BUNDLE_PATCHES, SOURCE_PATCHES, patch_source, replace_once
+  target=a.assets()
+  code=next((target/'assets').glob('index-*.js')).read_text()
+  for old,new in BUNDLE_PATCHES:
+   self.assertNotIn(old,code)
+   self.assertIn(new,code)
+  with zipfile.ZipFile(target/'jarvis-source.zip') as source:
+   for path,(old,new) in SOURCE_PATCHES.items():
+    content=source.read(path).decode()
+    self.assertNotIn(old,content)
+    self.assertIn(new,content)
+    self.assertEqual(patch_source(path,content),content)
+  with self.assertRaises(RuntimeError):replace_once('unexpected','old','new')
  def test_architecture_group_has_native_tools_no_retired_integration(self):
   names={s['function']['name'] for s in tools.specs({'architecture'})}
   self.assertIn('architecture_house',names);self.assertIn('architecture_apply',names)

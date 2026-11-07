@@ -49,6 +49,12 @@ def main():
         if not (public / "catalog.sh3f").exists():
             raise RuntimeError("The retained designer archive lacks its furniture catalog")
 
+        sys.path.insert(0, str(ROOT))
+        from core.designer_patch import SOURCE_PATCHES, patch_source
+        for relative in SOURCE_PATCHES:
+            file = source / relative
+            file.write_text(patch_source(relative, file.read_text(encoding="utf-8")), encoding="utf-8")
+
         bridge = source / "apps" / "web" / "src" / "jarvisBridge.ts"
         code = bridge.read_text(encoding="utf-8")
         pattern = r"for\s*\(const cat of catalog\.getCategories\(\)\)\s*for\s*\(const piece of cat\.getFurniture\(\)\)\s*preferences\.getFurnitureCatalog\(\)\.add\(cat,piece\);"
@@ -98,6 +104,7 @@ def main():
         run("npm", "run", "build", "-w", "@sweethomejs/web", "--", "--base=/designer/", cwd=source)
         run(sys.executable, ROOT / "scripts" / "package_designer.py", source)
         manifest = json.loads((VENDOR / "designer.json").read_text(encoding="utf-8"))
+        manifest["cutaway_fix"] = "room-cutaway-v1"
         manifest["catalog_fix"] = "shared-categories-source"
         manifest["xml_constructor_names"] = "preserved-vite-esbuild"
         (VENDOR / "designer.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")

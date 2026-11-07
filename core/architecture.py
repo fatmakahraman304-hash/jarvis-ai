@@ -52,7 +52,7 @@ def assets():
     archive=ROOT/'vendor/designer.zip'
     if hashlib.sha256(archive.read_bytes()).hexdigest()!=manifest['sha256']:
         raise RuntimeError('Mimari editör paketi doğrulanamadı.')
-    target=DATA/'vendor'/manifest['sha256'][:16]
+    target=DATA/'vendor'/(manifest['sha256'][:16]+'-cutaway1')
     if not (target/'index.html').exists():
         target.mkdir(parents=True,exist_ok=True)
         with zipfile.ZipFile(archive) as z:
@@ -65,6 +65,13 @@ def assets():
     # has the fix and stable XML constructor names baked into the JavaScript.
     if manifest.get('catalog_fix') != 'shared-categories-source':
         _fix_designer_catalog(target)
+    from .designer_patch import patch_bundle, corresponding_source
+    if manifest.get('cutaway_fix') != 'room-cutaway-v1':
+        patch_bundle(target)
+    source=ROOT/'vendor/designer-source.zip'
+    if hashlib.sha256(source.read_bytes()).hexdigest()!=manifest['source_sha256']:
+        raise RuntimeError('Mimari editör kaynak paketi doğrulanamadı.')
+    corresponding_source(source,target/'jarvis-source.zip')
     return target
 
 
