@@ -5,10 +5,14 @@
  const timings=[];
  const renderStyle=document.getElementById('studio-render-style');
  async function changeRenderStyle(style){
-  const result=await measured('render-style',()=>window.JarvisArchitectureRender.setStyle(frame,style));
-  renderStyle.value=result.render_style;
-  try{window.localStorage.setItem('jarvis.studio.renderStyle',result.render_style);}catch(_){result.preference_saved=false;}
-  return result;
+  clearTimeout(fitTimer);const follow=autoFit;autoFit=false;
+  try{
+   if(fitPromise)await fitPromise;
+   const result=await measured('render-style',()=>window.JarvisArchitectureRender.setStyle(frame,style));
+   renderStyle.value=result.render_style;
+   try{window.localStorage.setItem('jarvis.studio.renderStyle',result.render_style);}catch(_){result.preference_saved=false;}
+   return result;
+  }finally{autoFit=follow;}
  }
  async function measured(stage,action){const started=Date.now();try{return await action();}finally{timings.push({stage,elapsed_ms:Date.now()-started});if(timings.length>120)timings.shift();}}
  let autoFit=true,fitTimer=0,fitPromise=null;
@@ -97,7 +101,11 @@
  }
  JV.architecture={open:()=>init().catch(e=>{status.textContent=e.message;}),save,fit:async()=>{await init();autoFit=true;return fitView();},history:refreshHistory,timings,state:()=>bridge()?.state(true)};
  if(typeof ResizeObserver!=='undefined')new ResizeObserver(scheduleFit).observe(frame);
- document.getElementById('studio-fit').onclick=async()=>{try{await JV.architecture.fit();status.textContent='Plan ve kamera görünüm alanına sığdırıldı.';}catch(e){status.textContent=e.message;}};
+ document.getElementById('studio-fit').onclick=async()=>{
+  const button=document.getElementById('studio-fit');button.disabled=true;status.textContent='Plan ve kamera sığdırılıyor…';
+  try{await JV.architecture.fit();status.textContent='Plan ve kamera görünüm alanına sığdırıldı.';}
+  catch(e){status.textContent=e.message;}finally{button.disabled=false;}
+ };
  const expand=document.getElementById('architecture-expand');
  expand.onclick=()=>{
   const active=document.body.classList.toggle('architecture-expanded');
@@ -119,7 +127,7 @@
  async function studioRun(op,args={}){
   if(studioBusy)return false;studioBusy=true;studioButtons.forEach(b=>b.disabled=true);
   status.textContent='JARVIS tasarımı uyguluyor…';
-  try{await init();const r=await json('run',{op,args});if(!r?.verified)throw Error('Tasarım işlemi doğrulanamadı');updateMetrics();status.textContent='Tasarım uygulandı ve kaydedildi.';refreshInspector();return true;}
+  try{await init();const r=await json('run',{op,args});if(!r?.verified)throw Error('Tasarım işlemi doğrulanamadı');updateMetrics();status.textContent=op==='render_style'?'3D görünüm çizildi.':'Tasarım uygulandı ve kaydedildi.';refreshInspector();return true;}
   catch(e){status.textContent='Tasarım hatası: '+e.message;console.warn('[studio] '+op,e);return false;}
   finally{studioBusy=false;studioButtons.forEach(b=>b.disabled=false);}
  }

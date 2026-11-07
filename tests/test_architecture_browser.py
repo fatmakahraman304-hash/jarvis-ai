@@ -189,7 +189,7 @@ try:
    }''')
    assert quality['stats']['style']=='design' and quality['stats']['frames']>0 and quality['stats']['shadows'] and quality['stats']['ao'],quality
    assert quality['physical']>0 and quality['scene'] and quality['environment'],quality
-   assert quality['pose']==before_style['pose'] and quality['observer']==before_style['observer']
+   assert quality['pose']==before_style['pose'] and quality['observer']==before_style['observer'],(before_style['pose'],quality['pose'],before_style['observer'],quality['observer'])
    for key in ['counts','walls','rooms','furniture','levels']:assert quality['state'][key]==before_style['state'][key],key
    p.screenshot(path='test-results/studio-material-light.png')
    print('Native material/light view:',{key:quality[key] for key in ['stats','physical','scene','environment']},flush=True)

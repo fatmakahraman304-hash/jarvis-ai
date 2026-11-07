@@ -60,6 +60,23 @@ async function main() {
   queued={id:'disk-error',command:{op:'apply',operations:[]}};await poll();
   assert.equal(events.at(-1).error,'Disk write failed');assert.equal(saved,false);
   failSave=false;await JV.architecture.save();assert(saved,'Failed save must be retryable');
+  // A pending fit must finish before appearance captures/restores the camera.
+  // Its old success label must not announce that the new fit is already done.
+  let finishFit;const fitGate=new Promise(resolve=>{finishFit=resolve;});
+  ctx.window.JarvisArchitectureViewport.fit=()=>fitGate;
+  ctx.window.JarvisArchitectureRender={setStyle:async()=>{events.push('render-mode');return {render_style:'design',frames:1};}};
+  events.length=0;
+  const fitting=nodes['studio-fit'].onclick();
+  await new Promise(resolve=>setTimeout(resolve,0));
+  assert(nodes['studio-fit'].disabled);assert.equal(nodes['architecture-status'].textContent,'Plan ve kamera sığdırılıyor…');
+  queued={id:'quality',command:{op:'render_style',style:'design'}};
+  const switching=poll();await new Promise(resolve=>setTimeout(resolve,0));
+  assert(!events.includes('render-mode'),'Mode switch raced the pending fit');
+  finishFit({scale:1});await fitting;await switching;
+  assert(events.includes('render-mode'));assert(!events.includes('save'));
+  assert.equal(events.at(-1).result.render_style,'design');
+  assert.equal(nodes['studio-fit'].disabled,false);
+  ctx.window.JarvisArchitectureViewport.fit=async()=>({scale:1});
   events.length=0;document.hidden=true;
   queued={id:'hidden',command:{op:'state'}};await poll();assert.equal(events.length,0);assert(queued);
   // Starting a new plan from a cold page must restore the saved drawing
