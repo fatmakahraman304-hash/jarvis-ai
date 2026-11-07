@@ -17,10 +17,21 @@ try:
   except Exception:time.sleep(.1)
  else:log.seek(0);raise RuntimeError(log.read()[-4000:])
  with sync_playwright() as pw:
-  kwargs={'headless':os.environ.get('JARVIS_CI_HEADED')!='1','channel':'chromium','args':['--enable-unsafe-swiftshader','--disable-dev-shm-usage']}
+  kwargs={'headless':os.environ.get('JARVIS_CI_HEADED')!='1','channel':os.environ.get('JARVIS_BROWSER_CHANNEL','chromium'),'args':['--enable-unsafe-swiftshader','--disable-dev-shm-usage']}
   if os.environ.get('JARVIS_TEST_CHROMIUM'):kwargs['executable_path']=os.environ['JARVIS_TEST_CHROMIUM']
   b=pw.chromium.launch(**kwargs)
   try:
+   # Separate the editor-bundle boot from the surrounding JARVIS dashboard.
+   # A crashing standalone page points to the designer/WebGL runtime itself.
+   print('Probe: loading isolated SweetHomeJS designer...',flush=True)
+   probe=b.new_page(viewport={'width':1200,'height':800});probe_errors=[]
+   probe.on('crash',lambda _:probe_errors.append('standalone renderer crashed'))
+   probe.on('pageerror',lambda e:probe_errors.append(str(e)))
+   probe.goto(base+'/designer/',wait_until='domcontentloaded',timeout=30000)
+   try:probe.wait_for_function('window.jarvisDesigner && typeof window.jarvisDesigner.run === "function"',timeout=30000)
+   except Exception as e:raise AssertionError(f'Isolated designer failed: {e}; errors={probe_errors}') from e
+   print('Probe: isolated designer booted; errors='+str(probe_errors),flush=True)
+   probe.close()
    p=b.new_page(viewport={'width':1600,'height':1000});errors=[];requests=[]
    p.on('pageerror',lambda e:errors.append(str(e)))
    p.on('crash',lambda _:errors.append('Page/renderer crashed'))
