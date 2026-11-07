@@ -36,6 +36,15 @@ try:
    # A crashing standalone page points to the designer/WebGL runtime itself.
    print('Probe: loading isolated SweetHomeJS designer...',flush=True)
    probe=b.new_page(viewport={'width':1200,'height':800});probe_errors=[]
+   # Trace the bundled app's async session bootstrap without changing release assets.
+   with zipfile.ZipFile(ROOT/'vendor/designer.zip') as archive:
+    bundle_name=next(n for n in archive.namelist() if n.startswith('assets/index-') and n.endswith('.js'))
+    bundle=archive.read(bundle_name).decode('utf8')
+   anchor=re.search(r'globalThis\.__devEvent=[^,]{1,30},([\w$]+\(new [\w$]+\)\.then\(async [\w$]+=>\{)',bundle)
+   assert anchor, 'Session bootstrap entry not found in compiled bundle'
+   bundle=bundle[:anchor.start(1)]+'(console.warn("JARVIS_TRACE before createSession"),'+anchor.group(1).replace('=>{','=>{console.warn("JARVIS_TRACE session ready");',1)+')'+bundle[anchor.end(1):]
+   probe.route('**/designer/'+bundle_name,lambda route:route.fulfill(status=200,content_type='application/javascript',body=bundle))
+   print('Patched bundled app boot checkpoints at '+bundle_name,flush=True)
    probe.on('crash',lambda _:probe_errors.append('standalone renderer crashed'))
    probe.on('pageerror',lambda e:probe_errors.append(str(e)))
    probe.on('console',lambda m:probe_errors.append('console '+m.type+': '+m.text[:250]) if m.type in ('error','warning') else None)
