@@ -1,40 +1,8 @@
 """Real 2D/3D editor, local catalog, transaction rollback and durable project roundtrip."""
-import json,os,socket,subprocess,sys,tempfile,time,urllib.request,re,zipfile
+import json,os,socket,subprocess,sys,tempfile,time,urllib.request,re
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parent.parent
-with zipfile.ZipFile(ROOT/'vendor/designer-source.zip') as sources:
- source=sources.read('apps/web/src/App.tsx').decode('utf8')
- i=source.find('async function createSession')
- print('DESIGNER SOURCE SESSION: '+source[i:i+4400],flush=True)
- print('DESIGNER SOURCE IMPORTS: '+source[:2600],flush=True)
- with zipfile.ZipFile(ROOT/'vendor/designer-source.zip') as srcz:
-  for name in srcz.namelist():
-   if not name.endswith(('.ts','.tsx','.js')):continue
-   raw=srcz.read(name)
-   if b'function loadCatalog' in raw or b'const loadCatalog =' in raw:
-    k=raw.find(b'loadCatalog')
-    print('CATALOG LOADER SOURCE '+name+': '+raw[max(0,k-280):k+7600].decode('utf8','replace'),flush=True)
-
-with zipfile.ZipFile(ROOT/'vendor/designer.zip') as archive:
- entries=[(i.filename,i.file_size) for i in archive.infolist() if i.filename.endswith(('.js','.html'))]
- print('DESIGNER files largest: '+repr(sorted(entries,key=lambda x:-x[1])[:12]),flush=True)
- print('DESIGNER catalogue asset names: '+repr([n for n in archive.namelist() if 'catalog' in n.lower()][:30]),flush=True)
- import io
- if 'catalog.sh3f' in archive.namelist():
-  data=archive.read('catalog.sh3f')
-  with zipfile.ZipFile(io.BytesIO(data)) as catz:
-   props=[(i.filename,i.file_size,i.compress_size) for i in catz.infolist() if 'FurnitureCatalog.properties' in i.filename]
-   print('CATALOG nested archive: '+str({'bytes':len(data),'entries':len(catz.infolist()),'uncompressed':sum(i.file_size for i in catz.infolist()),'properties':props}),flush=True)
-
- for name,size in entries:
-  if size>15_000_000:continue
-  raw=archive.read(name)
-  for needle in (b'jarvisDesigner',b'jarvisRenderStats'):
-   at=raw.find(needle)
-   if at>=0:
-    print('DESIGNER bridge in '+name+' bytes='+str(size)+' near='+raw[max(0,at-600):at+700].decode('utf8','replace'),flush=True)
-
 sock=socket.socket();sock.bind(('127.0.0.1',0));port=sock.getsockname()[1];sock.close()
 data=Path(tempfile.mkdtemp(prefix='jv_designer_browser_'))
 (data/'settings.json').write_text(json.dumps({'wake_word':False,'voice_enabled':False,'always_listen_migrated':True,'continuous_voice_v2':True}))
@@ -53,39 +21,10 @@ try:
   if os.environ.get('JARVIS_TEST_CHROMIUM'):kwargs['executable_path']=os.environ['JARVIS_TEST_CHROMIUM']
   b=pw.chromium.launch(**kwargs)
   try:
-   # Separate the editor-bundle boot from the surrounding JARVIS dashboard.
-   # A crashing standalone page points to the designer/WebGL runtime itself.
-   print('Probe: loading isolated SweetHomeJS designer...',flush=True)
-   probe=b.new_page(viewport={'width':1200,'height':800});probe_errors=[]
-   # Trace the bundled app's async session bootstrap without changing release assets.
-   with zipfile.ZipFile(ROOT/'vendor/designer.zip') as archive:
-    bundle_name=max((n for n in archive.namelist() if n.startswith('assets/index-') and n.endswith('.js')),key=lambda n:archive.getinfo(n).file_size)
-    bundle=archive.read(bundle_name).decode('utf8')
-   for pattern in ('async function SX(', 'function SX(', 'SX=async', 'SX='):
-    at=bundle.find(pattern)
-    if at>=0:
-     print('MINIFIED catalog loader definition: '+bundle[at:at+1800],flush=True)
-     break
-   for pattern in ('async function RE(', 'function RE(', 'RE=async', 'RE='):
-    at=bundle.find(pattern)
-    if at>=0:
-     print('MINIFIED createSession definition: '+bundle[at:at+2200],flush=True)
-     break
-   anchor=re.search(r'globalThis\.__devEvent=[^,]{1,30},([\w$]+\(new [\w$]+\)\.then\(async [\w$]+=>\{)',bundle)
-   assert anchor, 'Session bootstrap entry not found in compiled bundle'
-   boot=anchor.group(1).replace('(new ', '((()=>{console.warn("JARVIS_TRACE entering Home ctor");const home=new ',1).replace(').then(async', ';console.warn("JARVIS_TRACE constructed Home");return home})()).then(async',1)
-   bundle=bundle[:anchor.start(1)]+'console.warn("JARVIS_TRACE before createSession"),'+boot+bundle[anchor.end(1):]
-   probe.route('**/designer/'+bundle_name,lambda route:route.fulfill(status=200,content_type='application/javascript',body=bundle))
-   print('Patched bundled app boot checkpoints at '+bundle_name,flush=True)
-   probe.on('crash',lambda _:probe_errors.append('standalone renderer crashed'))
-   probe.on('pageerror',lambda e:probe_errors.append(str(e)))
-   probe.on('console',lambda m:probe_errors.append('console '+m.type+': '+m.text[:250]) if m.type in ('error','warning') else None)
-   probe.on('requestfailed',lambda r:probe_errors.append('request '+r.url[:130]+' '+str(r.failure)))
-   probe.on('response',lambda r:print('DESIGNER HTTP '+str(r.status)+' '+r.url,flush=True) if r.status>=400 else None)
+   # Isolated editor boot must succeed without relying on the main dashboard.
+   probe=b.new_page(viewport={'width':1200,'height':800})
    probe.goto(base+'/designer/',wait_until='domcontentloaded',timeout=30000)
-   try:probe.wait_for_function('window.jarvisDesigner && typeof window.jarvisDesigner.run === "function"',timeout=30000)
-   except Exception as e:raise AssertionError(f'Isolated designer failed: {e}; errors={probe_errors}') from e
-   print('Probe: isolated designer booted; errors='+str(probe_errors),flush=True)
+   probe.wait_for_function('window.jarvisDesigner && typeof window.jarvisDesigner.run === "function"',timeout=30000)
    probe.close()
    p=b.new_page(viewport={'width':1600,'height':1000});errors=[];requests=[]
    p.on('pageerror',lambda e:errors.append(str(e)))
