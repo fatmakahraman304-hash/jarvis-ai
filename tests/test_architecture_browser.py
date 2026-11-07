@@ -42,7 +42,7 @@ try:
     bundle=archive.read(bundle_name).decode('utf8')
    anchor=re.search(r'globalThis\.__devEvent=[^,]{1,30},([\w$]+\(new [\w$]+\)\.then\(async [\w$]+=>\{)',bundle)
    assert anchor, 'Session bootstrap entry not found in compiled bundle'
-   bundle=bundle[:anchor.start(1)]+'(console.warn("JARVIS_TRACE before createSession"),'+anchor.group(1).replace('=>{','=>{console.warn("JARVIS_TRACE session ready");',1)+')'+bundle[anchor.end(1):]
+   bundle=bundle[:anchor.start(1)]+'console.warn("JARVIS_TRACE before createSession"),'+anchor.group(1).replace('=>{','=>{console.warn("JARVIS_TRACE session ready");',1)+bundle[anchor.end(1):]
    probe.route('**/designer/'+bundle_name,lambda route:route.fulfill(status=200,content_type='application/javascript',body=bundle))
    print('Patched bundled app boot checkpoints at '+bundle_name,flush=True)
    probe.on('crash',lambda _:probe_errors.append('standalone renderer crashed'))
