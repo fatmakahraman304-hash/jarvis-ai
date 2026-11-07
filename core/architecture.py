@@ -20,6 +20,33 @@ REPORT=STORE/'report.json'
 MAX_PROJECT=24*1024*1024
 
 
+# The shipped GPL SweetHomeJS build has a catalog aliasing bug: each category
+# is iterated and then appended to itself through FurnitureCatalog.add(). The
+# array grows forever, exhausting the browser heap before the editor opens.
+# We preserve the verified original archive and patch its extracted JS only;
+# this source-available patch also applies to already-extracted installations.
+_BAD_CATALOG_INIT = 'for(const t of e.getCategories())for(const n of t.getFurniture())i.getFurnitureCatalog().add(t,n)'
+_GOOD_CATALOG_INIT = 'for(const t of e.getCategories())i.getFurnitureCatalog().getCategories().push(t)'
+
+
+def _fix_designer_catalog(target):
+    bundles = list((target / 'assets').glob('index-*.js'))
+    patched = 0
+    for bundle in bundles:
+        code = bundle.read_text(encoding='utf-8')
+        if _BAD_CATALOG_INIT in code:
+            if code.count(_BAD_CATALOG_INIT) != 1:
+                raise RuntimeError('Multiple catalog initializers in designer bundle')
+            tmp = bundle.with_suffix('.js.tmp')
+            tmp.write_text(code.replace(_BAD_CATALOG_INIT, _GOOD_CATALOG_INIT), encoding='utf-8')
+            tmp.replace(bundle)
+            patched += 1
+        elif _GOOD_CATALOG_INIT in code:
+            patched += 1
+    if patched != 1:
+        raise RuntimeError('Designer catalog initialization patch could not be verified')
+
+
 def assets():
     manifest=json.loads((ROOT/'vendor/designer.json').read_text())
     archive=ROOT/'vendor/designer.zip'
@@ -34,6 +61,7 @@ def assets():
                 p=(target/i.filename).resolve()
                 if not p.is_relative_to(target.resolve()):raise ValueError('Unsafe editor path')
             z.extractall(target)
+    _fix_designer_catalog(target)
     return target
 
 
