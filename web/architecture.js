@@ -7,7 +7,7 @@
  let autoFit=true,fitTimer=0,fitPromise=null;
  function fitView(){
   if(fitPromise)return fitPromise;
-  fitPromise=window.JarvisArchitectureViewport.fit(frame).finally(()=>{fitPromise=null;});
+  fitPromise=measured('fit-view',()=>window.JarvisArchitectureViewport.fit(frame)).finally(()=>{fitPromise=null;});
   return fitPromise;
  }
  function scheduleFit(){
@@ -71,13 +71,13 @@
      try{await bridge().load(bytes);}
      catch(e){await bridge().load(before);throw e;}
      await fitView();result=bridge().state();await save();
-    }else{result=await measured('engine-'+job.command.op,()=>bridge().run(job.command));if(job.command.op==='apply'&&job.command.operations?.some(op=>op.kind==='new')){autoFit=true;await fitView();}else if(autoFit&&['undo','redo'].includes(job.command.op))await fitView();if(['apply','undo','redo'].includes(job.command.op))await save();}}
+    }else{result=await measured('engine-'+job.command.op,()=>bridge().run(job.command));if(job.command.op==='apply'&&job.command.operations?.some(op=>op.kind==='new')){autoFit=true;await fitView();result=bridge().state();}else if(autoFit&&['undo','redo'].includes(job.command.op)){await fitView();result=bridge().state();}if(['apply','undo','redo'].includes(job.command.op))await save();}}
     catch(e){console.error('[architecture] command failed: '+job.command.op, e && (e.stack || e.message || e));error=e.message;status.textContent='İşlem uygulanmadı / kayıt başarısız: '+error;}
     await json('ack',{client,id:job.id,result,error});
    }else if(loaded&&Date.now()-lastSave>4000&&bridge().modified())await save();
   }catch(e){status.textContent=e.message;}finally{running=false;}
  }
- JV.architecture={open:()=>init().catch(e=>{status.textContent=e.message;}),save,fit:async()=>{await init();autoFit=true;return fitView();},timings,state:()=>bridge()?.state(true)};
+ JV.architecture={open:()=>init().catch(e=>{status.textContent=e.message;}),save,fit:async()=>{await init();autoFit=true;return fitView();},history:refreshHistory,timings,state:()=>bridge()?.state(true)};
  if(typeof ResizeObserver!=='undefined')new ResizeObserver(scheduleFit).observe(frame);
  document.getElementById('studio-fit').onclick=async()=>{try{await JV.architecture.fit();status.textContent='Plan ve kamera görünüm alanına sığdırıldı.';}catch(e){status.textContent=e.message;}};
  const expand=document.getElementById('architecture-expand');
@@ -188,8 +188,10 @@
    history.replaceChildren(new Option('Kayıtlı sürümler',''));
    for(const row of rows)history.add(new Option('Sürüm '+row.revision+' · '+new Date(row.saved_at*1000).toLocaleString('tr-TR'),String(row.revision)));
    history.value=rows.some(row=>String(row.revision)===selected)?selected:'';
-  }catch(e){status.textContent=e.message;}
+   return true;
+  }catch(e){status.textContent='Kayıt geçmişi yüklenemedi: '+e.message;console.error('[architecture] history failed',e);return false;}
  }
+ document.getElementById('studio-history-refresh').onclick=refreshHistory;
  // Populate at load/save, rather than replacing options during native focus.
  document.getElementById('studio-restore').onclick=async()=>{
   if(!history.value){status.textContent='Önce kayıtlı bir sürüm seç.';return;}

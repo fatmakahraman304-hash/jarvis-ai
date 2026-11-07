@@ -48,6 +48,8 @@
   const plan=doc.querySelector('.sh-plan canvas'),scene=doc.querySelector('[data-testid="view3d"]');
   if(!plan||!scene||!plan.clientWidth||!scene.clientWidth||!scene.clientHeight)throw Error('2D/3D görünüm boyutu okunamadı.');
   const pose=cameraPose(bounds(home),scene.clientWidth/scene.clientHeight);
+  const planHost=plan.parentElement;
+  view.resize(planHost.clientWidth,planHost.clientHeight);
   view.updatePlanBounds();view.fitHome(plan.clientWidth,plan.clientHeight);
   // The pinned view's fitHome ignores PlanViewport's margin translation.
   // Recenter using its actual public model-to-pixel transform.

@@ -870,11 +870,11 @@ async def original_voice_api(request):
 
 
 async def system(request):
-    return JSONResponse(tools.system_status(), )
+    return JSONResponse(await asyncio.to_thread(tools.system_status))
 
 
 async def processes(request):
-    return JSONResponse(tools.top_processes(8, request.query_params.get("by", "ram")))
+    return JSONResponse(await asyncio.to_thread(tools.top_processes, 8, request.query_params.get("by", "ram")))
 
 
 LOCAL_ONLY_SETTINGS = {"allow_remote_commands", "allow_remote_camera", "allow_remote_screen", "telegram_voice", "guest_mode", "voice_lock", "disabled_groups", "robot_port", "robot_url"}
@@ -924,13 +924,18 @@ async def models(request):
     if pid not in llm.PROVIDERS:
         return JSONResponse({"error": "yok"}, status_code=404)
     refresh = request.query_params.get("refresh") == "1"
+    return JSONResponse(await asyncio.to_thread(_model_snapshot, pid, refresh))
+
+
+def _model_snapshot(pid, refresh):
+    """Provider discovery may wait on a network socket; keep it off the ASGI loop."""
     if not llm.configured(pid):
-        return JSONResponse({"models": [], "selected": "", "auto": "", "pinned": ""})
+        return {"models": [], "selected": "", "auto": "", "pinned": ""}
     llm.list_models(pid, refresh)
-    return JSONResponse({"models": llm.ranked_models(pid), "selected": llm.pick_model(pid),
-                         "auto": llm.pick_model(pid) if not env(f"{pid.upper()}_MODEL") else (llm.ranked_models(pid) or [""])[0],
-                         "pinned": env(f"{pid.upper()}_MODEL"),
-                         "kota_doldu": {m: time.strftime("%H:%M", time.localtime(t)) for m in llm.ranked_models(pid) if (t := llm.cooling(pid, m))}})
+    return {"models": llm.ranked_models(pid), "selected": llm.pick_model(pid),
+            "auto": llm.pick_model(pid) if not env(f"{pid.upper()}_MODEL") else (llm.ranked_models(pid) or [""])[0],
+            "pinned": env(f"{pid.upper()}_MODEL"),
+            "kota_doldu": {m: time.strftime("%H:%M", time.localtime(t)) for m in llm.ranked_models(pid) if (t := llm.cooling(pid, m))}}
 
 
 ALLOWED_KEYS = {p["key_env"] for p in llm.PROVIDERS.values() if p["key_env"]} | {

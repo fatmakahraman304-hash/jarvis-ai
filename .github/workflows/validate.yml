@@ -56,6 +56,7 @@ jobs:
         run: python tests/test_browser_approval.py
       - name: Check durable assistant and device verification
         run: |
+          python tests/test_server_responsiveness.py
           python tests/test_assistant.py
           python tests/test_home_verification.py
           python tests/test_gemini_continuation.py

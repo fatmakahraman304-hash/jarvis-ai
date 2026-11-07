@@ -56,6 +56,7 @@ try:
 
    assert sum(bool(x['model']) for x in catalog)>70
    assert any(x['opening'] for x in catalog)
+   profiler=p.context.new_cdp_session(p);profiler.send('Profiler.enable');profiler.send('Profiler.start')
    # End-to-end studio workflow: preset -> dimensions -> visible button -> real SH3D geometry.
    p.locator('#studio-preset').select_option('compact')
    assert p.locator('#studio-width').input_value()=='8'
@@ -104,6 +105,12 @@ try:
    with p.expect_download() as exported:p.locator('#studio-svg').click()
    svg=Path(exported.value.path()).read_text()
    assert '<svg' in svg and 'Ölçülü test mobilyası' in svg and 'rotate(45' in svg,svg[:1000]
+   profile=profiler.send('Profiler.stop')['profile']
+   nodes={n['id']:n['callFrame'] for n in profile['nodes']};totals={}
+   for ident,delta in zip(profile.get('samples',[]),profile.get('timeDeltas',[])):
+    name=nodes[ident].get('functionName') or '(anonymous)';totals[name]=totals.get(name,0)+delta/1000
+   Path('test-results').mkdir(exist_ok=True)
+   Path('test-results/architecture-cpu.json').write_text(json.dumps(sorted(totals.items(),key=lambda item:item[1],reverse=True)[:80],indent=2))
    count=run('state')['counts']['walls']
    bad=p.request.post(base+'/api/architecture/run',data={'op':'apply','args':{'operations':[{'kind':'wall','start':[0,0],'end':[2,0]},{'kind':'INVALID'}]}},timeout=65000)
    assert bad.status==400
@@ -118,6 +125,7 @@ try:
     p.set_viewport_size({'width':width,'height':height})
     p.wait_for_function("""()=>{
      const win=document.querySelector('#architecture-frame').contentWindow,v=win.__planView?.getViewport(),canvas=win.document.querySelector('.sh-plan canvas');if(!v||!canvas)return false;
+     if(Math.abs(canvas.clientWidth-canvas.parentElement.clientWidth)>2)return false;
      const b=v.getPlanBounds(),x0=v.convertXModelToPixel(b.minX),x1=v.convertXModelToPixel(b.maxX),y0=v.convertYModelToPixel(b.minY),y1=v.convertYModelToPixel(b.maxY);
      return x0>=20&&y0>=20&&x1<=canvas.clientWidth-20&&y1<=canvas.clientHeight-20&&Math.max((x1-x0)/canvas.clientWidth,(y1-y0)/canvas.clientHeight)>.65&&Math.abs((x0+x1)/2-canvas.clientWidth/2)<5;
     }""",timeout=15000)
@@ -142,6 +150,7 @@ try:
    # current project must remain recoverable as a newly retained snapshot.
    versions=p.request.get(base+'/api/architecture/history').json()
    assert versions
+   p.click('#studio-history-refresh')
    p.wait_for_function("document.querySelector('#studio-history').options.length>1")
    p.click('#studio-history')
    p.keyboard.press('Home');p.keyboard.press('ArrowDown');p.keyboard.press('Enter')
@@ -173,6 +182,8 @@ try:
    if 'measurements' in locals():Path('test-results/architecture-timings.json').write_text(json.dumps(measurements,indent=2))
    if 'p' in locals():
     try:Path('test-results/architecture-stages-failure.json').write_text(json.dumps(p.evaluate('JV.architecture.timings'),indent=2))
+    except Exception:pass
+    try:print('History debug:',p.evaluate('({html:document.querySelector("#studio-history")?.outerHTML,buttons:document.querySelector("#architecture-tools")?.textContent})'),flush=True)
     except Exception:pass
     try:print('Studio failure state:',p.evaluate('({status:document.querySelector("#architecture-status")?.textContent,object:document.querySelector("#studio-object-status")?.textContent})'),flush=True)
     except Exception:pass
