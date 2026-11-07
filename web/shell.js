@@ -14,7 +14,11 @@
   // [kategori, id ya da sanal, ikon, ad, açıklama, eylem (sanal için)]
   const APPS = [
     ["GÖRÜŞ & AR", "t-scan", "🔎", "Tara", "Odayı tara → tıkla, hologram; nesne bul, belge, QR, renk, bitki"],
-    ["GÖRÜŞ & AR", "v-arfx", "✨", "AR Efekt", "Ateş, mühür, gezegen, şimşek, kitaplık", () => JV.gesture && JV.gesture.start("efekt")],
+    ["GÖRÜŞ & AR", "v-globehand", "🌍", "Dünya · Elle Döndür", "Yalnızca 3D Dünya, ateş/AR efektleri kapalı", () => { JV.setView && JV.setView("globe"); JV.gesture && JV.gesture.start("nesne"); }],
+    ["GÖRÜŞ & AR", "v-arfx", "✨", "AR Efekt Modları", "Bir seferde bir efekt seç: ateş, gezegen, şimşek, mühür…", () => JV.gesture && JV.gesture.start("efekt")],
+    ["GÖRÜŞ & AR", "v-arfire", "🔥", "El Ateşi", "Yalnızca ateş efekti", () => { JV.handfx && JV.handfx.setProfile("fire"); JV.gesture && JV.gesture.start("efekt"); }],
+    ["GÖRÜŞ & AR", "v-arplanet", "🪐", "Avuçta Gezegen", "Yalnızca avuçta gezegen", () => { JV.handfx && JV.handfx.setProfile("planet"); JV.gesture && JV.gesture.start("efekt"); }],
+    ["GÖRÜŞ & AR", "v-arlightning", "⚡", "El Şimşeği", "Yalnızca iki parmak arası şimşek", () => { JV.handfx && JV.handfx.setProfile("lightning"); JV.gesture && JV.gesture.start("efekt"); }],
     ["GÖRÜŞ & AR", "v-ardesk", "🖥", "AR Masaüstü", "Avuçta menü, elle taşınan paneller", () => JV.handfx && JV.handfx.cmd({ action: "desktop" })],
     ["GÖRÜŞ & AR", "v-helmet", "🛡", "Kask Modu", "Yüzüne Iron Man kaskı + HUD", () => JV.handfx && JV.handfx.cmd({ action: "extra", extra: "mask" })],
     ["GÖRÜŞ & AR", "t-cams", "📹", "Kameralar", "Telefon kameraları, güvenlik modu"],
