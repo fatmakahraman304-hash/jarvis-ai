@@ -17,13 +17,14 @@ try:
   except Exception:time.sleep(.1)
  else:log.seek(0);raise RuntimeError(log.read()[-4000:])
  with sync_playwright() as pw:
-  kwargs={'headless':True,'channel':'chromium','args':['--enable-unsafe-swiftshader','--disable-dev-shm-usage']}
+  kwargs={'headless':os.environ.get('JARVIS_CI_HEADED')!='1','channel':'chromium','args':['--enable-unsafe-swiftshader','--disable-dev-shm-usage']}
   if os.environ.get('JARVIS_TEST_CHROMIUM'):kwargs['executable_path']=os.environ['JARVIS_TEST_CHROMIUM']
   b=pw.chromium.launch(**kwargs)
   try:
    p=b.new_page(viewport={'width':1600,'height':1000});errors=[];requests=[]
    p.on('pageerror',lambda e:errors.append(str(e)))
    p.on('crash',lambda _:errors.append('Page/renderer crashed'))
+   p.on('console',lambda m:errors.append('Browser '+m.type+': '+m.text[:300]) if m.type=='error' else None)
    p.on('requestfailed',lambda r:requests.append(f'{r.method} {r.url}: {r.failure}'))
    # Block external resources, but let localhost requests run natively: routing
    # every poll through Python can starve the synchronous APIRequestContext test.
@@ -34,6 +35,7 @@ try:
     assert response.ok, f'{response.text()}\nJS errors: {errors}\nFailed requests: {requests}'
     return response.json()['result']
    # First voice/model command must open the editor from the core view automatically.
+   print('Opening model catalog from real UI...',flush=True)
    catalog=run('catalog');assert len(catalog)>80
    frame=p.frame(url=base+'/designer/');assert frame
    assert sum(bool(x['model']) for x in catalog)>70
