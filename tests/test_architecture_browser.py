@@ -7,6 +7,15 @@ with zipfile.ZipFile(ROOT/'vendor/designer-source.zip') as sources:
  source=sources.read('apps/web/src/App.tsx').decode('utf8')
  i=source.find('async function createSession')
  print('DESIGNER SOURCE SESSION: '+source[i:i+4400],flush=True)
+ print('DESIGNER SOURCE IMPORTS: '+source[:2600],flush=True)
+ with zipfile.ZipFile(ROOT/'vendor/designer-source.zip') as srcz:
+  for name in srcz.namelist():
+   if not name.endswith(('.ts','.tsx','.js')):continue
+   raw=srcz.read(name)
+   if b'function loadCatalog' in raw or b'const loadCatalog =' in raw:
+    k=raw.find(b'loadCatalog')
+    print('CATALOG LOADER SOURCE '+name+': '+raw[max(0,k-280):k+7600].decode('utf8','replace'),flush=True)
+
 with zipfile.ZipFile(ROOT/'vendor/designer.zip') as archive:
  entries=[(i.filename,i.file_size) for i in archive.infolist() if i.filename.endswith(('.js','.html'))]
  print('DESIGNER files largest: '+repr(sorted(entries,key=lambda x:-x[1])[:12]),flush=True)
