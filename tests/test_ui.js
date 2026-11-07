@@ -65,17 +65,17 @@ const check = (name, cond, extra = "") => { console.log((cond ? "  ✓ " : "  �
     check("ortam sesi: duman alarmı güvenlik bildirimi", amb.some((x) => x.startsWith("security:") && x.includes("Duman")), JSON.stringify(amb));
     console.log("AR EFEKT + UYKU");
     const ar = await p.evaluate(async () => {
-      const H = JV.handfx, C = JV.GestureCore, out = {}; H.show(null);
+      const H = JV.handfx, C = JV.GestureCore, out = {}; H.setProfile("fire"); H.show(null);
       const run = async (n, mk) => { for (let i = 0; i < n; i++) { H.frame(mk(i), null); await new Promise((r) => setTimeout(r, 16)); } };
       await run(8, (i) => [{ lm: H._synth(0.4 + i * 0.03, 0.5, 0.5, "open"), handed: "Right" }]); out.fire = H.stats().parts;
-      await run(20, (i) => [{ lm: H._synth(0.3 + i * 0.02, 0.5, 0.5, "point"), handed: "Right" }]); out.trail = H.stats().trail;
-      await run(10, () => [{ lm: H._synth(0.5, 0.5, 0.5, "pinch"), handed: "Right" }]); out.planet = H.stats().planets.length;
-      await run(1, () => [{ lm: H._synth(0.5, 0.5, 0.5, "fist"), handed: "Right" }]); await run(2, () => [{ lm: H._synth(0.5, 0.5, 0.5, "open"), handed: "Right" }]); out.blast = H.stats().planets.length;
-      await run(6, () => [{ lm: H._synth(0.3, 0.5, 0.4, "point"), handed: "Right" }, { lm: H._synth(0.7, 0.5, 0.4, "point"), handed: "Left" }]); out.bolts = H.stats().bolts;
+      H.setProfile("trail"); await run(20, (i) => [{ lm: H._synth(0.3 + i * 0.02, 0.5, 0.5, "point"), handed: "Right" }]); out.trail = H.stats().trail;
+      H.setProfile("planet"); await run(10, () => [{ lm: H._synth(0.5, 0.5, 0.5, "pinch"), handed: "Right" }]); out.planet = H.stats().planets.length;
+      H.setProfile("blast"); await run(1, () => [{ lm: H._synth(0.5, 0.5, 0.5, "fist"), handed: "Right" }]); await run(2, () => [{ lm: H._synth(0.5, 0.5, 0.5, "open"), handed: "Right" }]); out.blast = H.stats().planets.length;
+      H.setProfile("lightning"); await run(6, () => [{ lm: H._synth(0.3, 0.5, 0.4, "point"), handed: "Right" }, { lm: H._synth(0.7, 0.5, 0.4, "point"), handed: "Left" }]); out.bolts = H.stats().bolts;
       JV.uiCommand("ar_effects", {}, JSON.stringify({ ui: "handfx", action: "planet", planet: "jupiter" }));
       await run(10, () => [{ lm: H._synth(0.5, 0.5, 0.5, "pinch"), handed: "Right" }]); out.jup = H.stats().planets.slice(-1)[0];
       const face = []; for (let i = 0; i < 40; i++) face.push({ x: 0.45 + (i % 8) * 0.015, y: 0.3 + Math.floor(i / 8) * 0.03 });
-      for (let i = 0; i < 90; i++) { H.frame([], [face]); await new Promise((r) => setTimeout(r, 16)); } out.locked = H.stats().locked;
+      H.setProfile("face"); for (let i = 0; i < 90; i++) { H.frame([], [face]); await new Promise((r) => setTimeout(r, 16)); } out.locked = H.stats().locked;
       H.stop();
       JV.sleep.enter(); await new Promise((r) => setTimeout(r, 200)); out.asleep = JV.sleep.asleep;
       const t = performance.now(); JV.sleep._clap(t); JV.sleep._clap(t + 1200); out.slowClap = JV.sleep.asleep;
@@ -91,7 +91,7 @@ const check = (name, cond, extra = "") => { console.log((cond ? "  ✓ " : "  �
     check("uyku modu + yavaş alkış uyandırmaz + iki alkış uyandırır", ar.asleep && ar.slowClap && ar.woke);
     console.log("KİTAPLIK (AR) + KAMERA + VİDEO");
     const lib = await p.evaluate(async () => {
-      const H = JV.handfx, out = {};
+      const H = JV.handfx, out = {}; H.setProfile("library");
       const probe = H._synth(0.5, 0.5, 0.5, "point"), tx = probe[8].x, ty = probe[8].y;
       await JV.api("/api/library/book", { body: { title: "Mülksüzler", author: "Ursula K. Le Guin", box: [tx - 0.03, ty - 0.2, tx + 0.03, ty + 0.2], notes: [{ t: "Anarres", d: "2026-11-05" }] } });
       await JV.api("/api/library/book", { body: { title: "Davranış", author: "Sapolsky", box: [tx + 0.08, ty - 0.2, tx + 0.14, ty + 0.2] } });
@@ -172,7 +172,7 @@ const check = (name, cond, extra = "") => { console.log((cond ? "  ✓ " : "  �
     check("squat sayacı (diz açısı)", bd.squats === 3, JSON.stringify(bd));
     check("ruh hali: mutlu / yorgun", bd.happy.includes("MUTLU") && bd.tired.includes("YORGUN"), JSON.stringify(bd));
     const ax = await p.evaluate(async () => {
-      const H = JV.handfx; H.show(null); const out = {};
+      const H = JV.handfx; H.setProfile("palm"); H.show(null); const out = {};
       const run = async (n, mk) => { for (let i = 0; i < n; i++) { H.frame(mk(i), null); await new Promise((r) => setTimeout(r, 30)); } };
       await run(50, () => [{ lm: H._synth(0.5, 0.55, 0.5, "open"), handed: "Right" }]); out.palm = H.stats().palm;
       JV.uiCommand("ar_extra", {}, JSON.stringify({ ui: "handfx", action: "extra", extra: "draw" }));
@@ -236,7 +236,7 @@ const check = (name, cond, extra = "") => { console.log((cond ? "  ✓ " : "  �
       JV.uiCommand("weather_panel", {}, JSON.stringify({ ui: "weather", data: wx })); await new Promise((r) => setTimeout(r, 300));
       out.wx = { t: (document.querySelector(".wx-t") || {}).textContent, days: document.querySelectorAll(".wx-day").length, curve: !!document.querySelector(".wx-curve path") };
       JV.weather.close();
-      const H = JV.handfx; H.show(null); JV.ardesk.toggle(true);
+      const H = JV.handfx; H.setProfile("desktop"); H.show(null);
       const run = async (n, mk) => { for (let i = 0; i < n; i++) { H.frame(mk(i), null); await new Promise((r) => setTimeout(r, 30)); } };
       await run(40, () => [{ lm: H._synth(0.62, 0.55, 0.55, "open"), handed: "Right" }]); out.menu = JV.ardesk._menu();
       const probe = H._synth(0.5, 0.5, 0.5, "point"), dx = probe[8].x - 0.5, dy = probe[8].y - 0.5;
