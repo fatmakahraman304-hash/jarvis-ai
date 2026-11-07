@@ -98,7 +98,9 @@ try:
             assert result["globeStopsAR"] and result["objectModeStopsAR"], result
 
             page.evaluate("JV.handfx.show(null)")
-            page.click("#t-camera")
+            assert page.locator("#ar-world-b").is_visible()
+            assert page.locator("#ar-camera-b").is_visible()
+            page.click("#ar-camera-b")
             page.wait_for_selector("#camera", state="visible", timeout=15000)
             assert page.evaluate("!JV.handfx.active && JV.camera.isOpen()")
             page.click("#cam-close")
