@@ -61,6 +61,11 @@ try:
    with zipfile.ZipFile(ROOT/'vendor/designer.zip') as archive:
     bundle_name=max((n for n in archive.namelist() if n.startswith('assets/index-') and n.endswith('.js')),key=lambda n:archive.getinfo(n).file_size)
     bundle=archive.read(bundle_name).decode('utf8')
+   for pattern in ('async function SX(', 'function SX(', 'SX=async', 'SX='):
+    at=bundle.find(pattern)
+    if at>=0:
+     print('MINIFIED catalog loader definition: '+bundle[at:at+1800],flush=True)
+     break
    for pattern in ('async function RE(', 'function RE(', 'RE=async', 'RE='):
     at=bundle.find(pattern)
     if at>=0:
