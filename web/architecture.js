@@ -52,6 +52,29 @@
    expand.setAttribute('aria-pressed','false');expand.textContent='⛶ Tam ekran';
   }
  });
+ const studioMetrics=document.getElementById('studio-metrics');
+ const studioHouse=document.getElementById('studio-house');
+ const studioButtons=[studioHouse,document.getElementById('studio-undo'),document.getElementById('studio-redo')];
+ const updateMetrics=()=>{try{const report=bridge()?.state();if(report?.counts)studioMetrics.textContent=[report.counts.rooms+' oda',report.counts.walls+' duvar',report.counts.furniture+' eşya',Number(report.area_m2||0).toFixed(1)+' m²'].join(' · ');}catch(_){}};
+ let studioBusy=false;
+ async function studioRun(op,args={}){
+  if(studioBusy)return;studioBusy=true;studioButtons.forEach(b=>b.disabled=true);
+  status.textContent='JARVIS tasarımı uyguluyor…';
+  try{await init();const r=await json('run',{op,args});if(!r?.result?.verified)throw Error('Tasarım işlemi doğrulanamadı');updateMetrics();status.textContent='Tasarım uygulandı ve kaydedildi.';}
+  catch(e){status.textContent='Tasarım hatası: '+e.message;console.warn('[studio] '+op,e);}
+  finally{studioBusy=false;studioButtons.forEach(b=>b.disabled=false);}
+ }
+ studioHouse.onclick=()=>{
+  const width=Number(document.getElementById('studio-width').value),depth=Number(document.getElementById('studio-depth').value);
+  const bedrooms=Number(document.getElementById('studio-bedrooms').value),bathrooms=Number(document.getElementById('studio-bathrooms').value);
+  if(!Number.isFinite(width)||!Number.isFinite(depth)||width<7||width>40||depth<7||depth>40){status.textContent='Ölçüler 7 ile 40 metre arasında olmalı.';return;}
+  const current=bridge()?.state();
+  if(current?.counts?.walls>0&&!window.confirm('Mevcut çizimin yerine yeni bir ev planı oluşturulsun mu?'))return;
+  studioRun('house',{width,depth,bedrooms,bathrooms,name:'JARVIS '+width+' × '+depth+' m',replace:true});
+ };
+ document.getElementById('studio-undo').onclick=()=>studioRun('undo');
+ document.getElementById('studio-redo').onclick=()=>studioRun('redo');
+ setInterval(()=>{if(loaded&&document.body.classList.contains('view-design'))updateMetrics();},3000);
  document.getElementById('architecture-close').onclick=()=>JV.setView('core');
  document.getElementById('architecture-download').onclick=async()=>{try{await save();const r=await api('project');const url=URL.createObjectURL(await r.blob());const a=document.createElement('a');a.href=url;a.download='JARVIS-Proje.sh3d';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(e){status.textContent=e.message;}};
  setInterval(poll,400);
