@@ -743,5 +743,7 @@ body.view-design.architecture-expanded #architecture-view footer{padding:8px 16p
 #architecture-tools label{font-size:11px;letter-spacing:.025em}
 #architecture-tools input,#architecture-tools select{font-size:12px}
 #architecture-tools #studio-preset{width:145px}
+#architecture-tools #studio-render-style{width:175px}
+#architecture-tools select:disabled{opacity:.45;cursor:wait}
 @container(max-width:1000px){#studio-inspector{position:absolute;right:0;top:0;bottom:0;z-index:5;box-shadow:-8px 0 28px #0004}}
 @media(prefers-reduced-motion:reduce){#architecture-view *{transition:none!important;animation:none!important}}

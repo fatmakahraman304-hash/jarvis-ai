@@ -178,6 +178,7 @@ try:
     const h=window.__homeController.getHome(),c=h.getObserverCamera();
     return {pose:[c.getX(),c.getY(),c.getZ(),c.getYaw(),c.getPitch(),c.getFieldOfView()],observer:h.getCamera()===c,state:window.jarvisDesigner.state(true)};
    }''')
+   assert p.locator('#studio-render-style').bounding_box()['width']>=150,'Quality label is truncated'
    p.locator('#studio-render-style').select_option('design')
    p.wait_for_function("document.querySelector('#studio-render-style').disabled===false",timeout=90000)
    assert 'görünümü çizildi' in p.locator('#architecture-status').inner_text()
