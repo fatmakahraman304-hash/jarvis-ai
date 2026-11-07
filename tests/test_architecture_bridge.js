@@ -15,8 +15,8 @@ async function main() {
   const frame = {contentWindow:{}};
   Object.defineProperty(frame,'src',{set(value){assert.equal(value,'/designer/');frame.contentWindow.jarvisDesigner=engine;}});
   nodes['architecture-frame']=frame;
-  for(const name of ['architecture-status','architecture-close','architecture-download'])nodes[name]={textContent:''};
-  const document = {hidden:false,getElementById:id=>nodes[id]};
+  for(const name of ['architecture-status','architecture-close','architecture-download','architecture-expand','studio-metrics','studio-house','studio-undo','studio-redo','studio-width','studio-depth','studio-bedrooms','studio-bathrooms'])nodes[name]={textContent:'',setAttribute:()=>{},disabled:false};
+  const document = {hidden:false,getElementById:id=>nodes[id],addEventListener:()=>{},body:{classList:{contains:()=>false,toggle:()=>false,remove:()=>{}}}};
   const JV = {token:'',setView:mode=>{events.push('view:'+mode);JV.architecture.open();}};
   const ctx = {window:{JV},document,crypto:require('node:crypto'),Uint8Array,console,setTimeout,
     setInterval:fn=>{poll=fn;},fetch:async(url,options={})=>{
